@@ -1,0 +1,8 @@
+flask
+flask-sqlalchemy
+flask-login
+flask-wtf
+pyotp
+qrcode[pil]
+https://apply.ycombinator.com/
+pip install flask-wtf

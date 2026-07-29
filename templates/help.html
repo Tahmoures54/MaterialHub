@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}MaterialHub - Help & Support{% endblock %}
+{% block content %}
+<style>
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background-color: #f4f7fa;
+        color: #333;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .help-container {
+        padding: 40px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .help-header {
+        text-align: center;
+        padding: 40px 20px;
+        background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+        color: #fff;
+        border-radius: 12px;
+        margin-bottom: 40px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .help-header h1 {
+        font-size: 2.5em;
+        margin-bottom: 15px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .help-header p {
+        font-size: 1.2em;
+        color: #e0e7ff;
+    }
+
+    .help-section {
+        margin-bottom: 40px;
+    }
+
+    .help-section h2 {
+        font-size: 1.8em;
+        color: #1a73e8;
+        margin-bottom: 20px;
+        position: relative;
+        text-align: center;
+    }
+
+    .help-section h2::after {
+        content: '';
+        width: 50px;
+        height: 3px;
+        background: #1a73e8;
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .help-section ul {
+        list-style: none;
+        padding: 0;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .help-section li {
+        font-size: 1.1em;
+        color: #444;
+        margin-bottom: 15px;
+        position: relative;
+        padding-left: 25px;
+    }
+
+    .help-section li::before {
+        content: '✔';
+        color: #28a745;
+        position: absolute;
+        left: 0;
+        font-size: 1.2em;
+    }
+
+    .button {
+        display: inline-block;
+        padding: 12px 24px;
+        background: #28a745;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1.1em;
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    .button:hover {
+        background: #218838;
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+        .help-header {
+            padding: 30px 15px;
+        }
+
+        .help-header h1 {
+            font-size: 2em;
+        }
+
+        .help-header p {
+            font-size: 1em;
+        }
+
+        .help-section h2 {
+            font-size: 1.6em;
+        }
+
+        .help-section li {
+            font-size: 1em;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .help-header {
+            padding: 20px 10px;
+        }
+
+        .help-header h1 {
+            font-size: 1.8em;
+        }
+
+        .help-section h2 {
+            font-size: 1.4em;
+        }
+
+        .button {
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+    }
+</style>
+
+<div class="help-container">
+    <!-- Help Header -->
+    <section class="help-header">
+        <h1>MaterialHub Help & Support</h1>
+        <p>Get answers to your questions and learn how to make the most of MaterialHub!</p>
+    </section>
+
+    <!-- Getting Started Section -->
+    <section class="help-section">
+        <h2>Getting Started</h2>
+        <ul>
+            <li><strong>Sign Up:</strong> Create an account by visiting the <a href="{{ url_for('auth.register') }}">Registration Page</a>.</li>
+            <li><strong>Log In:</strong> Access the <a href="{{ url_for('project_dashboard.dashboard') }}">Project Dashboard</a> with your email and TOTP code.</li>
+            <li><strong>Dashboard Overview:</strong> Explore your personalized dashboard to manage materials, requisitions, and more.</li>
+        </ul>
+    </section>
+
+    <!-- Using MaterialHub Section -->
+    <section class="help-section">
+        <h2>Using MaterialHub</h2>
+        <ul>
+            <li><strong>Material Requisitions:</strong> Submit and track material requests via the <a href="{{ url_for('material_requisitions.material_requisitions') }}">Material Requisition</a> page.</li>
+            <li><strong>Purchase Orders:</strong> Create and manage orders in the <a href="{{ url_for('purchase_order.purchase_order') }}">Purchase Order</a> section.</li>
+            <li><strong>Warehouse Management:</strong> Monitor inventory and stock levels in the <a href="{{ url_for('warehouse.warehouse_operations') }}">Warehouse</a> section.</li>
+            <li><strong>Quality Control:</strong> Ensure material quality through the <a href="{{ url_for('quality_control.quality_control') }}">Quality Control</a> page.</li>
+            <li><strong>Material Marketplace:</strong> Buy or sell materials in the <a href="{{ url_for('supplier.material_marketplace') }}">Material Marketplace</a>.</li>
+        </ul>
+    </section>
+
+    <!-- Support Section -->
+    <section class="help-section">
+        <h2>Need More Help?</h2>
+        <p>Contact our support team for assistance or visit our <a href="{{ url_for('auth.contact_support') }}">Contact Support</a> page.</p>
+        <a href="{{ url_for('auth.contact_support') }}" class="button">Contact Support</a>
+    </section>
+</div>
+{% endblock %}

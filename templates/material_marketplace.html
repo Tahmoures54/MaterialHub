@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+{% block title %}MaterialHub Marketplace{% endblock %}
+{% block content %}
+<style>
+    :root {
+        --primary-color: #1e3a8a;
+        --secondary-color: #3b82f6;
+        --background-color: #f3f4f6;
+        --card-bg: #ffffff;
+        --text-color: #111827;
+        --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        --border-radius: 12px;
+        --transition: all 0.3s ease;
+    }
+
+    body {
+        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .marketplace-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Header */
+    .marketplace-header {
+        text-align: center;
+        padding: 50px 20px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: #fff;
+        border-radius: var(--border-radius);
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .marketplace-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.15), transparent);
+        animation: wave 10s infinite linear;
+    }
+
+    @keyframes wave {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .marketplace-header h1 {
+        font-size: 2.8rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .marketplace-header p {
+        font-size: 1.2rem;
+        max-width: 700px;
+        margin: 0 auto;
+        opacity: 0.85;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Search Bar */
+    .search-bar {
+        margin: 25px 0;
+        display: flex;
+        justify-content: center;
+    }
+
+    .search-form {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        max-width: 900px;
+        align-items: center;
+    }
+
+    .search-button {
+        padding: 12px;
+        background: var(--secondary-color);
+        color: #fff;
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+    }
+
+    .search-button::before {
+        content: '🔍';
+        font-size: 1.2rem;
+    }
+
+    .search-button:hover {
+        background: #2563eb;
+        transform: scale(1.05);
+    }
+
+    .search-input, .search-select {
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+        transition: var(--transition);
+        background: #fff;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    .search-select {
+        max-width: 200px;
+    }
+
+    .search-input:focus, .search-select:focus {
+        outline: none;
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Flash Messages */
+    .flash-container {
+        max-width: 900px;
+        margin: 20px auto;
+    }
+
+    .flash-message {
+        padding: 12px 20px;
+        border-radius: var(--border-radius);
+        margin-bottom: 12px;
+        font-size: 0.95rem;
+        opacity: 0;
+        transform: translateX(-20px);
+        transition: var(--transition);
+    }
+
+    .flash-message.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .flash-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .flash-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Materials Section */
+    .materials-section {
+        padding: 20px;
+    }
+
+    .materials-section h2 {
+        font-size: 2.2rem;
+        font-weight: 600;
+        text-align: center;
+        color: var(--primary-color);
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+    .materials-section h2::after {
+        content: '';
+        width: 60px;
+        height: 4px;
+        background: var(--secondary-color);
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .materials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .material-card {
+        background: var(--card-bg);
+        padding: 20px;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        text-align: center;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .material-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--secondary-color);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .material-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .material-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .material-card h3 {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 12px;
+    }
+
+    .material-price, .material-unit, .material-country {
+        font-size: 1rem;
+        color: #6b7280;
+        margin: 6px 0;
+    }
+
+    .contact-button {
+        padding: 10px 20px;
+        background: var(--primary-color);
+        color: #fff;
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: var(--transition);
+        width: 100%;
+        max-width: 220px;
+        margin-top: 12px;
+    }
+
+    .contact-button:hover {
+        background: #1e3a8a;
+        transform: translateY(-2px);
+    }
+
+    .no-materials {
+        text-align: center;
+        font-size: 1.2rem;
+        color: #6b7280;
+        padding: 25px;
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        margin: 20px auto;
+        max-width: 700px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .marketplace-container {
+            padding: 15px;
+        }
+
+        .marketplace-header {
+            padding: 40px 15px;
+        }
+
+        .marketplace-header h1 {
+            font-size: 2.2rem;
+        }
+
+        .marketplace-header p {
+            font-size: 1rem;
+        }
+
+        .search-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-button, .search-input, .search-select {
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .materials-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .material-card h3 {
+            font-size: 1.4rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .marketplace-header {
+            padding: 30px 10px;
+        }
+
+        .marketplace-header h1 {
+            font-size: 1.8rem;
+        }
+
+        .marketplace-header p {
+            font-size: 0.9rem;
+        }
+
+        .materials-section h2 {
+            font-size: 1.8rem;
+        }
+
+        .material-card {
+            padding: 15px;
+        }
+
+        .material-card h3 {
+            font-size: 1.3rem;
+        }
+
+        .contact-button {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .no-materials {
+            font-size: 1rem;
+            padding: 15px;
+        }
+    }
+</style>
+
+<div class="marketplace-container">
+    <!-- Marketplace Header -->
+    <header class="marketplace-header">
+        <h1>MaterialHub Marketplace</h1>
+        <p>Connect with global suppliers for top-quality materials</p>
+    </header>
+
+    <!-- Advanced Search Bar -->
+    <div class="search-bar">
+        <form class="search-form" method="GET" action="{{ url_for('supplier.material_marketplace') }}">
+            {{ form.hidden_tag() }}
+            <div class="search-input-group">
+                {{ form.submit(class="search-button") }}
+                {{ form.search(placeholder="Search materials...", class="search-input") }}
+                {{ form.country(class="search-select") }}
+            </div>
+        </form>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Marketplace Section -->
+    <main class="marketplace-main">
+        <section class="materials-section">
+            <h2>Available Materials</h2>
+            {% if materials %}
+                <div class="materials-grid">
+                    {% for material in materials %}
+                        <div class="material-card">
+                            <h3>{{ material.name }}</h3>
+                            <p class="material-price">Price: ${{ material.price | round(2) }}</p>
+                            <p class="material-unit">Unit: {{ material.unit }}</p>
+                            <p class="material-country">Country: {{ COUNTRY_NAMES_BY_CODE.get(material.country_code, 'Unknown') }}</p>
+                            <button class="contact-button" onclick="window.location.href='{{ url_for('auth.contact_support') }}?material={{ material.id }}'">Contact Supplier</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-materials">No materials available yet. Stay tuned!</div>
+            {% endif %}
+        </section>
+    </main>
+</div>
+
+<script>
+    // Add slide-in animation for flash messages
+    document.addEventListener('DOMContentLoaded', () => {
+        const flashMessages = document.querySelectorAll('.flash-message');
+        flashMessages.forEach((msg, index) => {
+            setTimeout(() => {
+                msg.classList.add('show');
+                setTimeout(() => {
+                    msg.classList.remove('show');
+                }, 3500 + index * 500);
+            }, index * 200);
+        });
+    });
+</script>
+{% endblock %}

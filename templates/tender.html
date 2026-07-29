@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="tender-container">
+    <!-- هدر صفحه -->
+    <header class="tender-hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">Tender Opportunities</h1>
+            <p class="hero-subtitle">Discover and bid on material requests from companies worldwide</p>
+        </div>
+    </header>
+    <!-- پیام‌ها -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="notifications">
+                {% for category, message in messages %}
+                    <div class="notification notification-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- بخش مناقصه‌ها -->
+    <section class="tender-section">
+        <h2 class="section-title">Explore Available Tenders</h2>
+        {% if tenders %}
+            <div class="tender-gallery">
+                {% for tender in tenders %}
+                    <article class="tender-item {% if tender.status == 'Closed' %}tender-closed{% endif %}">
+                        <div class="tender-details">
+                            <h3 class="tender-name">{{ tender.material }}</h3>
+                            <div class="tender-meta">
+                                <span class="meta-item"><strong>ID:</strong> #{{ tender.id }}</span>
+                                <span class="meta-item"><strong>Qty:</strong> {{ tender.quantity }}</span>
+                                <span class="meta-item"><strong>By:</strong> {{ tender.company }}</span>
+                                <span class="meta-item">
+                                    <strong>Status:</strong>
+                                    <span class="status-tag status-{{ tender.status.lower() }}">{{ tender.status }}</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="tender-actions">
+                            {% if tender.status == 'Open' %}
+                                <form method="POST" action="{{ url_for('tender') }}" class="bid-form">
+                                    <input type="hidden" name="tender_id" value="{{ tender.id }}">
+                                    <input type="hidden" name="material" value="{{ tender.material }}">
+                                    <div class="bid-inputs">
+                                        <input type="number" name="quantity" placeholder="Qty" min="1" max="{{ tender.quantity }}" required>
+                                        <input type="number" name="price" step="0.01" placeholder="Price ($)" min="0" required>
+                                    </div>
+                                    <button type="submit" name="submit_bid" class="btn bid-btn">Place Bid</button>
+                                </form>
+                            {% else %}
+                                <p class="closed-notice">Tender Closed</p>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h3>No Tenders Yet</h3>
+                <p>Stay tuned for new opportunities!</p>
+                <img src="https://via.placeholder.com/250x250?text=Coming+Soon" alt="No Tenders" class="empty-img">
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

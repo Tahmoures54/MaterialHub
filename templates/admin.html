@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="admin-container">
+    <h1>Admin Panel</h1>
+    <p>Manage companies and users</p>
+    <table class="company-table">
+        <thead>
+            <tr>
+                <th>Company Name</th>
+                <th>Email</th>
+                <th>Full Name</th>
+                <th>Access Level</th>
+                <th>Admin Status</th>
+                <th>Update Access Level</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.company_name }}</td>
+                <td>{{ user.company_email }}</td>
+                <td>{{ user.full_name }}</td>
+                <td>{{ user.access_level }}</td>
+                <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin') }}">
+                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                        <select name="role">
+                            <option value="supplier" {% if user.access_level == 'supplier' %}selected{% endif %}>Supplier</option>
+                            <option value="project_manager" {% if user.access_level == 'project_manager' %}selected{% endif %}>Project Manager</option>
+                            <option value="general_user" {% if user.access_level == 'general_user' %}selected{% endif %}>General User</option>
+                            <option value="engineering_manager" {% if user.access_level == 'engineering_manager' %}selected{% endif %}>Engineering Manager</option>
+                            <option value="purchase_manager" {% if user.access_level == 'purchase_manager' %}selected{% endif %}>Purchase Manager</option>
+                            <option value="quality_manager" {% if user.access_level == 'quality_manager' %}selected{% endif %}>Quality Manager</option>
+                            <option value="delivery_manager" {% if user.access_level == 'delivery_manager' %}selected{% endif %}>Delivery Manager</option>
+                            <option value="warehouse_manager" {% if user.access_level == 'warehouse_manager' %}selected{% endif %}>Warehouse Manager</option>
+                        </select>
+                        <button type="submit">Update</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('home') }}" class="button">Back to Home</a>
+</div>
+{% endblock %}

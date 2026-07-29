@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Inventory Management</h2>
+{% if alerts %}
+    <div class="alert alert-danger">Low stock alerts: {{ alerts|length }} items</div>
+{% endif %}
+<table>
+    <tr>
+        <th>Material</th>
+        <th>Stock Level</th>
+        <th>Last Updated</th>
+    </tr>
+    {% for item in inventory %}
+    <tr>
+        <td>
+            {% set material = item.owner.materials|selectattr('id', 'equalto', item.material_id)|first %}
+            {{ material.name if material else 'Unknown Material' }}
+        </td>
+        <td>{{ item.stock_level }}</td>
+        <td>{{ item.last_updated }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

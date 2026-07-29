@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaterialHub - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: #f4f7fa;
+            color: #1a2a44;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #ffffff;
+            text-align: center;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+            color: #2dd4bf;
+        }
+
+        header p {
+            margin: 0.5rem 0 0;
+            font-size: 1rem;
+            color: #6b7280;
+        }
+
+        nav.top-nav {
+            background: #2dd4bf;
+            padding: 0.5rem 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-links a:hover {
+            color: #0d9488;
+            text-shadow: 0 0 10px rgba(13, 148, 136, 0.8);
+        }
+
+        .nav-links::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(45, 212, 191, 0.3) 50%,
+                transparent 100%
+            );
+            animation: breeze 5s infinite linear;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes breeze {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .profile-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-btn {
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .profile-btn:hover {
+            color: #0d9488;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: #ffffff;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            right: 0;
+            z-index: 1;
+        }
+
+        .dropdown-content a {
+            color: #1a2a44;
+            padding: 0.75rem 1rem;
+            display: block;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: background 0.2s ease;
+        }
+
+        .dropdown-content a:hover {
+            background: #f4f7fa;
+            color: #2dd4bf;
+        }
+
+        .profile-dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .flash-messages {
+            margin: 1rem 0;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        footer {
+            background: #2dd4bf;
+            color: #ffffff;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #0d9488;
+        }
+
+        .footer-copyright {
+            font-size: 0.85rem;
+            color: #e6fffa;
+        }
+
+        @media (max-width: 768px) {
+            .hamburger {
+                display: block;
+            }
+
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                background: #2dd4bf;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                width: 100%;
+                padding: 1rem;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                margin: 0.5rem 0;
+                font-size: 1.1rem;
+            }
+
+            .profile-dropdown {
+                width: 100%;
+            }
+
+            .profile-btn {
+                justify-content: center;
+            }
+
+            .dropdown-content {
+                width: 100%;
+                left: 0;
+                right: auto;
+            }
+
+            .nav-links::after {
+                animation: breeze 6s infinite linear;
+            }
+
+            main {
+                margin: 1rem auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>MaterialHub</h1>
+        <p>Your Smart Material Management Solution</p>
+    </header>
+
+    <nav class="top-nav">
+        <div class="nav-container">
+            <button class="hamburger">☰</button>
+            <div class="nav-links">
+                <!-- General links -->
+                {% if request.endpoint != 'index' %}
+                    <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a>
+                {% endif %}
+                {% if request.endpoint != 'dashboard' %}
+                    <a href="{{ url_for('dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                {% endif %}
+                {% if request.endpoint != 'inventory' %}
+                    <a href="{{ url_for('inventory') }}"><i class="fas fa-boxes"></i> Inventory</a>
+                {% endif %}
+                {% if request.endpoint != 'material_marketplace' %}
+                    <a href="{{ url_for('material_marketplace') }}"><i class="fas fa-store"></i> Marketplace</a>
+                {% endif %}
+                {% if request.endpoint != 'materials' %}
+                    <a href="{{ url_for('materials') }}"><i class="fas fa-boxes"></i> Materials</a>
+                {% endif %}
+                {% if request.endpoint != 'add_material' %}
+                    <a href="{{ url_for('add_material') }}"><i class="fas fa-plus-circle"></i> Add Material</a>
+                {% endif %}
+                {% if request.endpoint != 'tender' %}
+                    <a href="{{ url_for('tender') }}"><i class="fas fa-gavel"></i> Tenders</a>
+                {% endif %}
+
+                <!-- Blueprint links -->
+                {% if current_user.is_authenticated %}
+                    {% if current_user.access_level == 'supplier' and request.endpoint != 'supplier.supplier_dashboard' %}
+                        <a href="{{ url_for('supplier.supplier_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Supplier Dashboard</a>
+                    {% elif current_user.access_level in ['project_manager', 'engineering', 'purchase', 'quality', 'delivery', 'warehouse'] and request.endpoint != 'project_dashboard.project_dashboard' %}
+                        <a href="{{ url_for('project_dashboard.project_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Project Dashboard</a>
+                    {% endif %}
+                    {% if current_user.access_level == 'supplier' and request.endpoint != 'supplier.tender' %}
+                        <a href="{{ url_for('supplier.tender') }}"><i class="fas fa-gavel"></i> Supplier Tenders</a>
+                    {% elif current_user.access_level in ['project_manager', 'engineering', 'purchase', 'quality', 'delivery', 'warehouse'] and request.endpoint != 'material_requisition.tender' %}
+                        <a href="{{ url_for('material_requisition.tender') }}"><i class="fas fa-gavel"></i> Project Tenders</a>
+                    {% endif %}
+                    {% if current_user.access_level in ['project_manager', 'engineering', 'purchase', 'quality', 'delivery', 'warehouse'] %}
+                        {% if request.endpoint != 'material_requisition.material_requisition' %}
+                            <a href="{{ url_for('material_requisition.material_requisition') }}"><i class="fas fa-clipboard-list"></i> Material Requisition</a>
+                        {% endif %}
+                    {% endif %}
+                    {% if (current_user.access_level == 'delivery' or current_user.is_admin) and request.endpoint != 'delivery.delivery_order' %}
+                        <a href="{{ url_for('delivery.delivery_order') }}"><i class="fas fa-truck"></i> Delivery Orders</a>
+                    {% endif %}
+                    {% if (current_user.access_level == 'purchase' or current_user.is_admin) and request.endpoint != 'purchase_order.purchase_order' %}
+                        <a href="{{ url_for('purchase_order.purchase_order') }}"><i class="fas fa-shopping-cart"></i> Purchase Orders</a>
+                    {% endif %}
+                    {% if (current_user.access_level == 'quality' or current_user.is_admin) and request.endpoint != 'quality_control.quality_control' %}
+                        <a href="{{ url_for('quality_control.quality_control') }}"><i class="fas fa-check-circle"></i> Quality Control</a>
+                    {% endif %}
+                    {% if (current_user.access_level == 'warehouse' or current_user.is_admin) and request.endpoint != 'warehouse.warehouse_operations' %}
+                        <a href="{{ url_for('warehouse.warehouse_operations') }}"><i class="fas fa-warehouse"></i> Warehouse Operations</a>
+                    {% endif %}
+                    {% if current_user.is_admin %}
+                        {% if request.endpoint != 'admin.admin' %}
+                            <a href="{{ url_for('admin.admin') }}"><i class="fas fa-user-shield"></i> Admin</a>
+                        {% endif %}
+                        {% if request.endpoint != 'report.report' %}
+                            <a href="{{ url_for('report.report') }}"><i class="fas fa-chart-bar"></i> Reports</a>
+                        {% endif %}
+                        {% if request.endpoint != 'report.reports' %}
+                            <a href="{{ url_for('report.reports') }}"><i class="fas fa-chart-line"></i> All Reports</a>
+                        {% endif %}
+                    {% endif %}
+                    {% if request.endpoint != 'help.help' %}
+                        <a href="{{ url_for('help.help') }}"><i class="fas fa-question-circle"></i> Help</a>
+                    {% endif %}
+                    <!-- Profile menu -->
+                    <div class="profile-dropdown">
+                        <div class="profile-btn"><i class="fas fa-user"></i> Profile</div>
+                        <div class="dropdown-content">
+                            <a href="{{ url_for('auth.change_password') }}"><i class="fas fa-key"></i> Change Password</a>
+                            <a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </div>
+                {% else %}
+                    {% if request.endpoint not in ['auth.login', 'auth.register', 'auth.reset_password_request', 'auth.reset_password'] %}
+                        <a href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    {% endif %}
+                    {% if request.endpoint not in ['auth.register', 'auth.login', 'auth.reset_password_request', 'auth.reset_password'] %}
+                        <a href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Register</a>
+                    {% endif %}
+                    {% if request.endpoint not in ['auth.reset_password_request', 'auth.reset_password'] %}
+                        <a href="{{ url_for('auth.reset_password_request') }}"><i class="fas fa-lock"></i> Forgot Password</a>
+                    {% endif %}
+                    {% if request.endpoint != 'help.help' %}
+                        <a href="{{ url_for('help.help') }}"><i class="fas fa-question-circle"></i> Help</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages max-width-container">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main class="max-width-container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            {% if request.endpoint != 'help.help' %}
+                <a href="{{ url_for('help.help') }}"><i class="fas fa-question-circle"></i> Help</a>
+            {% endif %}
+            {% if request.endpoint != 'auth.contact_support' %}
+                <a href="{{ url_for('auth.contact_support') }}"><i class="fas fa-envelope"></i> Contact Support</a>
+            {% endif %}
+            {% if request.endpoint != 'auth.privacy_policy' %}
+                <a href="{{ url_for('privacy_policy') }}"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
+            {% endif %}
+            {% if request.endpoint != 'auth.terms_of_service' %}
+                <a href="{{ url_for('terms_of_service') }}"><i class="fas fa-file-contract"></i> Terms of Service</a>
+            {% endif %}
+        </div>
+        <div class="footer-copyright">
+            © 2025 MaterialHub. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        document.querySelector('.hamburger').addEventListener('click', () => {
+            const navLinks = document.querySelector('.nav-links');
+            navLinks.classList.toggle('active');
+            const hamburger = document.querySelector('.hamburger');
+            hamburger.textContent = hamburger.textContent === '☰' ? '✕' : '☰';
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Material Requisition Report</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap');
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            margin: 0;
+            line-height: 1.5;
+            background-color: #f5f6f5;
+            color: #2d3436;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 15px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
+            position: relative;
+            page-break-inside: avoid;
+        }
+        .header {
+            background: linear-gradient(135deg, #2d3436 0%, #34495e 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 6px 6px 0 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+        .header .logo img {
+            max-width: 90px;
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.15));
+        }
+        .header .info {
+            flex-grow: 1;
+            margin: 0 15px;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 500;
+            margin: 0 0 8px;
+        }
+        .header p {
+            font-size: 13px;
+            margin: 4px 0;
+            opacity: 0.9;
+        }
+        .header .qr-code {
+            text-align: center;
+        }
+        .header .qr-code img {
+            width: 80px;
+            height: 80px;
+            border: 1px solid #dfe6e9;
+            border-radius: 4px;
+        }
+        .header .qr-code p {
+            font-size: 10px;
+            margin: 5px 0 0;
+            font-weight: 400;
+        }
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            opacity: 0.04;
+            pointer-events: none;
+        }
+        .watermark img {
+            width: 380px;
+        }
+        .section-title {
+            font-size: 17px;
+            font-weight: 500;
+            color: #2d3436;
+            margin: 20px 0 10px;
+            border-bottom: 1.5px solid #dfe6e9;
+            padding-bottom: 6px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 12px;
+            table-layout: fixed;
+            break-inside: avoid;
+        }
+        th, td {
+            border: 1px solid #dfe6e9;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+        th {
+            background-color: #ecf0f1;
+            font-weight: 500;
+            color: #2d3436;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr {
+            page-break-inside: avoid;
+        }
+        td {
+            height: auto;
+            min-height: 30px;
+        }
+        .row-number {
+            width: 40px;
+            text-align: center;
+        }
+        .item-code {
+            width: 70px;
+        }
+        .material-description {
+            width: 40%;
+        }
+        .quantity {
+            width: 60px;
+        }
+        .uom {
+            width: 50px;
+        }
+        .size-inches {
+            width: 60px;
+        }
+        .category {
+            width: 80px;
+        }
+        .discipline {
+            width: 80px;
+        }
+        .priority {
+            width: 60px;
+        }
+        .remarks {
+            width: 15%;
+        }
+        table {
+            counter-reset: rowNumber;
+        }
+        tr td.row-number::before {
+            counter-increment: rowNumber;
+            content: counter(rowNumber);
+        }
+        .signature-section {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            page-break-inside: avoid;
+        }
+        .signature-box {
+            width: 23%;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .signature-box h4 {
+            font-size: 13px;
+            font-weight: 500;
+            color: #2d3436;
+            margin-bottom: 8px;
+        }
+        .signature-box .signature-line {
+            border-top: 1px solid #636e72;
+            margin: 12px 0;
+        }
+        .signature-box p {
+            font-size: 10px;
+            color: #636e72;
+            margin: 4px 0;
+        }
+        .print-button {
+            text-align: center;
+            margin-top: 25px;
+        }
+        .print-button button {
+            padding: 8px 18px;
+            background-color: #0984e3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background-color 0.3s;
+        }
+        .print-button button:hover {
+            background-color: #0871c2;
+        }
+        .footer {
+            text-align: center;
+            font-size: 9pt;
+            color: #636e72;
+            margin-top: 15px;
+            border-top: 1px solid #dfe6e9;
+            padding-top: 8px;
+        }
+        .ad-banner {
+            background: linear-gradient(135deg, #0984e3 0%, #2d3436 100%);
+            color: white;
+            padding: 8px;
+            margin-top: 10px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            gap: 10px;
+        }
+        .ad-banner img.logo {
+            width: 30px;
+        }
+        .ad-banner a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .ad-banner a:hover {
+            text-decoration: underline;
+        }
+        .print-recipient {
+            position: fixed;
+            bottom: 4mm;
+            right: 4mm;
+            font-size: 7pt;
+            color: #b2bec3;
+            opacity: 0.7;
+        }
+        @page {
+            size: A4 landscape;
+            margin: 0.7cm;
+        }
+        @media print {
+            .print-button {
+                display: none;
+            }
+            body {
+                background: none;
+                margin: 0;
+                font-size: 10pt;
+            }
+            .container {
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+                padding: 10px;
+            }
+            .header {
+                padding: 10px;
+            }
+            .header .logo img {
+                max-width: 70px;
+            }
+            .header h1 {
+                font-size: 20pt;
+            }
+            .header p {
+                font-size: 11pt;
+            }
+            .header .qr-code img {
+                width: 60px;
+                height: 60px;
+            }
+            .header .qr-code p {
+                font-size: 8pt;
+            }
+            table {
+                font-size: 9pt;
+            }
+            .signature-box {
+                width: 24%;
+            }
+            .signature-box h4 {
+                font-size: 11pt;
+            }
+            .watermark {
+                opacity: 0.02;
+            }
+            .footer {
+                font-size: 8pt;
+            }
+            .ad-banner {
+                padding: 6px;
+                font-size: 9pt;
+            }
+            .ad-banner img.logo {
+                width: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="watermark">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Watermark">
+        </div>
+        <div class="header">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Company Logo">
+            </div>
+            <div class="info">
+                <h1>Material Requisition Report</h1>
+                <p>Company: {{ report.company_name }}</p>
+                <p>Report Number: {{ report.mr_no }}</p>
+                <p>Generated on: {{ report.generated_date }}</p>
+                <p>Project Number: {{ report.project_no }}</p>
+            </div>
+            <div class="qr-code">
+                {% if report.documents_drawings %}
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ report.documents_drawings | urlencode }}" alt="QR Code">
+                    <p>Documents Link</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="section-title">Material Details</div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="row-number">No.</th>
+                    <th class="item-code">Item Code</th>
+                    <th class="material-description">Material Description</th>
+                    <th class="quantity">Quantity</th>
+                    <th class="uom">UoM</th>
+                    <th class="size-inches">Size (Inches)</th>
+                    <th class="category">Category</th>
+                    <th class="discipline">Discipline</th>
+                    <th class="priority">Priority</th>
+                    <th class="remarks">Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="row-number"></td>
+                    <td class="item-code">{{ report.item_code }}</td>
+                    <td class="material-description">{{ report.material_description }}</td>
+                    <td class="quantity">{{ report.quantity }}</td>
+                    <td class="uom">{{ report.unit_of_measure }}</td>
+                    <td class="size-inches">{{ report.size_inches }}</td>
+                    <td class="category">{{ report.category }}</td>
+                    <td class="discipline">{{ report.discipline }}</td>
+                    <td class="priority">{{ report.priority }}</td>
+                    <td class="remarks">{{ report.remarks }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="signature-section">
+            <div class="signature-box">
+                <h4>Prepared By</h4>
+                <div class="signature-line"></div>
+                <p>Name: ________________________</p>
+                <p>Title: ________________________</p>
+                <p>Date: ________________________</p>
+            </div>
+            <div class="signature-box">
+                <h4>Reviewed By</h4>
+                <div class="signature-line"></div>
+                <p>Name: ________________________</p>
+                <p>Title: ________________________</p>
+                <p>Date: ________________________</p>
+            </div>
+            <div class="signature-box">
+                <h4>Approved By</h4>
+                <div class="signature-line"></div>
+                <p>Name: ________________________</p>
+                <p>Title: ________________________</p>
+                <p>Date: ________________________</p>
+            </div>
+            <div class="signature-box">
+                <h4>Inspected By</h4>
+                <div class="signature-line"></div>
+                <p>Name: ________________________</p>
+                <p>Title: ________________________</p>
+                <p>Date: ________________________</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            Page 1 of 1
+            <div class="ad-banner">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="MaterialHub Logo" class="logo">
+                <span>Streamline Your Material Management with <a href="https://materialhub2025.com" target="_blank">MaterialHub2025.com</a></span>
+            </div>
+        </div>
+
+        <div class="print-recipient">
+            Printed by: {{ current_user.full_name if current_user.is_authenticated else 'Anonymous' }}
+        </div>
+
+        <div class="print-button">
+            <button onclick="window.print()">Print Report</button>
+        </div>
+    </div>
+</body>
+</html>

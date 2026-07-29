@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block title %}Register - MaterialHub{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for MaterialHub registration page */
+        .auth-container {
+            @apply min-h-screen bg-gray-100 flex items-center justify-center p-4;
+        }
+        .auth-box {
+            @apply bg-white rounded-lg shadow-xl p-8 max-w-md w-full;
+        }
+        .auth-title {
+            @apply text-2xl font-bold text-gray-800 mb-2 text-center;
+        }
+        .auth-subtitle {
+            @apply text-gray-600 mb-6 text-center;
+        }
+        .input-group label {
+            @apply block text-sm font-medium text-gray-700 mb-1;
+        }
+        .input-group input, .input-group select, .input-group textarea {
+            @apply w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200;
+        }
+        .error {
+            @apply text-red-600 text-sm mt-1;
+        }
+        .captcha-group p {
+            @apply text-gray-700 font-medium bg-gray-50 p-3 rounded-md mb-2;
+        }
+        .auth-btn {
+            @apply w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed;
+        }
+        .terms-group label {
+            @apply text-gray-700 text-sm;
+        }
+        .qr-wrapper {
+            @apply flex justify-center my-6;
+        }
+        .qr-code {
+            @apply max-w-[180px] border border-gray-200 p-2 rounded-md;
+        }
+        .register-footer {
+            @apply mt-6 text-center text-gray-600 text-sm;
+        }
+        .footer-links a {
+            @apply text-blue-600 hover:underline mx-2;
+        }
+        .alert {
+            @apply p-3 rounded-md mb-4;
+        }
+        .alert-success {
+            @apply bg-green-100 text-green-700 border border-green-300;
+        }
+        .alert-danger {
+            @apply bg-red-100 text-red-700 border border-red-300;
+        }
+        .alert-info {
+            @apply bg-blue-100 text-blue-700 border border-blue-300;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-box">
+        {% if registered %}
+            <h2 class="auth-title">Welcome to MaterialHub!</h2>
+            <p class="auth-subtitle">Secure your account with two-factor authentication.</p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <p class="qr-instruction text-gray-600 mb-4">
+                Download <a href="https://www.microsoft.com/en-us/security/mobile-authenticator-app" target="_blank" class="text-blue-600 hover:underline">Microsoft Authenticator</a> and scan the QR code below to set up your account.
+            </p>
+            <div class="qr-wrapper">
+                <img src="data:image/png;base64,{{ qr_code }}" alt="TOTP QR Code" class="qr-code">
+            </div>
+            <p class="secret-instruction text-gray-600 mb-4">
+                Or manually enter this code: <strong>{{ totp_secret }}</strong><br>
+                <strong class="text-red-600">Important:</strong> Save this code securely to recover your account if you lose access to your Authenticator app.
+            </p>
+            <form method="POST" action="{{ url_for('auth.confirm_totp') }}" class="mt-4">
+                {{ totp_form.csrf_token }}
+                <div class="input-group">
+                    {{ totp_form.totp_code.label }}
+                    {{ totp_form.totp_code(class="w-full p-3 border border-gray-300 rounded-md", id="totp_code", placeholder="Enter 6-digit code", required=True, **{'aria-describedby': 'totp_code_error'}) }}
+                    {% if totp_form.totp_code.errors %}
+                        {% for error in totp_form.totp_code.errors %}
+                            <span class="error" id="totp_code_error" role="alert">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="terms-group flex items-center mb-4">
+                    {{ totp_form.totp_confirmed(id="totp_confirmed", class="mr-2", **{'aria-describedby': 'totp_confirmed_error'}) }}
+                    <label for="totp_confirmed">I have saved the TOTP secret and understand I am responsible for any loss of access.</label>
+                </div>
+                {% if totp_form.totp_confirmed.errors %}
+                    {% for error in totp_form.totp_confirmed.errors %}
+                        <span class="error" id="totp_confirmed_error" role="alert">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+                {{ totp_form.submit(class="auth-btn", id="confirm-totp-btn") }}
+            </form>
+        {% else %}
+            <div class="form-header">
+                <h2 class="auth-title">Create Your Account</h2>
+                <p class="auth-subtitle">Join MaterialHub to streamline material management.</p>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="POST" class="auth-form" id="register-form">
+                {{ form.csrf_token }}
+                <div class="input-group">
+                    {{ form.company_name.label }}
+                    {{ form.company_name(class="w-full p-3 border border-gray-300 rounded-md", id="company_name", placeholder="Enter company name", required=True, **{'aria-describedby': 'company_name_error', 'aria-label': 'Company Name'}) }}
+                    {% if form.company_name.errors %}
+                        {% for error in form.company_name.errors %}
+                            <span class="error" id="company_name_error" role="alert">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="input-group">
+                    {{ form.company_email.label }}
+                    {{ form.company_email(class="w-full p-3 border border-gray-300 rounded-md", id="company_email", placeholder="Enter company email", required=True, **{'aria-describedby': 'company_email_error', 'aria-label': 'Company Email'}) }}
+                    {% if form.company_email.errors %}
+                        {% for error in form.company_email.errors %}
+                            <span class="error" id="company_email_error" role="alert">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="input-group">
+                    {{ form.company_phone.label }}
+                    {{ form.company_phone(class="w-full p-3 border border-gray-300 rounded-md", id="company_phone", placeholder="e.g., +989123456789", required=True, **{'aria-describedby': 'company_phone_error', 'aria-label': 'Company Phone'}) }}
+                    {% if form.company_phone.errors %}
+                        {% for error in form.company_phone.errors %}
+                            <span class="error" id="company_phone_error" role="alert">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="input-group">
+                    {{ form.full_name.label }}
+                    {{ form.full_name(class="w-full p-3 border border-gray-300 rounded-md", id="full_name", placeholder="Enter your full name", required=True, **{'aria-describedby': 'full_name_error', 'aria-label': 'Full Name'}) }}
+                    {% if form.full_name.errors %}
+                        {% for error in form.full_name.errors %}
+                            <span class="error" id="full_name_error" role="alert">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="input-group">
+                    {{ form.company_address.label }}
+                    {{ form.company_address(class="w-full p-3 border border-gray-300 rounded-md", id="company_address", placeholder="Enter company address", required=True, **{'aria-describedby': 'company_address_error', 'aria-label': 'Company Address'}) }}
+                    {% if form.company_address.errors %}
+                        {% for error in form.company_address.errors %}
+                            <span class="error" id="company_address_error" role="alert">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="input-group">
+                    {{ form.country.label }}
+                    {{ form.country(class="w-full p-3 border border-gray-300 rounded-md", id="country", required=True, **{'aria-describedby': 'country_error', 'aria-label': 'Country'}) }}
+                    {% if form.country.errors %}
+                        {% for error in form.country.errors %}
+                            <span class="error" id="country_error" role="alert">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="input-group">
+                    {{ form.access_level.label("Role") }}
+                    {{ form.access_level(class="w-full p-3 border border-gray-300 rounded-md", id="access_level", required=True, **{'aria-describedby': 'access_level_error', 'aria-label': 'Role'}) }}
+                    {% if form.access_level.errors %}
+                        {% for error in form.access_level.errors %}
+                            <span class="error" id="access_level_error" role="alert">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="input-group" id="store_name_group" {% if form.access_level.data != 'supplier' %}style="display: none;"{% endif %}>
+                    {{ form.store_name.label }}
+                    {{ form.store_name(class="w-full p-3 border border-gray-300 rounded-md", id="store_name", placeholder="Enter store name (required for Suppliers)", **{'aria-describedby': 'store_name_error', 'aria-label': 'Store Name'}) }}
+                    {% if form.store_name.errors %}
+                        {% for error in form.store_name.errors %}
+                            <span class="error" id="store_name_error" role="alert">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="input-group captcha-group">
+                    <p id="captcha_question" aria-describedby="captcha_error">{{ captcha_question }}</p>
+                    {{ form.captcha_answer(class="w-full p-3 border border-gray-300 rounded-md", id="captcha_answer", placeholder="Enter answer", type="number", required=True, **{'aria-describedby': 'captcha_error captcha_question', 'aria-label': 'CAPTCHA Answer'}) }}
+                    {% if form.captcha_answer.errors %}
+                        {% for error in form.captcha_answer.errors %}
+                            <span class="error" id="captcha_error" role="alert">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="terms-group flex items-center mb-4">
+                    <input type="checkbox" id="accept_terms" name="accept_terms" required aria-describedby="terms-error" class="mr-2">
+                    <label for="accept_terms">I agree to the <a href="{{ url_for('auth.terms_of_service') }}" target="_blank" class="text-blue-600 hover:underline">Terms of Service</a> and <a href="{{ url_for('auth.privacy_policy') }}" target="_blank" class="text-blue-600 hover:underline">Privacy Policy</a>.</label>
+                </div>
+                <span class="error" id="terms-error" style="display: none;" role="alert">You must agree to the Terms of Service and Privacy Policy.</span>
+                <div class="form-footer">
+                    {{ form.submit(class="auth-btn", id="submit-btn") }}
+                </div>
+            </form>
+        {% endif %}
+        <div class="register-footer">
+            <p>© {{ current_year }} MaterialHub. All Rights Reserved.</p>
+            <div class="footer-links">
+                <a href="{{ url_for('auth.privacy_policy') }}">Privacy Policy</a>
+                <a href="{{ url_for('auth.terms_of_service') }}">Terms of Service</a>
+                <a href="{{ url_for('auth.contact_support') }}">Contact Us</a>
+                <a href="{{ url_for('help.help') }}">Help</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const registerForm = document.getElementById('register-form');
+        const termsCheckbox = document.getElementById('accept_terms');
+        const submitBtn = document.getElementById('submit-btn');
+        const termsError = document.getElementById('terms-error');
+        const totpForm = document.querySelector('form[action="{{ url_for('auth.confirm_totp') }}"]');
+        const totpConfirmedCheckbox = document.getElementById('totp_confirmed');
+        const confirmTotpBtn = document.getElementById('confirm-totp-btn');
+        const totpError = document.getElementById('totp_confirmed_error');
+        const accessLevelSelect = document.getElementById('access_level');
+        const storeNameGroup = document.getElementById('store_name_group');
+
+        // Manage terms checkbox and submit button for registration form
+        if (registerForm && termsCheckbox && submitBtn && termsError) {
+            submitBtn.disabled = !termsCheckbox.checked;
+            termsCheckbox.addEventListener('change', () => {
+                submitBtn.disabled = !termsCheckbox.checked;
+                termsError.style.display = termsCheckbox.checked ? 'none' : 'block';
+            });
+
+            registerForm.addEventListener('submit', (e) => {
+                if (!termsCheckbox.checked) {
+                    e.preventDefault();
+                    termsError.style.display = 'block';
+                }
+            });
+        }
+
+        // Manage TOTP confirmation checkbox and submit button
+        if (totpForm && totpConfirmedCheckbox && confirmTotpBtn && totpError) {
+            confirmTotpBtn.disabled = !totpConfirmedCheckbox.checked;
+            totpConfirmedCheckbox.addEventListener('change', () => {
+                confirmTotpBtn.disabled = !totpConfirmedCheckbox.checked;
+                totpError.style.display = totpConfirmedCheckbox.checked ? 'none' : 'block';
+            });
+
+            totpForm.addEventListener('submit', (e) => {
+                if (!totpConfirmedCheckbox.checked) {
+                    e.preventDefault();
+                    totpError.style.display = 'block';
+                }
+            });
+        }
+
+        // Dynamically show/hide store_name based on access_level
+        if (accessLevelSelect && storeNameGroup) {
+            accessLevelSelect.addEventListener('change', () => {
+                storeNameGroup.style.display = accessLevelSelect.value === 'supplier' ? 'block' : 'none';
+            });
+        }
+    });
+</script>
+{% endblock %}

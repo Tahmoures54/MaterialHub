@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+{% block title %}MaterialHub - Smart Material Management{% endblock %}
+{% block content %}
+<style>
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background-color: #f4f7fa;
+        color: #333;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .home-container {
+        padding: 40px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .hero {
+        text-align: center;
+        padding: 60px 20px;
+        background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+        color: #fff;
+        border-radius: 12px;
+        margin-bottom: 40px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero h1 {
+        font-size: 2.8em;
+        margin-bottom: 15px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .hero p {
+        font-size: 1.3em;
+        margin-bottom: 20px;
+        color: #e0e7ff;
+    }
+
+    .cta-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .button {
+        display: inline-block;
+        padding: 12px 24px;
+        background: #28a745;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1.1em;
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    .button:hover {
+        background: #218838;
+        transform: translateY(-2px);
+    }
+
+    .button.start-now {
+        background: #28a745;
+    }
+
+    .button.start-now:hover {
+        background: #218838;
+    }
+
+    .button.big {
+        padding: 15px 30px;
+        font-size: 1.2em;
+    }
+
+    .benefits {
+        margin-bottom: 40px;
+        text-align: center;
+        position: relative;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        min-height: 600px;
+    }
+
+    .benefits-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        opacity: 1;
+        animation: backgroundFade 8s infinite;
+    }
+
+    .benefits-background img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 12px;
+    }
+
+    .benefits h2 {
+        font-size: 2em;
+        color: #1a73e8;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 2;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 10px 20px;
+        display: inline-block;
+        border-radius: 8px;
+    }
+
+    .benefits h2::after {
+        content: '';
+        width: 50px;
+        height: 3px;
+        background: #1a73e8;
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .benefit-card {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        border: 1px solid #e0e7ff;
+        text-align: center;
+        position: absolute;
+        width: 250px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.5);
+        z-index: 2;
+        opacity: 0;
+        animation: zoomFade 8s infinite;
+    }
+
+    .benefit-card:nth-child(2) { animation-delay: 0s; }
+    .benefit-card:nth-child(3) { animation-delay: 1s; }
+    .benefit-card:nth-child(4) { animation-delay: 2s; }
+    .benefit-card:nth-child(5) { animation-delay: 3s; }
+    .benefit-card:nth-child(6) { animation-delay: 4s; }
+    .benefit-card:nth-child(7) { animation-delay: 5s; }
+    .benefit-card:nth-child(8) { animation-delay: 6s; }
+    .benefit-card:nth-child(9) { animation-delay: 7s; }
+
+    @keyframes zoomFade {
+        0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+        15% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        35% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+    }
+
+    @keyframes backgroundFade {
+        0%, 50% {
+            opacity: 1;
+        }
+        15%, 35% {
+            opacity: 0.3;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .benefit-card .icon {
+        font-size: 2.5em;
+        color: #1a73e8;
+        margin-bottom: 15px;
+    }
+
+    .benefit-card h3 {
+        font-size: 1.4em;
+        font-weight: 600;
+        color: #1a73e8;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .benefit-card p {
+        font-size: 1em;
+        color: #444;
+        line-height: 1.5;
+    }
+
+    .integrated-management, .material-market, .call-to-action {
+        margin-bottom: 40px;
+        text-align: center;
+    }
+
+    .integrated-management h2, .material-market h2, .call-to-action h2 {
+        font-size: 2em;
+        color: #1a73e8;
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    .integrated-management h2::after, .material-market h2::after, .call-to-action h2::after {
+        content: '';
+        width: 50px;
+        height: 3px;
+        background: #1a73e8;
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .integrated-management p, .material-market p, .call-to-action p {
+        font-size: 1.1em;
+        color: #444;
+        margin-bottom: 15px;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .integrated-management ul, .material-market ul {
+        list-style: none;
+        padding: 0;
+        max-width: 600px;
+        margin: 0 auto 15px;
+    }
+
+    .integrated-management li, .material-market li {
+        font-size: 1.1em;
+        color: #444;
+        margin-bottom: 10px;
+        position: relative;
+        padding-left: 25px;
+    }
+
+    .integrated-management li::before, .material-market li::before {
+        content: '✔';
+        color: #28a745;
+        position: absolute;
+        left: 0;
+        font-size: 1.2em;
+    }
+
+    @media (max-width: 768px) {
+        .hero {
+            padding: 40px 20px;
+        }
+
+        .hero h1 {
+            font-size: 2.2em;
+        }
+
+        .hero p {
+            font-size: 1.1em;
+        }
+
+        .benefits {
+            min-height: 500px;
+        }
+
+        .benefits h2 {
+            font-size: 1.8em;
+        }
+
+        .benefit-card {
+            width: 200px;
+        }
+
+        .cta-buttons {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .integrated-management h2, .material-market h2, .call-to-action h2 {
+            font-size: 1.7em;
+        }
+
+        .integrated-management p, .material-market p, .call-to-action p {
+            font-size: 1em;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .hero {
+            padding: 30px 15px;
+        }
+
+        .hero h1 {
+            font-size: 1.8em;
+        }
+
+        .benefits {
+            min-height: 400px;
+        }
+
+        .benefit-card {
+            width: 180px;
+            padding: 15px;
+        }
+
+        .benefit-card .icon {
+            font-size: 2em;
+        }
+
+        .benefit-card h3 {
+            font-size: 1.2em;
+        }
+
+        .button {
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+
+        .button.big {
+            padding: 12px 25px;
+            font-size: 1.1em;
+        }
+    }
+</style>
+
+<div class="home-container">
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Revolutionize Your Material Management</h1>
+        <p>Smarter material management to simplify your workflows and power up your projects!</p>
+        <div class="cta-buttons">
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.register') }}" class="button start-now">Get Started Now</a>
+            {% else %}
+                {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin.admin') }}" class="button">Go to Admin Panel</a>
+                {% elif current_user.access_level == 'supplier' %}
+                    <a href="{{ url_for('supplier.supplier_dashboard') }}" class="button">Go to Dashboard</a>
+                {% else %}
+                    <a href="{{ url_for('project_dashboard.dashboard') }}" class="button">Go to Dashboard</a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits">
+        <div class="benefits-background">
+            <img src="{{ url_for('static', filename='images/pic_1.png') }}" alt="MaterialHub Benefits">
+        </div>
+        <h2>Why Choose MaterialHub?</h2>
+        <div class="benefit-card">
+            <i class="fas fa-cogs icon"></i>
+            <h3>Integrated Management</h3>
+            <p>Seamlessly manage all your materials in one platform, from requisition to delivery.</p>
+        </div>
+        <div class="benefit-card">
+            <i class="fas fa-chart-line icon"></i>
+            <h3>Real-Time Insights</h3>
+            <p>Track inventory, quality, and supply chain updates instantly with live data.</p>
+        </div>
+        <div class="benefit-card">
+            <i class="fas fa-brain icon"></i>
+            <h3>AI-Powered Efficiency</h3>
+            <p>Leverage smart predictions to optimize stock and reduce waste effortlessly.</p>
+        </div>
+        <div class="benefit-card">
+            <i class="fas fa-cloud icon"></i>
+            <h3>Online Accessibility</h3>
+            <p>Access your material data anytime, anywhere, with our cloud-based solution.</p>
+        </div>
+        <div class="benefit-card">
+            <i class="fas fa-dollar-sign icon"></i>
+            <h3>Cost Savings</h3>
+            <p>Minimize overstock and delays, saving time and money on every project.</p>
+        </div>
+        <div class="benefit-card">
+            <i class="fas fa-users icon"></i>
+            <h3>Team Collaboration</h3>
+            <p>Enable your team to work together efficiently with centralized tools.</p>
+        </div>
+        <div class="benefit-card">
+            <i class="fas fa-exchange-alt icon"></i>
+            <h3>Trade Surplus & Shortages</h3>
+            <p>Sell your surplus materials or buy what you need from other companies on the platform.</p>
+        </div>
+        <div class="benefit-card">
+            <i class="fas fa-warehouse icon"></i>
+            <h3>Online Inventory</h3>
+            <p>Access to online inventory for all engineering and execution departments.</p>
+        </div>
+    </section>
+
+    <!-- Integrated Management Section -->
+    <section class="integrated-management">
+        <h2>The Power of Integrated & Online Material Management</h2>
+        <p>MaterialHub transforms how companies handle project materials. Say goodbye to scattered spreadsheets and manual tracking. With our platform, you get:</p>
+        <ul>
+            <li>A unified system to oversee requisitions, purchases, and deliveries.</li>
+            <li>Online dashboards for instant decision-making, no matter where you are.</li>
+            <li>Reduced errors and delays with automated workflows and AI insights.</li>
+            <li>Scalable solutions that grow with your business, from small teams to large enterprises.</li>
+            <li>The ability to sell surplus materials or purchase shortages directly from other companies within MaterialHub.</li>
+        </ul>
+        <p>Join the future of material management—streamlined, smart, and connected!</p>
+    </section>
+
+    <!-- Material Marketplace Section -->
+    <section class="material-market">
+        <h2>Material Marketplace: Trade Smarter</h2>
+        <p>Have extra materials? Need something urgently? MaterialHub lets you:</p>
+        <ul>
+            <li><strong>Sell Surplus:</strong> Turn your excess stock into profit by offering it to other companies on the platform.</li>
+            <li><strong>Buy Shortages:</strong> Quickly source missing materials from trusted partners within MaterialHub.</li>
+        </ul>
+        <p>Reduce waste, save costs, and keep your projects on track—all in one place!</p>
+    </section>
+
+    <!-- Call-to-Action Section -->
+    <section class="call-to-action">
+        <h2>Ready to Transform Your Business?</h2>
+        <p>Thousands of companies trust MaterialHub to streamline their operations and trade materials efficiently. Whether you're a small startup or a global enterprise, our platform boosts your productivity and profitability. Sign up today and join a thriving community of material managers!</p>
+        {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.register') }}" class="button start-now big">Start Now!</a>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

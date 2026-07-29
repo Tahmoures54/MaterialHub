@@ -1,0 +1,1009 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="purchase-order-container">
+    <div class="dashboard-header">
+        <h1><i class="fas fa-shopping-cart me-2" aria-hidden="true"></i>Purchase Orders</h1>
+        <p>Manage purchase orders for {{ company_name }}</p>
+    </div>
+
+    <!-- Notifications Container -->
+    <div id="notifications" class="notifications-container" role="alert" aria-live="polite"></div>
+
+    <!-- Debug Info -->
+    <div class="alert alert-info" role="alert">
+        <strong>Debug Info:</strong><br>
+        User: {{ current_user.full_name or 'Not set' }}<br>
+        Access Level: {{ current_user.access_level or 'Not set' }}<br>
+        Read Only: {{ read_only|default('Not set', true) }}<br>
+        Authenticated: {{ current_user.is_authenticated }}
+    </div>
+
+    <section class="purchase-orders" aria-labelledby="orders-heading">
+        <h2 id="orders-heading">Current Purchase Orders</h2>
+
+        <!-- Buttons and Filters Group -->
+        <div class="button-group mb-3 d-flex align-items-center flex-wrap">
+            {% if current_user.is_authenticated and current_user.access_level.name == 'purchase' and not read_only %}
+            <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#addPOModal" id="createNewPO" aria-label="Create New Purchase Order">
+                <i class="fas fa-plus me-2" aria-hidden="true"></i>Create New PO
+            </button>
+            {% endif %}
+            <button class="btn btn-custom ms-2" data-bs-toggle="modal" data-bs-target="#helpModal" id="showHelp" aria-label="Show Help">
+                <i class="fas fa-question-circle me-2" aria-hidden="true"></i>Help
+            </button>
+            {% if current_user.is_authenticated %}
+            <button id="exportCSV" class="btn btn-custom ms-2" aria-label="Export to CSV">
+                <i class="fas fa-file-csv me-2" aria-hidden="true"></i>Export to CSV
+            </button>
+            {% endif %}
+            <!-- Search Bar -->
+            <input type="text" id="searchBar" class="form-control ms-2" style="width: 200px;" placeholder="Search POs..." aria-label="Search Purchase Orders">
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="ms-2 d-none" aria-live="polite">
+                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading...
+            </div>
+        </div>
+
+        <!-- Purchase Orders Cards -->
+        <div class="orders-container">
+            <div id="ordersList" class="row" role="list"></div>
+        </div>
+    </section>
+
+    <!-- Navigation -->
+    <section class="navigation">
+        {% if current_user.is_authenticated and current_user.access_level.name == 'supplier' %}
+            <a href="{{ url_for('supplier_dashboard.supplier_dashboard') }}" class="btn btn-secondary" aria-label="Back to Supplier Dashboard">
+                <i class="fas fa-arrow-left me-2" aria-hidden="true"></i>Back to Supplier Dashboard
+            </a>
+        {% else %}
+            <a href="{{ url_for('project_dashboard.project_dashboard') }}" class="btn btn-secondary" aria-label="Back to Dashboard">
+                <i class="fas fa-arrow-left me-2" aria-hidden="true"></i>Back to Dashboard
+            </a>
+        {% endif %}
+    </section>
+
+    <!-- Modal for Creating PO -->
+    <div class="modal fade" id="addPOModal" tabindex="-1" aria-labelledby="addPOModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPOModalLabel">Create New Purchase Order</h5>
+                    <div class="modal-controls">
+                        <button type="button" class="btn btn-sm btn-custom minimize-modal" title="Minimize" aria-label="Minimize Modal">
+                            <i class="fas fa-minus" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-custom maximize-modal" title="Maximize/Restore" aria-label="Maximize/Restore Modal">
+                            <i class="fas fa-expand" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <!-- Display Logged-in User -->
+                    <div class="mb-3">
+                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
+                    </div>
+                    <form id="add-po-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="table-responsive">
+                            <table class="table table-bordered datasheet" id="add-po-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 150px; background-color: #e6e6fa;">PO No</th>
+                                        <th style="width: 120px;">Item Code</th>
+                                        <th style="width: 200px;">Description</th>
+                                        <th style="width: 150px;">Category</th>
+                                        <th style="width: 120px;">Purchase Quantity</th>
+                                        <th style="width: 120px;">Unit Cost</th>
+                                        <th style="width: 120px;">Total Cost</th>
+                                        <th style="width: 150px;">Vendor</th>
+                                        <th style="width: 120px;">Delivery Deadline</th>
+                                        <th style="width: 120px;">Project No</th>
+                                        <th style="width: 120px;">MR No</th>
+                                        <th style="width: 120px;">Status</th>
+                                        <th style="width: 150px;">Invoice No</th>
+                                        <th style="width: 200px;">Remarks</th>
+                                        <th style="width: 80px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rows populated dynamically -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-custom mt-2" id="add-row" aria-label="Add New Row">Add Row</button>
+                        </div>
+                        <div class="import-csv mt-3">
+                            <label for="csvFile" class="form-label">Import from CSV</label>
+                            <input type="file" class="form-control" id="csvFile" name="file" accept=".csv" aria-describedby="csvHelp">
+                            <div id="csvHelp" class="form-text">Upload a CSV file with the required columns to import purchase orders.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                    <button type="button" class="btn btn-custom" id="submit-po" aria-label="Submit Purchase Order">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Editing PO -->
+    <div class="modal fade" id="editPOModal" tabindex="-1" aria-labelledby="editPOModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPOModalLabel">Edit Purchase Order</h5>
+                    <div class="modal-controls">
+                        <button type="button" class="btn btn-sm btn-custom minimize-modal" title="Minimize" aria-label="Minimize Modal">
+                            <i class="fas fa-minus" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-custom maximize-modal" title="Maximize/Restore" aria-label="Maximize/Restore Modal">
+                            <i class="fas fa-expand" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <!-- Display Logged-in User -->
+                    <div class="mb-3">
+                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
+                    </div>
+                    <form id="edit-po-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="table-responsive">
+                            <table class="table table-bordered datasheet" id="edit-po-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 150px; background-color: #e6e6fa;">PO No</th>
+                                        <th style="width: 120px;">Item Code</th>
+                                        <th style="width: 200px;">Description</th>
+                                        <th style="width: 150px;">Category</th>
+                                        <th style="width: 120px;">Purchase Quantity</th>
+                                        <th style="width: 120px;">Unit Cost</th>
+                                        <th style="width: 120px;">Total Cost</th>
+                                        <th style="width: 150px;">Vendor</th>
+                                        <th style="width: 120px;">Delivery Deadline</th>
+                                        <th style="width: 120px;">Project No</th>
+                                        <th style="width: 120px;">MR No</th>
+                                        <th style="width: 120px;">Status</th>
+                                        <th style="width: 150px;">Invoice No</th>
+                                        <th style="width: 200px;">Remarks</th>
+                                        <th style="width: 80px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rows populated dynamically -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-custom mt-2" id="edit-add-row" aria-label="Add New Row">Add Row</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                    <button type="button" class="btn btn-custom" id="update-po" aria-label="Update Purchase Order">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Approving PO -->
+    <div class="modal fade" id="approvePOModal" tabindex="-1" aria-labelledby="approvePOModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="approvePOModalLabel">Approve Purchase Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="approve-po-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="po_no" class="form-label">PO No</label>
+                            <input type="text" class="form-control" id="po_no" readonly aria-describedby="poNoHelp">
+                            <div id="poNoHelp" class="form-text">The Purchase Order Number.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="workflow_status" class="form-label">Current Stage</label>
+                            <input type="text" class="form-control" id="workflow_status" readonly aria-describedby="workflowHelp">
+                            <div id="workflowHelp" class="form-text">The current workflow stage of the purchase order.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="approval_status" class="form-label">Approval Status</label>
+                            <select class="form-control" id="approval_status" required aria-describedby="approvalHelp">
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                            <div id="approvalHelp" class="form-text">Select the approval status for this purchase order.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comments" class="form-label">Comments</label>
+                            <textarea class="form-control" id="comments" rows="4" aria-describedby="commentsHelp"></textarea>
+                            <div id="commentsHelp" class="form-text">Add any comments related to the approval decision.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                    <button type="button" class="btn btn-custom" id="submit-approval" aria-label="Submit Approval">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="helpModalLabel">Help - Using Purchase Orders</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4>Welcome to the Purchase Orders Page!</h4>
+                    <p>This page helps you manage purchase orders for your projects. Here's a quick guide:</p>
+                    <ul>
+                        <li><strong>Create a New PO:</strong> Click "Create New PO" to open a form. Add multiple rows using "Add Row". Fill in the details and submit (Purchase only).</li>
+                        <li><strong>Manage a PO:</strong> Use the Edit/Delete buttons on each card to modify or remove orders (Purchase only).</li>
+                        <li><strong>Approve a PO:</strong> Project Managers can approve or reject POs in each stage using the Approve button.</li>
+                        <li><strong>View Details:</strong> Click on a PO No link to open a detailed report in a new tab.</li>
+                        <li><strong>Search POs:</strong> Use the search bar to find purchase orders by PO No or Description.</li>
+                        <li><strong>Import from CSV:</strong> Use the "Import from CSV" option in the Create modal to upload a CSV file (Purchase only).</li>
+                        <li><strong>Export to CSV:</strong> Click "Export to CSV" to download the orders as a CSV file.</li>
+                    </ul>
+                    <p>If you encounter issues, check the browser console (F12 > Console) for errors or contact your system administrator.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSS and JS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous">
+    <style>
+        .purchase-order-container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .dashboard-header {
+            background: linear-gradient(90deg, #007bff, #00d4ff);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .notifications-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        .notifications-container .alert {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .purchase-orders {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .navigation {
+            margin-top: 20px;
+        }
+        .button-group {
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+        .orders-container {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .order-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .order-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .order-card h5 {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+        .order-card a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .order-card a:hover {
+            text-decoration: underline;
+        }
+        .order-card p {
+            margin: 5px 0;
+            font-size: 0.95em;
+        }
+        .order-card .actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .order-card .actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #555;
+        }
+        .order-card .actions button:hover {
+            color: #007bff;
+        }
+        .btn-custom {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            transition: background-color 0.3s;
+        }
+        .btn-custom:hover {
+            background-color: #218838;
+        }
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-controls {
+            display: flex;
+            gap: 5px;
+        }
+        .datasheet th {
+            vertical-align: middle;
+            font-size: 0.9em;
+            white-space: nowrap;
+            background-color: #f1f3f5;
+        }
+        .datasheet td {
+            padding: 8px;
+        }
+        .datasheet input, .datasheet select, .datasheet textarea {
+            width: 100%;
+            font-size: 0.9em;
+            resize: both;
+            overflow: auto;
+            min-width: 80px;
+            min-height: 35px;
+            box-sizing: border-box;
+        }
+        .resizable-input {
+            vertical-align: top;
+        }
+        .modal-minimized {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 300px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1050;
+        }
+        .modal-minimized.show {
+            transform: translateY(0);
+        }
+        .modal-minimized .modal-body, .modal-minimized .modal-footer {
+            display: none;
+        }
+        .modal-maximized {
+            max-width: 95vw !important;
+            height: 95vh !important;
+        }
+        .modal-maximized .modal-content {
+            height: 100%;
+        }
+        .import-csv {
+            margin-top: 15px;
+        }
+        #loadingIndicator {
+            color: #007bff;
+        }
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .button-group > * {
+                margin: 5px 0 !important;
+                width: 100%;
+            }
+            .order-card {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js" integrity="sha512-JWejQEHkXb+BaqhXzB+gmiM7V3vKnG7xNXyDXZh/D5a2M/V/0K7EBQ1T6zT3Y2AfS6xJ7i4AAMj/2G2F86l/udg==" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script>
+        $(document).ready(function () {
+            const rawAccessLevel = '{{ current_user.access_level or "Not set" }}';
+            console.log('Raw Access Level:', rawAccessLevel);
+            const currentUserAccessLevel = rawAccessLevel.toLowerCase().replace('accesslevel.', '');
+            console.log('Processed Access Level:', currentUserAccessLevel);
+            let poDataCache = [];
+            const csrfToken = '{{ csrf_token() }}';
+
+            // Show loading indicator
+            function showLoading(show) {
+                $('#loadingIndicator').toggleClass('d-none', !show);
+            }
+
+            // Sanitize input to prevent XSS
+            function sanitizeInput(input) {
+                return input.replace(/</g, '<').replace(/>/g, '>');
+            }
+
+            // Validate form row
+            function validateRow(row, rowIndex) {
+                const requiredFields = ['po_no', 'item_code', 'material_description', 'purchase_quantity', 
+                                       'unit_cost', 'vendor', 'delivery_deadline', 'project_no', 'mr_no'];
+                for (let field of requiredFields) {
+                    if (!row[field]) {
+                        alert(`Please fill required field: ${field.replace('_', ' ')} in row ${rowIndex}`);
+                        return false;
+                    }
+                }
+                if (row.purchase_quantity <= 0) {
+                    alert(`Purchase Quantity must be a positive number in row ${rowIndex}.`);
+                    return false;
+                }
+                if (row.unit_cost < 0) {
+                    alert(`Unit Cost cannot be negative in row ${rowIndex}.`);
+                    return false;
+                }
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(row.delivery_deadline)) {
+                    alert(`Delivery Deadline must be in YYYY-MM-DD format in row ${rowIndex}.`);
+                    return false;
+                }
+                return true;
+            }
+
+            // Update total cost
+            function updateTotalCost(tableId) {
+                $(`#${tableId} tbody tr`).each(function () {
+                    const quantity = parseFloat($(this).find('input[name="purchase_quantity"]').val()) || 0;
+                    const unitCost = parseFloat($(this).find('input[name="unit_cost"]').val()) || 0;
+                    $(this).find('input[name="total_cost"]').val((quantity * unitCost).toFixed(2));
+                });
+            }
+
+            // Get current date in YYYY-MM-DD format
+            function getCurrentDate() {
+                const today = new Date();
+                return today.toISOString().split('T')[0];
+            }
+
+            // Load purchase orders
+            function loadPurchaseOrders(search = '') {
+                showLoading(true);
+                const url = '/purchase_orders/api/purchase_orders' + 
+                            (search ? '?search=' + encodeURIComponent(search) : '');
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        console.log('Purchase Orders loaded:', data);
+                        poDataCache = data;
+                        const ordersList = $('#ordersList');
+                        ordersList.empty();
+                        if (data.length === 0) {
+                            ordersList.append('<p class="text-muted">No purchase orders found.</p>');
+                        } else {
+                            data.forEach(row => {
+                                const actions = currentUserAccessLevel === 'purchase' ? `
+                                    <div class="actions" role="group" aria-label="Purchase Order Actions">
+                                        <button class="edit-po" data-po-no="${sanitizeInput(row.po_no)}" title="Edit" aria-label="Edit Purchase Order"><i class="fas fa-edit" aria-hidden="true"></i></button>
+                                        <button class="delete-po" data-po-no="${sanitizeInput(row.po_no)}" title="Delete" aria-label="Delete Purchase Order"><i class="fas fa-trash" aria-hidden="true"></i></button>
+                                    </div>
+                                ` : currentUserAccessLevel === 'project_manager' ? `
+                                    <div class="actions" role="group" aria-label="Purchase Order Actions">
+                                        <button class="approve-po" data-po-no="${sanitizeInput(row.po_no)}" title="Approve/Reject" aria-label="Approve or Reject Purchase Order"><i class="fas fa-check-circle" aria-hidden="true"></i></button>
+                                    </div>
+                                ` : '';
+                                ordersList.append(`
+                                    <div class="col-md-4" role="listitem">
+                                        <div class="order-card">
+                                            ${actions}
+                                            <h5><a href="/purchase_orders/report/${sanitizeInput(row.po_no)}" target="_blank" class="po-no-link" aria-label="View Purchase Order ${sanitizeInput(row.po_no)}">${sanitizeInput(row.po_no || '-')}</a></h5>
+                                            <p><strong>Item Code:</strong> ${sanitizeInput(row.item_code || '-')}</p>
+                                            <p><strong>Description:</strong> ${sanitizeInput(row.material_description || '-')}</p>
+                                            <p><strong>Vendor:</strong> ${sanitizeInput(row.vendor || '-')}</p>
+                                            <p><strong>Delivery Deadline:</strong> ${sanitizeInput(row.delivery_deadline || '-')}</p>
+                                            <p><strong>Project No:</strong> ${sanitizeInput(row.project_no || '-')}</p>
+                                            <p><strong>MR No:</strong> ${sanitizeInput(row.mr_no || '-')}</p>
+                                            <p><strong>Status:</strong> ${sanitizeInput(row.status || '-')}</p>
+                                            <p><strong>Workflow Stage:</strong> ${sanitizeInput(row.workflow_status || '-')}</p>
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error('Error loading purchase orders:', xhr);
+                        $('#ordersList').html('<p class="text-danger" role="alert">Error loading purchase orders: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.') + '</p>');
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            }
+
+            // Initial load
+            loadPurchaseOrders();
+
+            // Search bar input
+            $('#searchBar').on('input', function () {
+                const search = $(this).val();
+                loadPurchaseOrders(search);
+            });
+
+            // Add new row to table
+            function addNewRow(tableId, data = {}) {
+                const row = `
+                    <tr>
+                        <td><input type="text" class="form-control resizable-input" name="po_no" value="${sanitizeInput(data.po_no || '')}" readonly aria-label="PO Number"></td>
+                        <td><input type="text" class="form-control resizable-input" name="item_code" value="${sanitizeInput(data.item_code || '')}" required aria-label="Item Code"></td>
+                        <td><input type="text" class="form-control resizable-input" name="material_description" value="${sanitizeInput(data.material_description || '')}" required aria-label="Material Description"></td>
+                        <td>
+                            <select class="form-control resizable-input" name="material_category" aria-label="Category">
+                                <option value="" disabled ${!data.material_category ? 'selected' : ''}>Select Category</option>
+                                <option value="Valve" ${data.material_category === 'Valve' ? 'selected' : ''}>Valve</option>
+                                <option value="Gasket" ${data.material_category === 'Gasket' ? 'selected' : ''}>Gasket</option>
+                                <option value="Pipe" ${data.material_category === 'Pipe' ? 'selected' : ''}>Pipe</option>
+                                <option value="Other" ${data.material_category === 'Other' ? 'selected' : ''}>Other</option>
+                                <option value="add_new">Add New</option>
+                            </select>
+                        </td>
+                        <td><input type="number" class="form-control resizable-input" name="purchase_quantity" value="${data.purchase_quantity || 0}" min="0" required aria-label="Purchase Quantity"></td>
+                        <td><input type="number" step="0.01" class="form-control resizable-input" name="unit_cost" value="${data.unit_cost || 0}" min="0" required aria-label="Unit Cost"></td>
+                        <td><input type="number" step="0.01" class="form-control resizable-input" name="total_cost" value="${data.total_cost || 0}" readonly aria-label="Total Cost"></td>
+                        <td>
+                            <select class="form-control resizable-input" name="vendor" required aria-label="Vendor">
+                                <option value="" disabled ${!data.vendor ? 'selected' : ''}>Select Vendor</option>
+                                <option value="Vendor A" ${data.vendor === 'Vendor A' ? 'selected' : ''}>Vendor A</option>
+                                <option value="Vendor B" ${data.vendor === 'Vendor B' ? 'selected' : ''}>Vendor B</option>
+                                <option value="Vendor C" ${data.vendor === 'Vendor C' ? 'selected' : ''}>Vendor C</option>
+                                <option value="Other" ${data.vendor === 'Other' ? 'selected' : ''}>Other</option>
+                                <option value="add_new">Add New</option>
+                            </select>
+                        </td>
+                        <td><input type="date" class="form-control resizable-input" name="delivery_deadline" value="${sanitizeInput(data.delivery_deadline || getCurrentDate())}" required aria-label="Delivery Deadline"></td>
+                        <td><input type="text" class="form-control resizable-input" name="project_no" value="${sanitizeInput(data.project_no || '')}" required aria-label="Project Number"></td>
+                        <td><input type="text" class="form-control resizable-input" name="mr_no" value="${sanitizeInput(data.mr_no || '')}" required aria-label="MR Number"></td>
+                        <td>
+                            <select class="form-control resizable-input" name="status" aria-label="Status">
+                                <option value="Pending" ${data.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Approved" ${data.status === 'Approved' ? 'selected' : ''}>Approved</option>
+                                <option value="Delivered" ${data.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                            </select>
+                        </td>
+                        <td><input type="text" class="form-control resizable-input" name="invoice_no" value="${sanitizeInput(data.invoice_no || '')}" aria-label="Invoice Number"></td>
+                        <td><textarea class="form-control resizable-input" name="remarks" rows="2" aria-label="Remarks">${sanitizeInput(data.remarks || '')}</textarea></td>
+                        <td><button type="button" class="btn btn-danger btn-sm delete-row" aria-label="Delete Row"><i class="fas fa-trash" aria-hidden="true"></i></button></td>
+                    </tr>
+                `;
+                $(`#${tableId} tbody`).append(row);
+                updateTotalCost(tableId);
+            }
+
+            // Handle modal for create
+            $('#addPOModal').on('show.bs.modal', function () {
+                const modal = $(this);
+                modal.find('.modal-title').text('Create New Purchase Order');
+                $('#add-po-form')[0].reset();
+                $('#add-po-table tbody').empty();
+                showLoading(true);
+                $.ajax({
+                    url: '/purchase_orders/api/generate_po_no',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('add-po-table', { po_no: data.po_no });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating PO No:', xhr);
+                        alert('Failed to generate PO No: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle modal for edit
+            $(document).on('click', '.edit-po', function () {
+                const poNo = $(this).data('po-no');
+                const poData = poDataCache.find(row => row.po_no === poNo);
+                if (!poData) {
+                    alert('Selected PO not found. Please refresh the page or contact support.');
+                    return;
+                }
+                $('#edit-po-table tbody').empty();
+                addNewRow('edit-po-table', {
+                    po_no: poData.po_no || '',
+                    item_code: poData.item_code || '',
+                    material_description: poData.material_description || '',
+                    material_category: poData.material_category || '',
+                    purchase_quantity: poData.purchase_quantity || 0,
+                    unit_cost: poData.unit_cost || 0,
+                    total_cost: poData.total_cost || 0,
+                    vendor: poData.vendor || '',
+                    delivery_deadline: poData.delivery_deadline || getCurrentDate(),
+                    project_no: poData.project_no || '',
+                    mr_no: poData.mr_no || '',
+                    status: poData.status || 'Pending',
+                    invoice_no: poData.invoice_no || '',
+                    remarks: poData.remarks || ''
+                });
+                $('#editPOModal').modal('show');
+            });
+
+            // Handle modal for approval
+            $(document).on('click', '.approve-po', function () {
+                const poNo = $(this).data('po-no');
+                const poData = poDataCache.find(row => row.po_no === poNo);
+                if (!poData) {
+                    alert('Selected PO not found. Please refresh the page or contact support.');
+                    return;
+                }
+                $('#approve-po-form #po_no').val(sanitizeInput(poData.po_no));
+                $('#approve-po-form #workflow_status').val(sanitizeInput(poData.workflow_status || 'Purchase'));
+                $('#approve-po-form #approval_status').val('Pending');
+                $('#approve-po-form #comments').val('');
+                $('#approvePOModal').modal('show');
+            });
+
+            // Add row button
+            $('#add-row').on('click', function () {
+                showLoading(true);
+                $.ajax({
+                    url: '/purchase_orders/api/generate_po_no',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('add-po-table', { po_no: data.po_no });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating PO No:', xhr);
+                        alert('Failed to generate PO No: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            $('#edit-add-row').on('click', function () {
+                showLoading(true);
+                $.ajax({
+                    url: '/purchase_orders/api/generate_po_no',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('edit-po-table', { po_no: data.po_no });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating PO No:', xhr);
+                        alert('Failed to generate PO No: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Delete row
+            $(document).on('click', '.delete-row', function () {
+                const tableId = $(this).closest('table').attr('id');
+                if ($(`#${tableId} tbody tr`).length > 1) {
+                    $(this).closest('tr').remove();
+                } else {
+                    alert('At least one row is required.');
+                }
+                updateTotalCost(tableId);
+            });
+
+            // Update total cost on input change
+            $(document).on('input', 'input[name="purchase_quantity"], input[name="unit_cost"]', function () {
+                updateTotalCost($(this).closest('table').attr('id'));
+            });
+
+            // Handle "Add New" for combo boxes
+            $('select').on('change', function () {
+                if ($(this).val() === 'add_new') {
+                    const field = $(this).attr('name');
+                    const newValue = prompt(`Enter new ${field.replace('_', ' ')}:`);
+                    if (newValue && newValue.trim()) {
+                        const sanitizedValue = sanitizeInput(newValue.trim());
+                        const newOption = `<option value="${sanitizedValue}">${sanitizedValue}</option>`;
+                        $(this).find('option[value="add_new"]').before(newOption);
+                        $(this).val(sanitizedValue);
+                    } else {
+                        $(this).val('');
+                    }
+                }
+            });
+
+            // Handle CSV import
+            $('#csvFile').on('change', function (e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('csrf_token', csrfToken);
+
+                showLoading(true);
+                $.ajax({
+                    url: '/purchase_orders/api/upload_csv',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        loadPurchaseOrders();
+                        $('#addPOModal').modal('hide');
+                        alert(response.message || 'CSV file imported successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error uploading CSV:', xhr);
+                        alert('Failed to import CSV file: ' + sanitizeInput(xhr.responseJSON?.error || 'Please check the file format or try again later.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle new PO submission
+            $('#submit-po').on('click', function () {
+                const rows = [];
+                $('#add-po-table tbody tr').each(function (index) {
+                    const row = {
+                        po_no: sanitizeInput($(this).find('input[name="po_no"]').val().trim()),
+                        item_code: sanitizeInput($(this).find('input[name="item_code"]').val().trim()),
+                        material_description: sanitizeInput($(this).find('input[name="material_description"]').val().trim()),
+                        material_category: $(this).find('select[name="material_category"]').val() || null,
+                        purchase_quantity: parseFloat($(this).find('input[name="purchase_quantity"]').val()) || 0,
+                        unit_cost: parseFloat($(this).find('input[name="unit_cost"]').val()) || 0,
+                        total_cost: parseFloat($(this).find('input[name="total_cost"]').val()) || 0,
+                        vendor: $(this).find('select[name="vendor"]').val() || null,
+                        delivery_deadline: $(this).find('input[name="delivery_deadline"]').val(),
+                        project_no: sanitizeInput($(this).find('input[name="project_no"]').val().trim()),
+                        mr_no: sanitizeInput($(this).find('input[name="mr_no"]').val().trim()),
+                        status: $(this).find('select[name="status"]').val() || 'Pending',
+                        invoice_no: sanitizeInput($(this).find('input[name="invoice_no"]').val().trim()) || null,
+                        remarks: sanitizeInput($(this).find('textarea[name="remarks"]').val().trim()) || null,
+                        workflow_status: 'Purchase'
+                    };
+
+                    if (!validateRow(row, index + 1)) return false;
+                    rows.push(row);
+                });
+
+                if (rows.length === 0) {
+                    alert('Please add at least one row.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: '/purchase_orders/api/purchase_orders',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(rows),
+                    success: function (response) {
+                        loadPurchaseOrders();
+                        $('#addPOModal').modal('hide');
+                        $('#add-po-form')[0].reset();
+                        $('#add-po-table tbody').empty();
+                        alert(response.message || 'Purchase Orders created successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error creating PO:', xhr);
+                        alert('Failed to create Purchase Order: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle update PO
+            $('#update-po').on('click', function () {
+                const rows = [];
+                $('#edit-po-table tbody tr').each(function (index) {
+                    const row = {
+                        po_no: sanitizeInput($(this).find('input[name="po_no"]').val().trim()),
+                        item_code: sanitizeInput($(this).find('input[name="item_code"]').val().trim()),
+                        material_description: sanitizeInput($(this).find('input[name="material_description"]').val().trim()),
+                        material_category: $(this).find('select[name="material_category"]').val() || null,
+                        purchase_quantity: parseFloat($(this).find('input[name="purchase_quantity"]').val()) || 0,
+                        unit_cost: parseFloat($(this).find('input[name="unit_cost"]').val()) || 0,
+                        total_cost: parseFloat($(this).find('input[name="total_cost"]').val()) || 0,
+                        vendor: $(this).find('select[name="vendor"]').val() || null,
+                        delivery_deadline: $(this).find('input[name="delivery_deadline"]').val(),
+                        project_no: sanitizeInput($(this).find('input[name="project_no"]').val().trim()),
+                        mr_no: sanitizeInput($(this).find('input[name="mr_no"]').val().trim()),
+                        status: $(this).find('select[name="status"]').val() || 'Pending',
+                        invoice_no: sanitizeInput($(this).find('input[name="invoice_no"]').val().trim()) || null,
+                        remarks: sanitizeInput($(this).find('textarea[name="remarks"]').val().trim()) || null
+                    };
+
+                    if (!validateRow(row, index + 1)) return false;
+                    rows.push(row);
+                });
+
+                if (rows.length === 0) {
+                    alert('Please add at least one row.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: `/purchase_orders/api/purchase_orders/${rows[0].po_no}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(rows[0]),
+                    success: function (response) {
+                        loadPurchaseOrders();
+                        $('#editPOModal').modal('hide');
+                        alert(response.message || 'Purchase Order updated successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error updating PO:', xhr);
+                        alert('Failed to update Purchase Order: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle approval submission
+            $('#submit-approval').on('click', function () {
+                const approvalData = {
+                    po_no: sanitizeInput($('#approve-po-form #po_no').val()),
+                    workflow_status: sanitizeInput($('#approve-po-form #workflow_status').val()),
+                    approval_status: $('#approve-po-form #approval_status').val(),
+                    comments: sanitizeInput($('#approve-po-form #comments').val()),
+                    csrf_token: csrfToken
+                };
+
+                if (!approvalData.approval_status) {
+                    alert('Please select an approval status.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: '/purchase_orders/api/approve',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(approvalData),
+                    success: function (response) {
+                        loadPurchaseOrders();
+                        $('#approvePOModal').modal('hide');
+                        alert(response.message || 'Approval submitted successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error submitting approval:', xhr);
+                        alert('Failed to submit approval: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle delete PO
+            $(document).on('click', '.delete-po', function () {
+                const poNo = $(this).data('po-no');
+                if (confirm(`Are you sure you want to delete PO ${poNo}?`)) {
+                    showLoading(true);
+                    $.ajax({
+                        url: `/purchase_orders/api/purchase_orders/${poNo}`,
+                        type: 'DELETE',
+                        headers: { 'X-CSRFToken': csrfToken },
+                        success: function (response) {
+                            loadPurchaseOrders();
+                            alert(response.message || `PO ${poNo} deleted successfully!`);
+                        },
+                        error: function (xhr) {
+                            console.error('Error deleting PO:', xhr);
+                            alert('Failed to delete PO: ' + sanitizeInput(xhr.responseJSON?.error || 'Please verify the PO number exists or try again later.'));
+                        },
+                        complete: function () {
+                            showLoading(false);
+                        }
+                    });
+                }
+            });
+
+            // Export to CSV
+            $('#exportCSV').on('click', function () {
+                const search = $('#searchBar').val();
+                showLoading(true);
+                const url = '/purchase_orders/api/export_csv' + 
+                            (search ? '?search=' + encodeURIComponent(search) : '');
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data, status, xhr) {
+                        const disposition = xhr.getResponseHeader('Content-Disposition');
+                        const filename = disposition ? disposition.match(/filename="(.+)"/)[1] : 'purchase_orders.csv';
+                        const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = filename;
+                        link.click();
+                        URL.revokeObjectURL(link.href);
+                    },
+                    error: function (xhr) {
+                        console.error('Error exporting CSV:', xhr);
+                        alert('Failed to export CSV: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Modal minimize/maximize functionality
+            $('.minimize-modal').on('click', function () {
+                const modal = $(this).closest('.modal');
+                modal.toggleClass('modal-minimized');
+                modal.find('.modal-body, .modal-footer').toggle();
+            });
+
+            $('.maximize-modal').on('click', function () {
+                const modal = $(this).closest('.modal');
+                modal.toggleClass('modal-maximized');
+            });
+
+            // Focus management for modals
+            $('.modal').on('shown.bs.modal', function () {
+                $(this).find('[autofocus], input, select, textarea').first().focus();
+            });
+        });
+    </script>
+</div>
+{% endblock %}
