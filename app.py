@@ -2,10 +2,9 @@ import logging
 import os
 import sys
 from flask import Flask, render_template, redirect, url_for, flash
-from flask_login import LoginManager, login_required, current_user
-from flask_wtf.csrf import CSRFProtect
+from flask_login import login_required, current_user
 from logging.handlers import RotatingFileHandler
-from extensions import db
+from extensions import db, migrate, login_manager, csrf
 from config.config import config_by_name
 from data.country_codes import COUNTRY_NAMES_BY_CODE
 
@@ -23,14 +22,10 @@ def create_app(config_name=None):
     except OSError as e:
         app.logger.error(f"Error creating instance folder: {e}")
 
-    # Extensions
+    # Initialize extensions
     db.init_app(app)
-    login_manager = LoginManager()
+    migrate.init_app(app, db)
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message_category = 'warning'
-
-    csrf = CSRFProtect()
     csrf.init_app(app)
 
     # Logging
@@ -61,7 +56,7 @@ def create_app(config_name=None):
     except AttributeError:
         pass
 
-    # Import models & forms after app context is ready
+    # Import models & forms after extensions are ready
     from forms.material_forms import MaterialMarketplaceForm, AddMaterialForm
     from models import SupplierMaterial, User, AccessLevel
 
@@ -209,20 +204,10 @@ def create_app(config_name=None):
         return render_template('contact_support.html')
 
     # Error handlers
-    try:
-        from errors import page_not_found, internal_server_error
-        app.register_error_handler(404, page_not_found)
-        app.register_error_handler(500, internal_server_error)
-    except ImportError as e:
-        app.logger.error(f"Error importing error handlers: {e}")
-
-        @app.errorhandler(404)
-        def fallback_page_not_found(e):
-            return render_template('404.html'), 404
-
-        @app.errorhandler(500)
-        def fallback_internal_server_error(e):
-            return render_template('500.html'), 500
+    from errors import page_not_found, internal_server_error, forbidden
+    app.register_error_handler(404, page_not_found)
+    app.register_error_handler(500, internal_server_error)
+    app.register_error_handler(403, forbidden)
 
     app.logger.info("MaterialHub application created successfully.")
     return app
