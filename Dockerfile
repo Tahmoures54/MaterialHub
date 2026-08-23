@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# System dependencies
+# System dependencies for psycopg2 and builds
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
@@ -15,14 +15,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create instance folder
+# Create instance folder for SQLite / logs
 RUN mkdir -p instance
 
 # Environment
-ENV FLASK_APP=app.py
+ENV FLASK_APP=wsgi:app
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 
 EXPOSE 5000
 
-# Use Gunicorn in production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "--timeout", "120", "app:create_app()"]
+# Use Gunicorn with the proper WSGI callable
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "wsgi:app"]

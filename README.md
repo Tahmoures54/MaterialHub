@@ -2,12 +2,12 @@
 
 **MaterialHub** is a Flask-based web application for managing the full material supply chain in engineering and industrial projects.
 
-It covers material requisitions, purchase orders, quality control, deliveries, warehouse operations, supplier marketplace, and tenders — with role-based access and two-factor authentication.
+It covers material requisitions, purchase orders, quality control, deliveries, warehouse operations, supplier marketplace, and tenders — with role-based access and two-factor authentication (TOTP).
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![Flask](https://img.shields.io/badge/Flask-3.0-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
-![Status](https://img.shields.io/badge/Status-v1.0.0-success)
+![Status](https://img.shields.io/badge/Status-v1.1.0-success)
 
 ---
 
@@ -24,7 +24,9 @@ It covers material requisitions, purchase orders, quality control, deliveries, w
 - **Supplier Material Marketplace**  
 - **Tender & Bid** system  
 - **Two-factor authentication** (TOTP / Microsoft Authenticator)  
-- Basic inventory & delivery risk analysis  
+- Rule-based inventory & delivery risk analysis  
+- Docker + PostgreSQL ready  
+- Basic test suite (pytest)
 
 ---
 
@@ -70,7 +72,7 @@ Generate a secure key:
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-### 5. Run
+### 5. Run (Development)
 
 ```bash
 python app.py
@@ -78,13 +80,19 @@ python app.py
 
 Open → [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
+### 6. Run Tests
+
+```bash
+pytest -v
+```
+
 ---
 
-## Docker (Recommended)
+## Docker (Recommended for production-like environment)
 
 ```bash
 cp .env.example .env
-# Set SECRET_KEY in .env
+# Set a strong SECRET_KEY in .env
 
 docker-compose up --build
 ```
@@ -92,13 +100,15 @@ docker-compose up --build
 - App: http://localhost:5000  
 - PostgreSQL: port 5432
 
+The Docker setup uses Gunicorn + PostgreSQL with health checks.
+
 ---
 
 ## Environment Variables
 
 | Variable     | Required | Description                                      |
 |--------------|----------|--------------------------------------------------|
-| SECRET_KEY   | **Yes**  | Flask secret key                                 |
+| SECRET_KEY   | **Yes**  | Flask secret key (must be strong & random)       |
 | DATABASE_URL | No       | PostgreSQL URL (defaults to SQLite)              |
 | FLASK_ENV    | No       | `development` or `production`                    |
 | LOG_LEVEL    | No       | `DEBUG` / `INFO` / `WARNING` / `ERROR`           |
@@ -116,8 +126,10 @@ MaterialHub/
 ├── forms/               # WTForms
 ├── static/              # CSS, JS, images
 ├── templates/           # Jinja2 templates
+├── tests/               # Pytest suite
 ├── ai_analysis.py       # Rule-based analysis helpers
 ├── app.py               # Application factory
+├── wsgi.py              # Production WSGI entrypoint
 ├── models.py            # SQLAlchemy models
 ├── extensions.py        # Flask extensions
 ├── utils.py             # Shared helpers
@@ -131,19 +143,22 @@ MaterialHub/
 ## Database Migrations
 
 ```bash
-flask db init
-flask db migrate -m "Initial migration"
+flask db init          # only first time
+flask db migrate -m "Your message"
 flask db upgrade
 ```
+
+For production always prefer PostgreSQL via `DATABASE_URL`.
 
 ---
 
 ## Security Notes
 
-- Never commit `.env` or recovery codes.
+- **Never** commit `.env`, recovery codes, or private keys.
 - Always use a strong random `SECRET_KEY` in production.
 - Prefer PostgreSQL for any real deployment.
 - TOTP (2FA) is required for login.
+- Session cookies are HttpOnly + SameSite=Lax (Secure in production).
 
 ---
 
@@ -162,4 +177,4 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-**MaterialHub v1.0.0** — Ready for use and further development.
+**MaterialHub v1.1.0** — Improved security, Docker, tests and analysis helpers.

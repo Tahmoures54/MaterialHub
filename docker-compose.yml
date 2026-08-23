@@ -11,10 +11,17 @@ services:
       - DATABASE_URL=postgresql://materialhub:materialhub@db:5432/materialhub
       - FLASK_ENV=production
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./instance:/app/instance
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   db:
     image: postgres:16-alpine
@@ -27,6 +34,11 @@ services:
     ports:
       - "5432:5432"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U materialhub -d materialhub"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

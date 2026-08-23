@@ -31,12 +31,14 @@ venv/
 env/
 ENV/
 
-# Environment & secrets
+# Environment & secrets – NEVER commit these
 .env
 .env.local
 .env.*.local
 *.pem
 github-recovery-codes.txt
+*.key
+secrets/
 
 # Database & logs
 instance/
@@ -59,6 +61,11 @@ htmlcov/
 .tox/
 .pytest_cache/
 .mypy_cache/
+.coverage.*
+coverage.xml
 
 # Docker
 *.pid
+
+# Local overrides
+local_settings.py
