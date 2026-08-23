@@ -6,41 +6,54 @@ from flask_login import LoginManager, login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 from logging.handlers import RotatingFileHandler
 from extensions import db
-from config.config import Config
+from config.config import config_by_name
 from data.country_codes import COUNTRY_NAMES_BY_CODE
 
-def create_app():
+
+def create_app(config_name=None):
+    """Application factory."""
+    if config_name is None:
+        config_name = os.getenv('FLASK_ENV', 'development')
+
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_object(Config)
+    app.config.from_object(config_by_name.get(config_name, config_by_name['default']))
 
     try:
         os.makedirs(app.instance_path, exist_ok=True)
     except OSError as e:
         app.logger.error(f"Error creating instance folder: {e}")
 
+    # Extensions
     db.init_app(app)
     login_manager = LoginManager()
     login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message_category = 'warning'
+
     csrf = CSRFProtect()
     csrf.init_app(app)
 
+    # Logging
+    log_level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'))
     log_handler = RotatingFileHandler(
         os.path.join(app.instance_path, 'warehouse.log'),
-        maxBytes=10_000_000, backupCount=5, encoding='utf-8'
+        maxBytes=10_000_000,
+        backupCount=5,
+        encoding='utf-8'
     )
     log_handler.setFormatter(logging.Formatter(
         '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
     ))
-    log_handler.setLevel(logging.INFO)
+    log_handler.setLevel(log_level)
 
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(logging.Formatter(
         '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
     ))
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(log_level)
 
     app.logger.handlers = [log_handler, console_handler]
-    app.logger.setLevel(logging.INFO)
+    app.logger.setLevel(log_level)
 
     try:
         sys.stdout.reconfigure(encoding='utf-8')
@@ -48,7 +61,7 @@ def create_app():
     except AttributeError:
         pass
 
-    # Import forms and models after app setup to avoid circular imports
+    # Import models & forms after app context is ready
     from forms.material_forms import MaterialMarketplaceForm, AddMaterialForm
     from models import SupplierMaterial, User, AccessLevel
 
@@ -85,13 +98,11 @@ def create_app():
             app.logger.error(f"Error creating database tables: {e}")
             raise
 
-    login_manager.login_view = 'auth.login'
-
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
-    # Routes for general HTML pages
+    # ---------- General routes ----------
     @app.route('/')
     def index():
         return render_template('home.html')
@@ -109,7 +120,7 @@ def create_app():
     @app.route('/material_marketplace', methods=['GET', 'POST'])
     def material_marketplace():
         form = MaterialMarketplaceForm()
-        materials = SupplierMaterial.query.all()  # Fetch all supplier materials
+        materials = SupplierMaterial.query.all()
         if form.validate_on_submit():
             search_query = form.search.data
             country_code = form.country.data
@@ -119,10 +130,12 @@ def create_app():
             if country_code:
                 query = query.filter(SupplierMaterial.country_code == country_code)
             materials = query.all()
-        return render_template('material_marketplace.html', 
-                             form=form, 
-                             materials=materials, 
-                             COUNTRY_NAMES_BY_CODE=COUNTRY_NAMES_BY_CODE)
+        return render_template(
+            'material_marketplace.html',
+            form=form,
+            materials=materials,
+            COUNTRY_NAMES_BY_CODE=COUNTRY_NAMES_BY_CODE
+        )
 
     @app.route('/add_material', methods=['GET', 'POST'])
     @login_required
@@ -139,7 +152,7 @@ def create_app():
                 price=form.unit_price.data,
                 available_qty=form.available_quantity.data,
                 unit=form.unit_of_measure.data,
-                delivery_time_days=7,  # Default value
+                delivery_time_days=7,
                 country_code=current_user.country,
                 company_name=current_user.company_name
             )
@@ -202,6 +215,7 @@ def create_app():
         app.register_error_handler(500, internal_server_error)
     except ImportError as e:
         app.logger.error(f"Error importing error handlers: {e}")
+
         @app.errorhandler(404)
         def fallback_page_not_found(e):
             return render_template('404.html'), 404
@@ -210,9 +224,9 @@ def create_app():
         def fallback_internal_server_error(e):
             return render_template('500.html'), 500
 
-    app.logger.info("Starting Flask development server...")
-    app.logger.info("Server running! Open in your browser: http://127.0.0.1:5000/")
+    app.logger.info("MaterialHub application created successfully.")
     return app
+
 
 if __name__ == '__main__':
     app = create_app()
