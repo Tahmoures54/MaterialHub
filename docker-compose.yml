@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://materialhub:materialhub@db:5432/materialhub
+      - FLASK_ENV=production
+    depends_on:
+      - db
+    volumes:
+      - ./instance:/app/instance
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: materialhub
+      POSTGRES_PASSWORD: materialhub
+      POSTGRES_DB: materialhub
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

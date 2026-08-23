@@ -1,42 +1,49 @@
-import qrcode
-from io import BytesIO
-import base64
-import phonenumbers
-from phonenumbers import PhoneNumberFormat
+"""Shared utility helpers for MaterialHub."""
 
-def generate_qr_code(uri):
-    qr = qrcode.QRCode(version=1, box_size=10, border=5)
-    qr.add_data(uri)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    return base64.b64encode(buffered.getvalue()).decode('utf-8')
+from functools import wraps
+from flask import flash, redirect, url_for
+from flask_login import current_user
+from models import AccessLevel
 
-def get_clean_phone(phone, country):
-    try:
-        parsed_number = phonenumbers.parse(phone, country)
-        if not phonenumbers.is_valid_number(parsed_number):
-            raise ValueError("Invalid phone number")
-        return phonenumbers.format_number(parsed_number, PhoneNumberFormat.E164)
-    except Exception:
-        raise ValueError("Invalid phone number format")
 
-def generate_next_mr_no(company_name):
+def role_required(*roles):
     """
-    Generate a new unique MR No for a given company.
-    This is a simple version and should be adapted for production.
-    """
-    from models import MaterialRequisition, db
+    Decorator to restrict access to specific AccessLevel values.
 
-    last_mr = (
-        db.session.query(MaterialRequisition)
-        .filter_by(company_name=company_name)
-        .order_by(MaterialRequisition.id.desc())
-        .first()
-    )
-    if last_mr and last_mr.mr_no and last_mr.mr_no.isdigit():
-        next_no = int(last_mr.mr_no) + 1
-    else:
-        next_no = 1
-    return f"{next_no:05d}"
+    Usage:
+        @role_required(AccessLevel.purchase, AccessLevel.project_manager)
+        def some_view():
+            ...
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                flash('Please log in to access this page.', 'warning')
+                return redirect(url_for('auth.login'))
+
+            if current_user.is_admin:
+                return f(*args, **kwargs)
+
+            if current_user.access_level not in roles:
+                flash('You do not have permission to access this page.', 'danger')
+                return redirect(url_for('index'))
+
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
+def generate_document_number(prefix: str, last_number: int = 0) -> str:
+    """
+    Generate sequential document numbers like MR-0001, PO-0001, etc.
+
+    Args:
+        prefix: Document prefix (e.g. 'MR', 'PO', 'DLV', 'WH')
+        last_number: The last used numeric part (default 0)
+
+    Returns:
+        Formatted document number string
+    """
+    next_num = last_number + 1
+    return f"{prefix}-{next_num:04d}"

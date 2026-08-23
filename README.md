@@ -1,77 +1,115 @@
 # MaterialHub
 
-MaterialHub is a Flask-based web application for managing material requisitions, purchase orders, quality control, deliveries, and warehouse operations.
+MaterialHub is a Flask-based web application for managing material requisitions, purchase orders, quality control, deliveries, warehouse operations, supplier marketplace, and tenders.
+
+## Features
+
+- Role-based access (Project Manager, Engineering, Purchase, Quality, Delivery, Warehouse, Supplier)
+- Material Requisition workflow with approvals
+- Purchase Orders linked to requisitions
+- Quality Control inspections
+- Delivery tracking
+- Warehouse inventory management
+- Supplier Material Marketplace
+- Tender & Bid system
+- Two-factor authentication (TOTP)
+- Basic inventory & delivery risk analysis
 
 ## Project Structure
 
 ```
 MaterialHub/
-├── blueprints/          # Blueprint modules for different app sections
-├── config/              # Configuration settings
-├── data/                # Static data (e.g., country codes)
-├── forms/               # WTForms for input validation
-├── static/              # Static files (CSS, JS, images)
-├── templates/           # HTML templates
-├── instance/            # SQLite database
-├── ai_analysis.py       # AI analysis logic
-├── app.py               # Main application entry point
-├── errors.py            # Error handling
+├── blueprints/          # Blueprint modules
+├── config/              # Configuration
+├── data/                # Static data (country codes)
+├── forms/               # WTForms
+├── static/              # CSS, JS, images
+├── templates/           # Jinja2 templates
+├── instance/            # Runtime data (not in git)
+├── ai_analysis.py       # Simple rule-based analysis
+├── app.py               # Application factory
 ├── models.py            # SQLAlchemy models
-├── utils.py             # Utility functions
-├── requirements.txt     # Python dependencies
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+└── .env.example
 ```
 
-## Setup
+## Quick Start (Local Development)
 
-1. **Clone the repository**:
+1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Tahmoures54/MaterialHub.git
    cd MaterialHub
    ```
 
-2. **Create a virtual environment**:
+2. **Create and activate virtual environment**
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scriptsctivate
+   source venv/bin/activate          # Linux / macOS
+   # venv\Scripts\activate           # Windows
    ```
 
-3. **Install dependencies**:
+3. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Set environment variables**:
-   Create a `.env` file in the root directory:
-   ```env
-   SECRET_KEY=your-secret-key
+4. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env and set a strong SECRET_KEY
    ```
 
-5. **Run the application**:
+5. **Run the application**
    ```bash
    python app.py
    ```
+   Open http://127.0.0.1:5000
 
-   The app will be available at `http://0.0.0.0:5000`.
+## Docker (Recommended for Production-like Environment)
 
-## Dependencies
+```bash
+cp .env.example .env
+# Set SECRET_KEY in .env
 
-- Flask
-- Flask-SQLAlchemy
-- Flask-Migrate
-- Flask-Login
-- Flask-Bcrypt
-- Flask-CORS
-- Flask-WTF
-- python-dotenv
-- pyotp
-- qrcode
-- Pillow
-- phonenumbers
+docker-compose up --build
+```
+
+The app will be available at http://localhost:5000  
+PostgreSQL runs on port 5432.
+
+## Environment Variables
+
+| Variable       | Required | Description                              |
+|----------------|----------|------------------------------------------|
+| SECRET_KEY     | Yes      | Flask secret key                         |
+| DATABASE_URL   | No       | PostgreSQL URL (falls back to SQLite)    |
+| FLASK_ENV      | No       | `development` or `production`            |
+| LOG_LEVEL      | No       | Logging level (default: INFO)            |
+| ADMIN_EMAIL    | No       | Email that becomes admin on registration |
+
+## Database Migration (Flask-Migrate)
+
+```bash
+flask db init          # only once
+flask db migrate -m "Initial migration"
+flask db upgrade
+```
+
+## Security Notes
+
+- Never commit `.env` or recovery codes.
+- Always use a strong random `SECRET_KEY` in production.
+- Prefer PostgreSQL over SQLite for any real deployment.
+- TOTP (2FA) is required for login.
 
 ## Contributing
 
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/your-feature`).
-3. Commit your changes (`git commit -m 'Add your feature'`).
-4. Push to the branch (`git push origin feature/your-feature`).
-5. Open a Pull Request.
+1. Create a feature branch from `main`
+2. Make your changes
+3. Open a Pull Request
+
+## License
+
+Proprietary / All rights reserved (update as needed).
