@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+.env.*
+instance/
+*.db
+*.sqlite3
+__pycache__/
+*.pyc
+.pytest_cache/

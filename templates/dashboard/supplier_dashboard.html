@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="supplier-dashboard">
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-inner">
+            <h1>Supplier Dashboard</h1>
+            <p>Hello {{ full_name }} from {{ company_name }}! This is your management hub.</p>
+        </div>
+    </header>
+
+    <!-- Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Add Material Section -->
+    <section class="material-add-section">
+        <h2>Add New Material</h2>
+        <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" class="material-add-form">
+            <div class="form-group">
+                <input type="text" name="material_name" placeholder="Material Name" required>
+                <input type="number" name="quantity" placeholder="Quantity" required>
+                <input type="number" name="price" placeholder="Price ($)" step="0.01" required>
+                <input type="url" name="link" placeholder="Material Link (Optional)" class="link-input">
+            </div>
+            <button type="submit" name="add_material" class="add-btn">Add Material</button>
+        </form>
+    </section>
+
+    <!-- Available Materials Section -->
+    <section class="materials-section">
+        <h2>Available Materials</h2>
+        {% if available_materials %}
+            <div class="materials-grid">
+                {% for material in available_materials %}
+                    <div class="material-card">
+                        <div class="material-info">
+                            <h3>{{ material.name }}</h3>
+                            <p>Quantity: {{ material.quantity }}</p>
+                            <p>Price: ${{ material.price }}</p>
+                            {% if material.link %}
+                                <div class="material-link">
+                                    {% if material.link.endswith(('.jpg', '.jpeg', '.png')) %}
+                                        <img src="{{ material.link }}" alt="{{ material.name }}" class="material-image" onerror="this.style.display='none';">
+                                    {% else %}
+                                        <a href="{{ material.link }}" target="_blank" class="view-link-btn">View Link</a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" class="marketplace-toggle">
+                            <input type="hidden" name="material_id" value="{{ material.id }}">
+                            <label class="marketplace-label">
+                                <input type="checkbox" name="is_listed" {% if material.is_listed %}checked{% endif %} onchange="this.form.submit()">
+                                <span>In Marketplace</span>
+                            </label>
+                        </form>
+                        <div class="material-actions">
+                            <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" class="action-form">
+                                <input type="hidden" name="material_id" value="{{ material.id }}">
+                                <button type="submit" name="edit_material" class="edit-btn">Edit</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" class="action-form">
+                                <input type="hidden" name="material_id" value="{{ material.id }}">
+                                <button type="submit" name="delete_material" class="delete-btn">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="no-data">No materials added yet.</p>
+        {% endif %}
+    </section>
+
+    <!-- Purchase Requests Section -->
+    <section class="requests-section">
+        <h2>Purchase Requests</h2>
+        {% if purchase_requests %}
+            <div class="requests-grid">
+                {% for request in purchase_requests %}
+                    <div class="request-card">
+                        <h3>{{ request.material }}</h3>
+                        <p>Quantity: {{ request.quantity }}</p>
+                        <p>Company: {{ request.company }}</p>
+                        <button class="respond-btn">Respond</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="no-data">No purchase requests available at the moment.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

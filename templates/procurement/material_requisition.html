@@ -1,0 +1,1155 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="material-requisition-container">
+    <div class="dashboard-header">
+        <h1><i class="fas fa-clipboard-list me-2" aria-hidden="true"></i>Material Requisitions</h1>
+        <p>Manage material requisitions for {{ company_name }}</p>
+    </div>
+
+    <!-- Notifications Container -->
+    <div id="notifications" class="notifications-container" role="alert" aria-live="polite"></div>
+
+    <!-- Debug Info -->
+    <div class="alert alert-info" role="alert">
+        <strong>Debug Info:</strong><br>
+        User: {{ current_user.full_name or 'Not set' }}<br>
+        Access Level: {{ current_user.access_level or 'Not set' }}<br>
+        Read Only: {{ read_only|default('Not set', true) }}<br>
+        Authenticated: {{ current_user.is_authenticated }}
+    </div>
+
+    <section class="material-requisitions" aria-labelledby="requisitions-heading">
+        <h2 id="requisitions-heading">Current Material Requisitions</h2>
+
+        <!-- Buttons and Filters Group -->
+        <div class="button-group mb-3 d-flex align-items-center flex-wrap">
+            {% if current_user.is_authenticated and current_user.access_level.name == 'engineering' %}
+            <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#addMRModal" id="createNewMR" aria-label="Create New Material Requisition">
+                <i class="fas fa-plus me-2" aria-hidden="true"></i>Create New MR
+            </button>
+            {% endif %}
+            <button class="btn btn-custom ms-2" data-bs-toggle="modal" data-bs-target="#helpModal" id="showHelp" aria-label="Show Help">
+                <i class="fas fa-question-circle me-2" aria-hidden="true"></i>Help
+            </button>
+            {% if current_user.is_authenticated %}
+            <button id="exportCSV" class="btn btn-custom ms-2" aria-label="Export to CSV">
+                <i class="fas fa-file-csv me-2" aria-hidden="true"></i>Export to CSV
+            </button>
+            {% endif %}
+            <!-- Discipline Filter -->
+            <select id="disciplineFilter" class="form-select ms-2" style="width: 200px;" aria-label="Filter by Discipline">
+                <option value="" selected>All Disciplines</option>
+                <!-- Options populated dynamically via JS -->
+            </select>
+            <!-- Search Bar -->
+            <input type="text" id="searchBar" class="form-control ms-2" style="width: 200px;" placeholder="Search MRs..." aria-label="Search Material Requisitions">
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="ms-2 d-none" aria-live="polite">
+                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading...
+            </div>
+        </div>
+
+        <!-- Material Requisitions Cards -->
+        <div class="requisitions-container">
+            <div id="requisitionsList" class="row" role="list"></div>
+        </div>
+    </section>
+
+    <!-- Navigation -->
+    <section class="navigation">
+        <a href="{{ url_for('project_dashboard.dashboard') }}" class="btn btn-secondary" aria-label="Back to Dashboard">
+            <i class="fas fa-arrow-left me-2" aria-hidden="true"></i>Back to Dashboard
+        </a>
+    </section>
+
+    <!-- Modal for Creating MR -->
+    <div class="modal fade" id="addMRModal" tabindex="-1" aria-labelledby="addMRModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addMRModalLabel">Create New Material Requisition</h5>
+                    <div class="modal-controls">
+                        <button type="button" class="btn btn-sm btn-custom minimize-modal" title="Minimize" aria-label="Minimize Modal">
+                            <i class="fas fa-minus" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-custom maximize-modal" title="Maximize/Restore" aria-label="Maximize/Restore Modal">
+                            <i class="fas fa-expand" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <!-- Display Logged-in User -->
+                    <div class="mb-3">
+                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
+                    </div>
+                    <form id="add-mr-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="table-responsive">
+                            <table class="table table-bordered datasheet" id="add-mr-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 150px; background-color: #e6e6fa;">MR No</th>
+                                        <th style="width: 200px;">Subject</th>
+                                        <th style="width: 120px;">Item Code</th>
+                                        <th style="width: 200px;">Material Description</th>
+                                        <th style="width: 150px;">Discipline</th>
+                                        <th style="width: 120px;">Required Date</th>
+                                        <th style="width: 120px;">Unit of Measure</th>
+                                        <th style="width: 100px;">Quantity</th>
+                                        <th style="width: 120px;">Priority</th>
+                                        <th style="width: 120px;">Project No</th>
+                                        <th style="width: 150px;">Category</th>
+                                        <th style="width: 100px;">Size (Inches)</th>
+                                        <th style="width: 100px;">Thickness (mm)</th>
+                                        <th style="width: 100px;">Length (mm)</th>
+                                        <th style="width: 150px;">Material Type</th>
+                                        <th style="width: 150px;">Drawing No</th>
+                                        <th style="width: 120px;">Drawing Revision</th>
+                                        <th style="width: 120px;">Drawing Page</th>
+                                        <th style="width: 150px;">Added By</th>
+                                        <th style="width: 150px;">Edited By</th>
+                                        <th style="width: 150px;">Standard/Specification</th>
+                                        <th style="width: 120px;">Estimated Cost</th>
+                                        <th style="width: 120px;">Status</th>
+                                        <th style="width: 200px;">Remarks</th>
+                                        <th style="width: 200px;">Link Documents</th>
+                                        <th style="width: 150px;">Suggested Vendor</th>
+                                        <th style="width: 80px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rows populated dynamically -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-custom mt-2" id="add-row" aria-label="Add New Row">Add Row</button>
+                        </div>
+                        <div class="import-csv mt-3">
+                            <label for="csvFile" class="form-label">Import from CSV</label>
+                            <input type="file" class="form-control" id="csvFile" name="file" accept=".csv" aria-describedby="csvHelp">
+                            <div id="csvHelp" class="form-text">Upload a CSV file with the required columns to import requisitions.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                    <button type="button" class="btn btn-custom" id="submit-mr" aria-label="Submit Material Requisition">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Editing MR -->
+    <div class="modal fade" id="editMRModal" tabindex="-1" aria-labelledby="editMRModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editMRModalLabel">Edit Material Requisition</h5>
+                    <div class="modal-controls">
+                        <button type="button" class="btn btn-sm btn-custom minimize-modal" title="Minimize" aria-label="Minimize Modal">
+                            <i class="fas fa-minus" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-custom maximize-modal" title="Maximize/Restore" aria-label="Maximize/Restore Modal">
+                            <i class="fas fa-expand" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <!-- Display Logged-in User -->
+                    <div class="mb-3">
+                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
+                    </div>
+                    <form id="edit-mr-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="table-responsive">
+                            <table class="table table-bordered datasheet" id="edit-mr-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 150px; background-color: #e6e6fa;">MR No</th>
+                                        <th style="width: 200px;">Subject</th>
+                                        <th style="width: 120px;">Item Code</th>
+                                        <th style="width: 200px;">Material Description</th>
+                                        <th style="width: 150px;">Discipline</th>
+                                        <th style="width: 120px;">Required Date</th>
+                                        <th style="width: 120px;">Unit of Measure</th>
+                                        <th style="width: 100px;">Quantity</th>
+                                        <th style="width: 120px;">Priority</th>
+                                        <th style="width: 120px;">Project No</th>
+                                        <th style="width: 150px;">Category</th>
+                                        <th style="width: 100px;">Size (Inches)</th>
+                                        <th style="width: 100px;">Thickness (mm)</th>
+                                        <th style="width: 100px;">Length (mm)</th>
+                                        <th style="width: 150px;">Material Type</th>
+                                        <th style="width: 150px;">Drawing No</th>
+                                        <th style="width: 120px;">Drawing Revision</th>
+                                        <th style="width: 120px;">Drawing Page</th>
+                                        <th style="width: 150px;">Added By</th>
+                                        <th style="width: 150px;">Edited By</th>
+                                        <th style="width: 150px;">Standard/Specification</th>
+                                        <th style="width: 120px;">Estimated Cost</th>
+                                        <th style="width: 120px;">Status</th>
+                                        <th style="width: 200px;">Remarks</th>
+                                        <th style="width: 200px;">Link Documents</th>
+                                        <th style="width: 150px;">Suggested Vendor</th>
+                                        <th style="width: 80px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rows populated dynamically -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-custom mt-2" id="edit-add-row" aria-label="Add New Row">Add Row</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                    <button type="button" class="btn btn-custom" id="update-mr" aria-label="Update Material Requisition">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Approving MR -->
+    <div class="modal fade" id="approveMRModal" tabindex="-1" aria-labelledby="approveMRModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="approveMRModalLabel">Approve Material Requisition</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="approve-mr-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="mr_no" class="form-label">MR No</label>
+                            <input type="text" class="form-control" id="mr_no" readonly aria-describedby="mrNoHelp">
+                            <div id="mrNoHelp" class="form-text">The Material Requisition Number.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="workflow_status" class="form-label">Current Stage</label>
+                            <input type="text" class="form-control" id="workflow_status" readonly aria-describedby="workflowHelp">
+                            <div id="workflowHelp" class="form-text">The current workflow stage of the requisition.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="approval_status" class="form-label">Approval Status</label>
+                            <select class="form-control" id="approval_status" required aria-describedby="approvalHelp">
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                            <div id="approvalHelp" class="form-text">Select the approval status for this requisition.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comments" class="form-label">Comments</label>
+                            <textarea class="form-control" id="comments" rows="4" aria-describedby="commentsHelp"></textarea>
+                            <div id="commentsHelp" class="form-text">Add any comments related to the approval decision.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                    <button type="button" class="btn btn-custom" id="submit-approval" aria-label="Submit Approval">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="helpModalLabel">Help - Using Material Requisitions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4>Welcome to the Material Requisitions Page!</h4>
+                    <p>This page helps you manage material requisitions for your projects. Here's a quick guide:</p>
+                    <ul>
+                        <li><strong>Create a New MR:</strong> Click "Create New MR" to open a form. Add multiple rows using "Add Row". Fill in the details and submit (Engineering only).</li>
+                        <li><strong>Manage an MR:</strong> Use the Edit/Delete buttons on each card to modify or remove requisitions (Engineering only).</li>
+                        <li><strong>Approve an MR:</strong> Project Managers can approve or reject MRs in each stage using the Approve button.</li>
+                        <li><strong>View Details:</strong> Click on an MR No link to open a detailed report in a new tab.</li>
+                        <li><strong>Filter by Discipline:</strong> Use the discipline dropdown to filter requisitions.</li>
+                        <li><strong>Search MRs:</strong> Use the search bar to find requisitions by MR No or Subject.</li>
+                        <li><strong>Import from CSV:</strong> Use the "Import from CSV" option in the Create modal to upload a CSV file (Engineering only).</li>
+                        <li><strong>Export to CSV:</strong> Click "Export to CSV" to download the requisitions as a CSV file.</li>
+                    </ul>
+                    <p>If you encounter issues, check the browser console (F12 > Console) for errors or contact your system administrator.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSS and JS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous">
+    <style>
+        .material-requisition-container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .dashboard-header {
+            background: linear-gradient(90deg, #007bff, #00d4ff);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .notifications-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        .notifications-container .alert {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .material-requisitions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .navigation {
+            margin-top: 20px;
+        }
+        .button-group {
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+        .requisitions-container {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .requisition-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .requisition-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .requisition-card h5 {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+        .requisition-card a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .requisition-card a:hover {
+            text-decoration: underline;
+        }
+        .requisition-card p {
+            margin: 5px 0;
+            font-size: 0.95em;
+        }
+        .requisition-card .actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .requisition-card .actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #555;
+        }
+        .requisition-card .actions button:hover {
+            color: #007bff;
+        }
+        /* Discipline-specific classes */
+        .discipline-civil { background-color: #e6ffec; }
+        .discipline-mechanical { background-color: #e6f0ff; }
+        .discipline-piping { background-color: #fff5e6; }
+        .discipline-electrical { background-color: #f0e6ff; }
+        .discipline-instrument { background-color: #e6faff; }
+        .discipline-paint-coating { background-color: #ffe6e6; }
+        .discipline-insulation { background-color: #f0fff0; }
+        .discipline-structural { background-color: #fff0e6; }
+        .discipline-hvac { background-color: #e6e6ff; }
+        .discipline-fire-fighting { background-color: #ffe6f0; }
+        .discipline-telecom { background-color: #f0f0e6; }
+        .discipline-process { background-color: #e6fff5; }
+        .discipline-hse { background-color: #fff5f5; }
+        .discipline-scaffolding { background-color: #f5f5e6; }
+        .discipline-geotechnical { background-color: #e6f5ff; }
+        .discipline-commissioning { background-color: #f5e6ff; }
+        .discipline-materials-engineering { background-color: #e6ffee; }
+        .discipline-rotating-equipment { background-color: #ffe6ff; }
+        .discipline-static-equipment { background-color: #e6f5e6; }
+        .discipline-waste-water { background-color: #f5ffe6; }
+        .discipline-unknown { background-color: #f0f0f0; }
+        .btn-custom {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            transition: background-color 0.3s;
+        }
+        .btn-custom:hover {
+            background-color: #218838;
+        }
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-controls {
+            display: flex;
+            gap: 5px;
+        }
+        .datasheet th {
+            vertical-align: middle;
+            font-size: 0.9em;
+            white-space: nowrap;
+            background-color: #f1f3f5;
+        }
+        .datasheet td {
+            padding: 8px;
+        }
+        .datasheet input, .datasheet select, .datasheet textarea {
+            width: 100%;
+            font-size: 0.9em;
+            resize: both;
+            overflow: auto;
+            min-width: 80px;
+            min-height: 35px;
+            box-sizing: border-box;
+        }
+        .resizable-input {
+            vertical-align: top;
+        }
+        .modal-minimized {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 300px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1050;
+        }
+        .modal-minimized.show {
+            transform: translateY(0);
+        }
+        .modal-minimized .modal-body, .modal-minimized .modal-footer {
+            display: none;
+        }
+        .modal-maximized {
+            max-width: 95vw !important;
+            height: 95vh !important;
+        }
+        .modal-maximized .modal-content {
+            height: 100%;
+        }
+        .import-csv {
+            margin-top: 15px;
+        }
+        #loadingIndicator {
+            color: #007bff;
+        }
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .button-group > * {
+                margin: 5px 0 !important;
+                width: 100%;
+            }
+            .requisition-card {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js" integrity="sha512-JWejQEHkXb+BaqhXzB+gmiM7V3vKnG7xNXyDXZh/D5a2M/V/0K7EBQ1T6zT3Y2AfS6xJ7i4AAMj/2G2F86l/udg==" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script>
+        $(document).ready(function () {
+            const rawAccessLevel = '{{ current_user.access_level or "Not set" }}';
+            console.log('Raw Access Level:', rawAccessLevel);
+            const currentUserAccessLevel = rawAccessLevel.toLowerCase().replace('accesslevel.', '');
+            console.log('Processed Access Level:', currentUserAccessLevel);
+            let mrDataCache = [];
+            const csrfToken = '{{ csrf_token() }}';
+
+            // Show loading indicator
+            function showLoading(show) {
+                $('#loadingIndicator').toggleClass('d-none', !show);
+            }
+
+            // Sanitize input to prevent XSS
+            function sanitizeInput(input) {
+                return input.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+
+            // Validate form row
+            function validateRow(row, rowIndex) {
+                const requiredFields = ['mr_no', 'subject', 'item_code', 'material_description', 'discipline', 
+                                       'required_date', 'unit_of_measure', 'quantity', 'priority', 'project_no'];
+                for (let field of requiredFields) {
+                    if (!row[field]) {
+                        alert(`Please fill required field: ${field.replace('_', ' ')} in row ${rowIndex}`);
+                        return false;
+                    }
+                }
+                if (row.quantity <= 0) {
+                    alert(`Quantity must be a positive number in row ${rowIndex}.`);
+                    return false;
+                }
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(row.required_date)) {
+                    alert(`Required Date must be in YYYY-MM-DD format in row ${rowIndex}.`);
+                    return false;
+                }
+                if (row.documents_drawings && !/^https?:\/\/\S+$/.test(row.documents_drawings)) {
+                    alert(`Link Documents must be a valid URL in row ${rowIndex}.`);
+                    return false;
+                }
+                return true;
+            }
+
+            // Load requisitions
+            function loadRequisitions(discipline = '', search = '') {
+                showLoading(true);
+                const url = '/material_requisitions/api/material_requisitions' + 
+                            (discipline ? '?discipline=' + encodeURIComponent(discipline) : '') +
+                            (search ? (discipline ? '&' : '?') + 'search=' + encodeURIComponent(search) : '');
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        console.log('Requisitions loaded:', data);
+                        mrDataCache = data;
+                        const requisitionsList = $('#requisitionsList');
+                        requisitionsList.empty();
+                        if (data.length === 0) {
+                            requisitionsList.append('<p class="text-muted">No requisitions found.</p>');
+                        } else {
+                            data.forEach(row => {
+                                const disciplineClass = `discipline-${(row.discipline || 'unknown').toLowerCase().replace(/ & /g, '-').replace(/\s+/g, '-')}`;
+                                const actions = currentUserAccessLevel === 'engineering' ? `
+                                    <div class="actions" role="group" aria-label="Requisition Actions">
+                                        <button class="edit-mr" data-mr-no="${sanitizeInput(row.mr_no)}" title="Edit" aria-label="Edit Requisition"><i class="fas fa-edit" aria-hidden="true"></i></button>
+                                        <button class="delete-mr" data-mr-no="${sanitizeInput(row.mr_no)}" title="Delete" aria-label="Delete Requisition"><i class="fas fa-trash" aria-hidden="true"></i></button>
+                                    </div>
+                                ` : currentUserAccessLevel === 'project_manager' ? `
+                                    <div class="actions" role="group" aria-label="Requisition Actions">
+                                        <button class="approve-mr" data-mr-no="${sanitizeInput(row.mr_no)}" title="Approve/Reject" aria-label="Approve or Reject Requisition"><i class="fas fa-check-circle" aria-hidden="true"></i></button>
+                                    </div>
+                                ` : '';
+                                requisitionsList.append(`
+                                    <div class="col-md-4" role="listitem">
+                                        <div class="requisition-card ${disciplineClass}">
+                                            ${actions}
+                                            <h5><a href="/material_requisitions/report/${sanitizeInput(row.mr_no)}" target="_blank" class="mr-no-link" aria-label="View Requisition ${sanitizeInput(row.mr_no)}">${sanitizeInput(row.mr_no || '-')}</a></h5>
+                                            <p><strong>Subject:</strong> ${sanitizeInput(row.subject || '-')}</p>
+                                            <p><strong>Required Date:</strong> ${sanitizeInput(row.required_date || '-')}</p>
+                                            <p><strong>Discipline:</strong> ${sanitizeInput(row.discipline || '-')}</p>
+                                            <p><strong>Added By:</strong> ${sanitizeInput(row.added_by || '-')}</p>
+                                            <p><strong>Suggested Vendor:</strong> ${sanitizeInput(row.suggested_vendor || '-')}</p>
+                                            <p><strong>Priority:</strong> ${sanitizeInput(row.priority || '-')}</p>
+                                            <p><strong>Status:</strong> ${sanitizeInput(row.status || '-')}</p>
+                                            <p><strong>Workflow Stage:</strong> ${sanitizeInput(row.workflow_status || '-')}</p>
+                                            <p><strong>Project No:</strong> ${sanitizeInput(row.project_no || '-')}</p>
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        }
+                        updateDisciplineFilter(data);
+                    },
+                    error: function (xhr) {
+                        console.error('Error loading requisitions:', xhr);
+                        $('#requisitionsList').html('<p class="text-danger" role="alert">Error loading requisitions: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.') + '</p>');
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            }
+
+            // Update discipline filter dynamically
+            function updateDisciplineFilter(data) {
+                const disciplineFilter = $('#disciplineFilter');
+                const disciplines = [...new Set(data.map(row => row.discipline).filter(d => d))];
+                const currentValue = disciplineFilter.val();
+                disciplineFilter.empty();
+                disciplineFilter.append('<option value="">All Disciplines</option>');
+                disciplines.forEach(discipline => {
+                    disciplineFilter.append(`<option value="${sanitizeInput(discipline)}">${sanitizeInput(discipline)}</option>`);
+                });
+                disciplineFilter.val(currentValue && disciplines.includes(currentValue) ? currentValue : '');
+            }
+
+            // Initial load
+            loadRequisitions();
+
+            // Discipline filter change
+            $('#disciplineFilter').on('change', function () {
+                const discipline = $(this).val();
+                const search = $('#searchBar').val();
+                loadRequisitions(discipline, search);
+            });
+
+            // Search bar input
+            $('#searchBar').on('input', function () {
+                const search = $(this).val();
+                const discipline = $('#disciplineFilter').val();
+                loadRequisitions(discipline, search);
+            });
+
+            // Get current date in YYYY-MM-DD format
+            function getCurrentDate() {
+                const today = new Date();
+                return today.toISOString().split('T')[0];
+            }
+
+            // Add new row to table
+            function addNewRow(tableId, data = {}) {
+                const row = `
+                    <tr>
+                        <td><input type="text" class="form-control resizable-input" name="mr_no" value="${sanitizeInput(data.mr_no || '')}" readonly aria-label="MR Number"></td>
+                        <td><input type="text" class="form-control resizable-input" name="subject" value="${sanitizeInput(data.subject || '')}" required aria-label="Subject"></td>
+                        <td><input type="text" class="form-control resizable-input" name="item_code" value="${sanitizeInput(data.item_code || '')}" required aria-label="Item Code"></td>
+                        <td><input type="text" class="form-control resizable-input" name="material_description" value="${sanitizeInput(data.material_description || '')}" required aria-label="Material Description"></td>
+                        <td>
+                            <select class="form-control resizable-input" name="discipline" required aria-label="Discipline">
+                                <option value="" disabled ${!data.discipline ? 'selected' : ''}>Select Discipline</option>
+                                <option value="Civil" ${data.discipline === 'Civil' ? 'selected' : ''}>Civil</option>
+                                <option value="Mechanical" ${data.discipline === 'Mechanical' ? 'selected' : ''}>Mechanical</option>
+                                <option value="Piping" ${data.discipline === 'Piping' ? 'selected' : ''}>Piping</option>
+                                <option value="Electrical" ${data.discipline === 'Electrical' ? 'selected' : ''}>Electrical</option>
+                                <option value="Instrument" ${data.discipline === 'Instrument' ? 'selected' : ''}>Instrument</option>
+                                <option value="Paint & Coating" ${data.discipline === 'Paint & Coating' ? 'selected' : ''}>Paint & Coating</option>
+                                <option value="Insulation" ${data.discipline === 'Insulation' ? 'selected' : ''}>Insulation</option>
+                                <option value="Structural" ${data.discipline === 'Structural' ? 'selected' : ''}>Structural</option>
+                                <option value="HVAC" ${data.discipline === 'HVAC' ? 'selected' : ''}>HVAC</option>
+                                <option value="Fire Fighting" ${data.discipline === 'Fire Fighting' ? 'selected' : ''}>Fire Fighting</option>
+                                <option value="Telecom" ${data.discipline === 'Telecom' ? 'selected' : ''}>Telecom</option>
+                                <option value="Process" ${data.discipline === 'Process' ? 'selected' : ''}>Process</option>
+                                <option value="HSE" ${data.discipline === 'HSE' ? 'selected' : ''}>HSE</option>
+                                <option value="Scaffolding" ${data.discipline === 'Scaffolding' ? 'selected' : ''}>Scaffolding</option>
+                                <option value="Geotechnical" ${data.discipline === 'Geotechnical' ? 'selected' : ''}>Geotechnical</option>
+                                <option value="Commissioning" ${data.discipline === 'Commissioning' ? 'selected' : ''}>Commissioning</option>
+                                <option value="Materials Engineering" ${data.discipline === 'Materials Engineering' ? 'selected' : ''}>Materials Engineering</option>
+                                <option value="Rotating Equipment" ${data.discipline === 'Rotating Equipment' ? 'selected' : ''}>Rotating Equipment</option>
+                                <option value="Static Equipment" ${data.discipline === 'Static Equipment' ? 'selected' : ''}>Static Equipment</option>
+                                <option value="Waste Water" ${data.discipline === 'Waste Water' ? 'selected' : ''}>Waste Water</option>
+                                <option value="add_new">Add New</option>
+                            </select>
+                        </td>
+                        <td><input type="date" class="form-control resizable-input" name="required_date" value="${sanitizeInput(data.required_date || getCurrentDate())}" required aria-label="Required Date"></td>
+                        <td>
+                            <select class="form-control resizable-input" name="unit_of_measure" required aria-label="Unit of Measure">
+                                <option value="" disabled ${!data.unit_of_measure ? 'selected' : ''}>Select Unit</option>
+                                <option value="Nos" ${data.unit_of_measure === 'Nos' ? 'selected' : ''}>Nos</option>
+                                <option value="Meters" ${data.unit_of_measure === 'Meters' ? 'selected' : ''}>Meters</option>
+                                <option value="Kilograms" ${data.unit_of_measure === 'Kilograms' ? 'selected' : ''}>Kilograms</option>
+                                <option value="Other" ${data.unit_of_measure === 'Other' ? 'selected' : ''}>Other</option>
+                                <option value="add_new">Add New</option>
+                            </select>
+                        </td>
+                        <td><input type="number" class="form-control resizable-input" name="quantity" value="${data.quantity || 0}" min="0" required aria-label="Quantity"></td>
+                        <td>
+                            <select class="form-control resizable-input" name="priority" required aria-label="Priority">
+                                <option value="" disabled ${!data.priority ? 'selected' : ''}>Select Priority</option>
+                                <option value="Low" ${data.priority === 'Low' ? 'selected' : ''}>Low</option>
+                                <option value="Medium" ${data.priority === 'Medium' ? 'selected' : ''}>Medium</option>
+                                <option value="High" ${data.priority === 'High' ? 'selected' : ''}>High</option>
+                                <option value="add_new">Add New</option>
+                            </select>
+                        </td>
+                        <td><input type="text" class="form-control resizable-input" name="project_no" value="${sanitizeInput(data.project_no || '')}" required aria-label="Project Number"></td>
+                        <td>
+                            <select class="form-control resizable-input" name="category" aria-label="Category">
+                                <option value="" disabled ${!data.category ? 'selected' : ''}>Select Category</option>
+                                <option value="Valve" ${data.category === 'Valve' ? 'selected' : ''}>Valve</option>
+                                <option value="Gasket" ${data.category === 'Gasket' ? 'selected' : ''}>Gasket</option>
+                                <option value="Pipe" ${data.category === 'Pipe' ? 'selected' : ''}>Pipe</option>
+                                <option value="Other" ${data.category === 'Other' ? 'selected' : ''}>Other</option>
+                                <option value="add_new">Add New</option>
+                            </select>
+                        </td>
+                        <td><input type="number" step="0.01" class="form-control resizable-input" name="size_inches" value="${data.size_inches || 0}" min="0" aria-label="Size in Inches"></td>
+                        <td><input type="number" step="0.01" class="form-control resizable-input" name="thickness_mm" value="${data.thickness_mm || 0}" min="0" aria-label="Thickness in mm"></td>
+                        <td><input type="number" step="0.01" class="form-control resizable-input" name="length_mm" value="${data.length_mm || 0}" min="0" aria-label="Length in mm"></td>
+                        <td><input type="text" class="form-control resizable-input" name="material_type" value="${sanitizeInput(data.material_type || '')}" aria-label="Material Type"></td>
+                        <td><input type="text" class="form-control resizable-input" name="drawing_no" value="${sanitizeInput(data.drawing_no || '')}" aria-label="Drawing Number"></td>
+                        <td><input type="text" class="form-control resizable-input" name="drawing_revision" value="${sanitizeInput(data.drawing_revision || '')}" aria-label="Drawing Revision"></td>
+                        <td><input type="text" class="form-control resizable-input" name="drawing_page" value="${sanitizeInput(data.drawing_page || '')}" aria-label="Drawing Page"></td>
+                        <td><input type="text" class="form-control resizable-input" name="added_by" value="${sanitizeInput(data.added_by || current_user.full_name)}" readonly aria-label="Added By"></td>
+                        <td><input type="text" class="form-control resizable-input" name="edited_by" value="${sanitizeInput(current_user.full_name)}" readonly aria-label="Edited By"></td>
+                        <td><input type="text" class="form-control resizable-input" name="standard_specification" value="${sanitizeInput(data.standard_specification || '')}" aria-label="Standard/Specification"></td>
+                        <td><input type="number" step="0.01" class="form-control resizable-input" name="estimated_cost" value="${data.estimated_cost || 0}" min="0" aria-label="Estimated Cost"></td>
+                        <td>
+                            <select class="form-control resizable-input" name="status" aria-label="Status">
+                                <option value="Pending" ${data.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Approved" ${data.status === 'Approved' ? 'selected' : ''}>Approved</option>
+                                <option value="Rejected" ${data.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                            </select>
+                        </td>
+                        <td><textarea class="form-control resizable-input" name="remarks" rows="2" aria-label="Remarks">${sanitizeInput(data.remarks || '')}</textarea></td>
+                        <td><input type="url" class="form-control resizable-input" name="documents_drawings" value="${sanitizeInput(data.documents_drawings || '')}" placeholder="Enter document or drawing URL" aria-label="Link Documents"></td>
+                        <td>
+                            <select class="form-control resizable-input" name="suggested_vendor" aria-label="Suggested Vendor">
+                                <option value="" disabled ${!data.suggested_vendor ? 'selected' : ''}>Select Vendor</option>
+                                <option value="Vendor A" ${data.suggested_vendor === 'Vendor A' ? 'selected' : ''}>Vendor A</option>
+                                <option value="Vendor B" ${data.suggested_vendor === 'Vendor B' ? 'selected' : ''}>Vendor B</option>
+                                <option value="Vendor C" ${data.suggested_vendor === 'Vendor C' ? 'selected' : ''}>Vendor C</option>
+                                <option value="Other" ${data.suggested_vendor === 'Other' ? 'selected' : ''}>Other</option>
+                                <option value="add_new">Add New</option>
+                            </select>
+                        </td>
+                        <td><button type="button" class="btn btn-danger btn-sm delete-row" aria-label="Delete Row"><i class="fas fa-trash" aria-hidden="true"></i></button></td>
+                    </tr>
+                `;
+                $(`#${tableId} tbody`).append(row);
+            }
+
+            // Handle modal for create
+            $('#addMRModal').on('show.bs.modal', function () {
+                const modal = $(this);
+                modal.find('.modal-title').text('Create New Material Requisition');
+                $('#add-mr-form')[0].reset();
+                $('#add-mr-table tbody').empty();
+                showLoading(true);
+                $.ajax({
+                    url: '/material_requisitions/api/generate_mr_no',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('add-mr-table', { mr_no: data.mr_no });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating MR No:', xhr);
+                        alert('Failed to generate MR No: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle modal for edit
+            $(document).on('click', '.edit-mr', function () {
+                const mrNo = $(this).data('mr-no');
+                const mrData = mrDataCache.find(row => row.mr_no === mrNo);
+                if (!mrData) {
+                    alert('Selected MR not found. Please refresh the page or contact support.');
+                    return;
+                }
+                $('#edit-mr-table tbody').empty();
+                addNewRow('edit-mr-table', {
+                    mr_no: mrData.mr_no || '',
+                    subject: mrData.subject || '',
+                    drawing_no: mrData.drawing_no || '',
+                    drawing_revision: mrData.drawing_revision || '',
+                    drawing_page: mrData.drawing_page || '',
+                    material_type: mrData.material_type || '',
+                    item_code: mrData.item_code || '',
+                    material_description: mrData.material_description || '',
+                    category: mrData.category || '',
+                    size_inches: mrData.size_inches || 0,
+                    thickness_mm: mrData.thickness_mm || 0,
+                    length_mm: mrData.length_mm || 0,
+                    discipline: mrData.discipline || '',
+                    added_by: mrData.added_by || '',
+                    required_date: mrData.required_date || getCurrentDate(),
+                    unit_of_measure: mrData.unit_of_measure || 'Nos',
+                    quantity: mrData.quantity || 0,
+                    priority: mrData.priority || '',
+                    standard_specification: mrData.standard_specification || '',
+                    estimated_cost: mrData.estimated_cost || 0,
+                    project_no: mrData.project_no || '',
+                    status: mrData.status || 'Pending',
+                    remarks: mrData.remarks || '',
+                    documents_drawings: mrData.documents_drawings || '',
+                    suggested_vendor: mrData.suggested_vendor || ''
+                });
+                $('#editMRModal').modal('show');
+            });
+
+            // Handle modal for approval
+            $(document).on('click', '.approve-mr', function () {
+                const mrNo = $(this).data('mr-no');
+                const mrData = mrDataCache.find(row => row.mr_no === mrNo);
+                if (!mrData) {
+                    alert('Selected MR not found. Please refresh the page or contact support.');
+                    return;
+                }
+                $('#approve-mr-form #mr_no').val(sanitizeInput(mrData.mr_no));
+                $('#approve-mr-form #workflow_status').val(sanitizeInput(mrData.workflow_status || 'Engineering'));
+                $('#approve-mr-form #approval_status').val('Pending');
+                $('#approve-mr-form #comments').val('');
+                $('#approveMRModal').modal('show');
+            });
+
+            // Add row button
+            $('#add-row').on('click', function () {
+                showLoading(true);
+                $.ajax({
+                    url: '/material_requisitions/api/generate_mr_no',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('add-mr-table', { mr_no: data.mr_no });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating MR No:', xhr);
+                        alert('Failed to generate MR No: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            $('#edit-add-row').on('click', function () {
+                showLoading(true);
+                $.ajax({
+                    url: '/material_requisitions/api/generate_mr_no',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('edit-mr-table', { mr_no: data.mr_no });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating MR No:', xhr);
+                        alert('Failed to generate MR No: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Delete row
+            $(document).on('click', '.delete-row', function () {
+                const tableId = $(this).closest('table').attr('id');
+                if ($(`#${tableId} tbody tr`).length > 1) {
+                    $(this).closest('tr').remove();
+                } else {
+                    alert('At least one row is required.');
+                }
+            });
+
+            // Handle "Add New" for combo boxes
+            $('select').on('change', function () {
+                if ($(this).val() === 'add_new') {
+                    const field = $(this).attr('name');
+                    const newValue = prompt(`Enter new ${field.replace('_', ' ')}:`);
+                    if (newValue && newValue.trim()) {
+                        const sanitizedValue = sanitizeInput(newValue.trim());
+                        const newOption = `<option value="${sanitizedValue}">${sanitizedValue}</option>`;
+                        $(this).find('option[value="add_new"]').before(newOption);
+                        $(this).val(sanitizedValue);
+                    } else {
+                        $(this).val('');
+                    }
+                }
+            });
+
+            // Handle CSV import
+            $('#csvFile').on('change', function (e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('csrf_token', csrfToken);
+
+                showLoading(true);
+                $.ajax({
+                    url: '/material_requisitions/api/upload_csv',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        loadRequisitions();
+                        $('#addMRModal').modal('hide');
+                        alert(response.message || 'CSV file imported successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error uploading CSV:', xhr);
+                        alert('Failed to import CSV file: ' + sanitizeInput(xhr.responseJSON?.error || 'Please check the file format or try again later.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle new MR submission
+            $('#submit-mr').on('click', function () {
+                const rows = [];
+                $('#add-mr-table tbody tr').each(function (index) {
+                    const row = {
+                        mr_no: sanitizeInput($(this).find('input[name="mr_no"]').val().trim()),
+                        subject: sanitizeInput($(this).find('input[name="subject"]').val().trim()),
+                        drawing_no: sanitizeInput($(this).find('input[name="drawing_no"]').val().trim()) || null,
+                        drawing_revision: sanitizeInput($(this).find('input[name="drawing_revision"]').val().trim()) || null,
+                        drawing_page: sanitizeInput($(this).find('input[name="drawing_page"]').val().trim()) || null,
+                        material_type: sanitizeInput($(this).find('input[name="material_type"]').val().trim()) || null,
+                        item_code: sanitizeInput($(this).find('input[name="item_code"]').val().trim()),
+                        material_description: sanitizeInput($(this).find('input[name="material_description"]').val().trim()),
+                        category: $(this).find('select[name="category"]').val() || null,
+                        size_inches: parseFloat($(this).find('input[name="size_inches"]').val()) || 0,
+                        thickness_mm: parseFloat($(this).find('input[name="thickness_mm"]').val()) || 0,
+                        length_mm: parseFloat($(this).find('input[name="length_mm"]').val()) || 0,
+                        discipline: $(this).find('select[name="discipline"]').val(),
+                        added_by: sanitizeInput($(this).find('input[name="added_by"]').val().trim()),
+                        edited_by: sanitizeInput($(this).find('input[name="edited_by"]').val().trim()),
+                        required_date: $(this).find('input[name="required_date"]').val(),
+                        unit_of_measure: $(this).find('select[name="unit_of_measure"]').val() || 'Nos',
+                        quantity: parseFloat($(this).find('input[name="quantity"]').val()) || 0,
+                        priority: $(this).find('select[name="priority"]').val(),
+                        standard_specification: sanitizeInput($(this).find('input[name="standard_specification"]').val().trim()) || null,
+                        estimated_cost: parseFloat($(this).find('input[name="estimated_cost"]').val()) || 0,
+                        project_no: sanitizeInput($(this).find('input[name="project_no"]').val().trim()),
+                        status: $(this).find('select[name="status"]').val() || 'Pending',
+                        remarks: sanitizeInput($(this).find('textarea[name="remarks"]').val().trim()) || null,
+                        documents_drawings: sanitizeInput($(this).find('input[name="documents_drawings"]').val().trim()) || null,
+                        suggested_vendor: $(this).find('select[name="suggested_vendor"]').val() || null,
+                        workflow_status: 'Engineering'
+                    };
+
+                    if (!validateRow(row, index + 1)) return false;
+                    rows.push(row);
+                });
+
+                if (rows.length === 0) {
+                    alert('Please add at least one row.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: '/material_requisitions/api/material_requisitions',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(rows),
+                    success: function (response) {
+                        loadRequisitions();
+                        $('#addMRModal').modal('hide');
+                        $('#add-mr-form')[0].reset();
+                        $('#add-mr-table tbody').empty();
+                        alert(response.message || 'Material Requisitions created successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error creating MR:', xhr);
+                        alert('Failed to create Material Requisition: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle update MR
+            $('#update-mr').on('click', function () {
+                const rows = [];
+                $('#edit-mr-table tbody tr').each(function (index) {
+                    const row = {
+                        mr_no: sanitizeInput($(this).find('input[name="mr_no"]').val().trim()),
+                        subject: sanitizeInput($(this).find('input[name="subject"]').val().trim()),
+                        drawing_no: sanitizeInput($(this).find('input[name="drawing_no"]').val().trim()) || null,
+                        drawing_revision: sanitizeInput($(this).find('input[name="drawing_revision"]').val().trim()) || null,
+                        drawing_page: sanitizeInput($(this).find('input[name="drawing_page"]').val().trim()) || null,
+                        material_type: sanitizeInput($(this).find('input[name="material_type"]').val().trim()) || null,
+                        item_code: sanitizeInput($(this).find('input[name="item_code"]').val().trim()),
+                        material_description: sanitizeInput($(this).find('input[name="material_description"]').val().trim()),
+                        category: $(this).find('select[name="category"]').val() || null,
+                        size_inches: parseFloat($(this).find('input[name="size_inches"]').val()) || 0,
+                        thickness_mm: parseFloat($(this).find('input[name="thickness_mm"]').val()) || 0,
+                        length_mm: parseFloat($(this).find('input[name="length_mm"]').val()) || 0,
+                        discipline: $(this).find('select[name="discipline"]').val(),
+                        added_by: sanitizeInput($(this).find('input[name="added_by"]').val().trim()),
+                        edited_by: sanitizeInput($(this).find('input[name="edited_by"]').val().trim()),
+                        required_date: $(this).find('input[name="required_date"]').val(),
+                        unit_of_measure: $(this).find('select[name="unit_of_measure"]').val() || 'Nos',
+                        quantity: parseFloat($(this).find('input[name="quantity"]').val()) || 0,
+                        priority: $(this).find('select[name="priority"]').val(),
+                        standard_specification: sanitizeInput($(this).find('input[name="standard_specification"]').val().trim()) || null,
+                        estimated_cost: parseFloat($(this).find('input[name="estimated_cost"]').val()) || 0,
+                        project_no: sanitizeInput($(this).find('input[name="project_no"]').val().trim()),
+                        status: $(this).find('select[name="status"]').val() || 'Pending',
+                        remarks: sanitizeInput($(this).find('textarea[name="remarks"]').val().trim()) || null,
+                        documents_drawings: sanitizeInput($(this).find('input[name="documents_drawings"]').val().trim()) || null,
+                        suggested_vendor: $(this).find('select[name="suggested_vendor"]').val() || null
+                    };
+
+                    if (!validateRow(row, index + 1)) return false;
+                    rows.push(row);
+                });
+
+                if (rows.length === 0) {
+                    alert('Please add at least one row.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: `/material_requisitions/api/material_requisitions/${rows[0].mr_no}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(rows[0]),
+                    success: function (response) {
+                        loadRequisitions();
+                        $('#editMRModal').modal('hide');
+                        alert(response.message || 'Material Requisition updated successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error updating MR:', xhr);
+                        alert('Failed to update Material Requisition: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle approval submission
+            $('#submit-approval').on('click', function () {
+                const approvalData = {
+                    mr_no: sanitizeInput($('#approve-mr-form #mr_no').val()),
+                    workflow_status: sanitizeInput($('#approve-mr-form #workflow_status').val()),
+                    approval_status: $('#approve-mr-form #approval_status').val(),
+                    comments: sanitizeInput($('#approve-mr-form #comments').val()),
+                    csrf_token: csrfToken
+                };
+
+                if (!approvalData.approval_status) {
+                    alert('Please select an approval status.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: '/material_requisitions/api/approve',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(approvalData),
+                    success: function (response) {
+                        loadRequisitions();
+                        $('#approveMRModal').modal('hide');
+                        alert(response.message || 'Approval submitted successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error submitting approval:', xhr);
+                        alert('Failed to submit approval: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle delete MR
+            $(document).on('click', '.delete-mr', function () {
+                const mrNo = $(this).data('mr-no');
+                if (confirm(`Are you sure you want to delete MR ${mrNo}?`)) {
+                    showLoading(true);
+                    $.ajax({
+                        url: `/material_requisitions/api/material_requisitions/${mrNo}`,
+                        type: 'DELETE',
+                        headers: { 'X-CSRFToken': csrfToken },
+                        success: function (response) {
+                            loadRequisitions();
+                            alert(response.message || `MR ${mrNo} deleted successfully!`);
+                        },
+                        error: function (xhr) {
+                            console.error('Error deleting MR:', xhr);
+                            alert('Failed to delete MR: ' + sanitizeInput(xhr.responseJSON?.error || 'Please verify the MR number exists or try again later.'));
+                        },
+                        complete: function () {
+                            showLoading(false);
+                        }
+                    });
+                }
+            });
+
+            // Export to CSV
+            $('#exportCSV').on('click', function () {
+                const discipline = $('#disciplineFilter').val();
+                const search = $('#searchBar').val();
+                showLoading(true);
+                const url = '/material_requisitions/api/export_csv' + 
+                            (discipline ? '?discipline=' + encodeURIComponent(discipline) : '') +
+                            (search ? (discipline ? '&' : '?') + 'search=' + encodeURIComponent(search) : '');
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data, status, xhr) {
+                        const disposition = xhr.getResponseHeader('Content-Disposition');
+                        const filename = disposition ? disposition.match(/filename="(.+)"/)[1] : 'material_requisitions.csv';
+                        const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = filename;
+                        link.click();
+                        URL.revokeObjectURL(link.href);
+                    },
+                    error: function (xhr) {
+                        console.error('Error exporting CSV:', xhr);
+                        alert('Failed to export CSV: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Modal minimize/maximize functionality
+            $('.minimize-modal').on('click', function () {
+                const modal = $(this).closest('.modal');
+                modal.toggleClass('modal-minimized');
+                modal.find('.modal-body, .modal-footer').toggle();
+            });
+
+            $('.maximize-modal').on('click', function () {
+                const modal = $(this).closest('.modal');
+                modal.toggleClass('modal-maximized');
+            });
+
+            // Focus management for modals
+            $('.modal').on('shown.bs.modal', function () {
+                $(this).find('[autofocus], input, select, textarea').first().focus();
+            });
+        });
+    </script>
+</div>
+{% endblock %}

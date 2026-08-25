@@ -1,0 +1,948 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="quality-control-container">
+    <div class="dashboard-header">
+        <h1><i class="fas fa-check-circle me-2"></i>Quality Control</h1>
+        <p>Manage quality control inspections for {{ company_name }}</p>
+    </div>
+
+    <!-- Notifications Container -->
+    <div id="notifications" class="notifications-container"></div>
+
+    <!-- Debug Info -->
+    <div class="alert alert-info">
+        <strong>Debug Info:</strong><br>
+        User: {{ current_user.full_name or 'Not set' }}<br>
+        Access Level: {{ current_user.access_level or 'Not set' }}<br>
+        Read Only: {{ read_only|default('Not set', true) }}<br>
+        Authenticated: {{ current_user.is_authenticated }}
+    </div>
+
+    <section class="quality-controls">
+        <h2>Current Quality Control Inspections</h2>
+
+        <!-- Buttons Group -->
+        <div class="button-group mb-3 d-flex align-items-center">
+            {% if current_user.is_authenticated and current_user.access_level.name == 'quality_control' and not read_only %}
+            <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#addQCModal" id="createNewQC">
+                <i class="fas fa-plus me-2"></i>Create New Inspection
+            </button>
+            {% endif %}
+            <button class="btn btn-custom ms-2" data-bs-toggle="modal" data-bs-target="#helpModal" id="showHelp">
+                <i class="fas fa-question-circle me-2"></i>Help
+            </button>
+            {% if current_user.is_authenticated %}
+            <button id="exportCSV" class="btn btn-custom ms-2">
+                <i class="fas fa-file-csv me-2"></i>Export to CSV
+            </button>
+            {% endif %}
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="ms-2 d-none">
+                <i class="fas fa-spinner fa-spin"></i> Loading...
+            </div>
+        </div>
+
+        <!-- Quality Control Cards -->
+        <div class="inspections-container">
+            <div id="inspectionsList" class="row"></div>
+        </div>
+    </section>
+
+    <!-- Navigation -->
+    <section class="navigation">
+        <a href="{{ url_for('project_dashboard.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </section>
+
+    <!-- Modal for Creating QC Inspection -->
+    <div class="modal fade" id="addQCModal" tabindex="-1" aria-labelledby="addQCModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addQCModalLabel">Create New Quality Control Inspection</h5>
+                    <div class="modal-controls">
+                        <button type="button" class="btn btn-sm btn-custom minimize-modal" title="Minimize">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-custom maximize-modal" title="Maximize/Restore">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <!-- Display Logged-in User -->
+                    <div class="mb-3">
+                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
+                    </div>
+                    <form id="add-qc-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="table-responsive">
+                            <table class="table table-bordered datasheet" id="add-qc-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 150px; background-color: #e6e6fa;">Inspection ID</th>
+                                        <th style="width: 120px;">Item Code</th>
+                                        <th style="width: 200px;">Description</th>
+                                        <th style="width: 120px;">PO No</th>
+                                        <th style="width: 120px;">Inspection Status</th>
+                                        <th style="width: 150px;">Test Results</th>
+                                        <th style="width: 120px;">Inspection Level</th>
+                                        <th style="width: 150px;">Inspection Agency</th>
+                                        <th style="width: 120px;">Inspection Date</th>
+                                        <th style="width: 120px;">Project No</th>
+                                        <th style="width: 120px;">Inspector</th>
+                                        <th style="width: 120px;">Defective Quantity</th>
+                                        <th style="width: 200px;">Remarks</th>
+                                        <th style="width: 80px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rows populated dynamically -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-custom mt-2" id="add-row">Add Row</button>
+                        </div>
+                        <div class="import-csv mt-3">
+                            <label for="csvFile" class="form-label">Import from CSV</label>
+                            <input type="file" class="form-control" id="csvFile" name="file" accept=".csv">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-custom" id="submit-qc">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Editing QC Inspection -->
+    <div class="modal fade" id="editQCModal" tabindex="-1" aria-labelledby="editQCModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editQCModalLabel">Edit Quality Control Inspection</h5>
+                    <div class="modal-controls">
+                        <button type="button" class="btn btn-sm btn-custom minimize-modal" title="Minimize">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-custom maximize-modal" title="Maximize/Restore">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <!-- Display Logged-in User -->
+                    <div class="mb-3">
+                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
+                    </div>
+                    <form id="edit-qc-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="table-responsive">
+                            <table class="table table-bordered datasheet" id="edit-qc-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 150px; background-color: #e6e6fa;">Inspection ID</th>
+                                        <th style="width: 120px;">Item Code</th>
+                                        <th style="width: 200px;">Description</th>
+                                        <th style="width: 120px;">PO No</th>
+                                        <th style="width: 120px;">Inspection Status</th>
+                                        <th style="width: 150px;">Test Results</th>
+                                        <th style="width: 120px;">Inspection Level</th>
+                                        <th style="width: 150px;">Inspection Agency</th>
+                                        <th style="width: 120px;">Inspection Date</th>
+                                        <th style="width: 120px;">Project No</th>
+                                        <th style="width: 120px;">Inspector</th>
+                                        <th style="width: 120px;">Defective Quantity</th>
+                                        <th style="width: 200px;">Remarks</th>
+                                        <th style="width: 80px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rows populated dynamically -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-custom mt-2" id="edit-add-row">Add Row</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="update-qc">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Approving QC Inspection -->
+    <div class="modal fade" id="approveQCModal" tabindex="-1" aria-labelledby="approveQCModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="approveQCModalLabel">Approve Quality Control Inspection</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="approve-qc-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="inspection_id" class="form-label">Inspection ID</label>
+                            <input type="text" class="form-control" id="inspection_id" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="workflow_status" class="form-label">Current Stage</label>
+                            <input type="text" class="form-control" id="workflow_status" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="approval_status" class="form-label">Approval Status</label>
+                            <select class="form-control" id="approval_status" required>
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comments" class="form-label">Comments</label>
+                            <textarea class="form-control" id="comments" rows="4"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-custom" id="submit-approval">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="helpModalLabel">Help - Using Quality Control</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4>Welcome to the Quality Control Page!</h4>
+                    <p>This page helps you manage quality control inspections for your projects. Here's a quick guide:</p>
+                    <ul>
+                        <li><strong>Create a New Inspection:</strong> Click "Create New Inspection" to open a form. Add multiple rows using "Add Row". Fill in the details and submit (Quality Control only).</li>
+                        <li><strong>Manage an Inspection:</strong> Use the Edit/Delete buttons on each card to modify or remove inspections (Quality Control only).</li>
+                        <li><strong>Approve an Inspection:</strong> Project Managers can approve or reject inspections using the Approve button.</li>
+                        <li><strong>Import from CSV:</strong> Use the "Import from CSV" option in the Create modal to upload a CSV file (Quality Control only).</li>
+                        <li><strong>Export to CSV:</strong> Click "Export to CSV" to download the inspections as a CSV file.</li>
+                    </ul>
+                    <p>If you encounter issues, check the browser console (F12 > Console) for errors or contact your system administrator.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSS and JS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .quality-control-container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .dashboard-header {
+            background: linear-gradient(90deg, #007bff, #00d4ff);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .notifications-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        .notifications-container .alert {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .quality-controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .navigation {
+            margin-top: 20px;
+        }
+        .button-group {
+            margin-bottom: 15px;
+        }
+        .inspections-container {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .inspection-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .inspection-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .inspection-card h5 {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+        .inspection-card a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .inspection-card a:hover {
+            text-decoration: underline;
+        }
+        .inspection-card p {
+            margin: 5px 0;
+            font-size: 0.95em;
+        }
+        .inspection-card .actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .inspection-card .actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #555;
+        }
+        .inspection-card .actions button:hover {
+            color: #007bff;
+        }
+        .btn-custom {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+        .btn-custom:hover {
+            background-color: #218838;
+        }
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-controls {
+            display: flex;
+            gap: 5px;
+        }
+        .datasheet th {
+            vertical-align: middle;
+            font-size: 0.9em;
+            white-space: nowrap;
+            background-color: #f1f3f5;
+        }
+        .datasheet td {
+            padding: 8px;
+        }
+        .datasheet input, .datasheet select, .datasheet textarea {
+            width: 100%;
+            font-size: 0.9em;
+            resize: both;
+            overflow: auto;
+            min-width: 80px;
+            min-height: 35px;
+        }
+        .resizable-input {
+            vertical-align: top;
+        }
+        .modal-minimized {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 300px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1050;
+        }
+        .modal-minimized.show {
+            transform: translateY(0);
+        }
+        .modal-minimized .modal-body, .modal-minimized .modal-footer {
+            display: none;
+        }
+        .modal-maximized {
+            max-width: 95vw !important;
+            height: 95vh !important;
+        }
+        .modal-maximized .modal-content {
+            height: 100%;
+        }
+        .import-csv {
+            margin-top: 15px;
+        }
+        #loadingIndicator {
+            color: #007bff;
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script>
+        $(document).ready(function () {
+            const rawAccessLevel = '{{ current_user.access_level or "Not set" }}';
+            console.log('Raw Access Level:', rawAccessLevel);
+            const currentUserAccessLevel = rawAccessLevel.toLowerCase().replace('accesslevel.', '');
+            console.log('Processed Access Level:', currentUserAccessLevel);
+            let qcDataCache = [];
+            const csrfToken = '{{ csrf_token() }}';
+
+            // Show loading indicator
+            function showLoading(show) {
+                $('#loadingIndicator').toggleClass('d-none', !show);
+            }
+
+            // Validate form row
+            function validateRow(row, rowIndex) {
+                const requiredFields = ['inspection_id', 'item_code', 'material_description', 'po_no', 
+                                       'inspection_status', 'inspection_date', 'project_no'];
+                for (let field of requiredFields) {
+                    if (!row[field]) {
+                        alert(`Please fill required field: ${field.replace('_', ' ')} in row ${rowIndex}`);
+                        return false;
+                    }
+                }
+                if (row.defective_quantity < 0) {
+                    alert(`Defective Quantity must be non-negative in row ${rowIndex}.`);
+                    return false;
+                }
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(row.inspection_date)) {
+                    alert(`Inspection Date must be in YYYY-MM-DD format in row ${rowIndex}.`);
+                    return false;
+                }
+                return true;
+            }
+
+            // Get current date in YYYY-MM-DD format
+            function getCurrentDate() {
+                const today = new Date();
+                return today.toISOString().split('T')[0];
+            }
+
+            // Load quality control inspections
+            function loadQualityControls() {
+                showLoading(true);
+                $.ajax({
+                    url: '/quality_control/api/inspections',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        console.log('Inspections loaded:', data);
+                        qcDataCache = data;
+                        const inspectionsList = $('#inspectionsList');
+                        inspectionsList.empty();
+                        if (data.length === 0) {
+                            inspectionsList.append('<p class="text-muted">No inspections found.</p>');
+                        } else {
+                            data.forEach(row => {
+                                const actions = currentUserAccessLevel === 'quality_control' ? `
+                                    <div class="actions">
+                                        <button class="edit-qc" data-inspection-id="${row.inspection_id}" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="delete-qc" data-inspection-id="${row.inspection_id}" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                ` : currentUserAccessLevel === 'project_manager' ? `
+                                    <div class="actions">
+                                        <button class="approve-qc" data-inspection-id="${row.inspection_id}" title="Approve/Reject"><i class="fas fa-check-circle"></i></button>
+                                    </div>
+                                ` : '';
+                                inspectionsList.append(`
+                                    <div class="col-md-4">
+                                        <div class="inspection-card">
+                                            ${actions}
+                                            <h5><a href="/quality_control/report/${row.inspection_id}" target="_blank" class="inspection-id-link">${row.inspection_id || '-'}</a></h5>
+                                            <p><strong>Item Code:</strong> ${row.item_code || '-'}</p>
+                                            <p><strong>Description:</strong> ${row.material_description || '-'}</p>
+                                            <p><strong>PO No:</strong> ${row.po_no || '-'}</p>
+                                            <p><strong>Inspection Status:</strong> ${row.inspection_status || '-'}</p>
+                                            <p><strong>Inspection Date:</strong> ${row.inspection_date || '-'}</p>
+                                            <p><strong>Project No:</strong> ${row.project_no || '-'}</p>
+                                            <p><strong>Workflow Stage:</strong> ${row.workflow_status || '-'}</p>
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error('Error loading inspections:', xhr);
+                        $('#inspectionsList').html('<p class="text-danger">Error loading inspections: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.') + '</p>');
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            }
+
+            // Initial load
+            loadQualityControls();
+
+            // Add new row to table
+            function addNewRow(tableId, data = {}) {
+                const row = `
+                    <tr>
+                        <td><input type="text" class="form-control resizable-input" name="inspection_id" value="${data.inspection_id || ''}" readonly></td>
+                        <td><input type="text" class="form-control resizable-input" name="item_code" value="${data.item_code || ''}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="material_description" value="${data.material_description || ''}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="po_no" value="${data.po_no || ''}" required></td>
+                        <td>
+                            <select class="form-control resizable-input" name="inspection_status" required>
+                                <option value="Pending" ${data.inspection_status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Inspected" ${data.inspection_status === 'Inspected' ? 'selected' : ''}>Inspected</option>
+                                <option value="Rejected" ${data.inspection_status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                            </select>
+                        </td>
+                        <td><input type="text" class="form-control resizable-input" name="test_results" value="${data.test_results || ''}" placeholder="e.g., Pass/Fail"></td>
+                        <td>
+                            <select class="form-control resizable-input" name="inspection_level">
+                                <option value="Level 1" ${data.inspection_level === 'Level 1' ? 'selected' : ''}>Level 1</option>
+                                <option value="Level 2" ${data.inspection_level === 'Level 2' ? 'selected' : ''}>Level 2</option>
+                                <option value="Level 3" ${data.inspection_level === 'Level 3' ? 'selected' : ''}>Level 3</option>
+                                <option value="add_new">Add New</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-control resizable-input" name="inspection_agency">
+                                <option value="" disabled ${!data.inspection_agency ? 'selected' : ''}>Select Agency</option>
+                                <option value="TUV" ${data.inspection_agency === 'TUV' ? 'selected' : ''}>TUV</option>
+                                <option value="SGS" ${data.inspection_agency === 'SGS' ? 'selected' : ''}>SGS</option>
+                                <option value="Bureau Veritas" ${data.inspection_agency === 'Bureau Veritas' ? 'selected' : ''}>Bureau Veritas</option>
+                                <option value="Other" ${data.inspection_agency === 'Other' ? 'selected' : ''}>Other</option>
+                                <option value="add_new">Add New</option>
+                            </select>
+                        </td>
+                        <td><input type="date" class="form-control resizable-input" name="inspection_date" value="${data.inspection_date || getCurrentDate()}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="project_no" value="${data.project_no || ''}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="inspector" value="${data.inspector || ''}"></td>
+                        <td><input type="number" class="form-control resizable-input" name="defective_quantity" value="${data.defective_quantity || 0}" min="0"></td>
+                        <td><textarea class="form-control resizable-input" name="remarks" rows="2">${data.remarks || ''}</textarea></td>
+                        <td><button type="button" class="btn btn-danger btn-sm delete-row"><i class="fas fa-trash"></i></button></td>
+                    </tr>
+                `;
+                $(`#${tableId} tbody`).append(row);
+            }
+
+            // Handle modal for create
+            $('#addQCModal').on('show.bs.modal', function () {
+                const modal = $(this);
+                modal.find('.modal-title').text('Create New Quality Control Inspection');
+                $('#add-qc-form')[0].reset();
+                $('#add-qc-table tbody').empty();
+                showLoading(true);
+                $.ajax({
+                    url: '/quality_control/api/generate_inspection_id',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('add-qc-table', { inspection_id: data.inspection_id });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating Inspection ID:', xhr);
+                        alert('Failed to generate Inspection ID: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle modal for edit
+            $(document).on('click', '.edit-qc', function () {
+                const inspectionId = $(this).data('inspection-id');
+                const qcData = qcDataCache.find(row => row.inspection_id === inspectionId);
+                if (!qcData) {
+                    alert('Selected inspection not found. Please refresh the page or contact support.');
+                    return;
+                }
+                $('#edit-qc-table tbody').empty();
+                addNewRow('edit-qc-table', {
+                    inspection_id: qcData.inspection_id || '',
+                    item_code: qcData.item_code || '',
+                    material_description: qcData.material_description || '',
+                    po_no: qcData.po_no || '',
+                    inspection_status: qcData.inspection_status || 'Pending',
+                    test_results: qcData.test_results || '',
+                    inspection_level: qcData.inspection_level || '',
+                    inspection_agency: qcData.inspection_agency || '',
+                    inspection_date: qcData.inspection_date || getCurrentDate(),
+                    project_no: qcData.project_no || '',
+                    inspector: qcData.inspector || '',
+                    defective_quantity: qcData.defective_quantity || 0,
+                    remarks: qcData.remarks || ''
+                });
+                $('#editQCModal').modal('show');
+            });
+
+            // Handle modal for approval
+            $(document).on('click', '.approve-qc', function () {
+                const inspectionId = $(this).data('inspection-id');
+                const qcData = qcDataCache.find(row => row.inspection_id === inspectionId);
+                if (!qcData) {
+                    alert('Selected inspection not found. Please refresh the page or contact support.');
+                    return;
+                }
+                $('#approve-qc-form #inspection_id').val(qcData.inspection_id);
+                $('#approve-qc-form #workflow_status').val(qcData.workflow_status || 'QualityControl');
+                $('#approve-qc-form #approval_status').val('Pending');
+                $('#approve-qc-form #comments').val('');
+                $('#approveQCModal').modal('show');
+            });
+
+            // Add row button
+            $('#add-row').on('click', function () {
+                showLoading(true);
+                $.ajax({
+                    url: '/quality_control/api/generate_inspection_id',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('add-qc-table', { inspection_id: data.inspection_id });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating Inspection ID:', xhr);
+                        alert('Failed to generate Inspection ID: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            $('#edit-add-row').on('click', function () {
+                showLoading(true);
+                $.ajax({
+                    url: '/quality_control/api/generate_inspection_id',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('edit-qc-table', { inspection_id: data.inspection_id });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating Inspection ID:', xhr);
+                        alert('Failed to generate Inspection ID: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Delete row
+            $(document).on('click', '.delete-row', function () {
+                const tableId = $(this).closest('table').attr('id');
+                if ($(`#${tableId} tbody tr`).length > 1) {
+                    $(this).closest('tr').remove();
+                } else {
+                    alert('At least one row is required.');
+                }
+            });
+
+            // Handle "Add New" for combo boxes
+            $('select').on('change', function () {
+                if ($(this).val() === 'add_new') {
+                    const field = $(this).attr('name');
+                    const newValue = prompt(`Enter new ${field.replace('_', ' ')}:`);
+                    if (newValue && newValue.trim()) {
+                        const newOption = `<option value="${newValue.trim()}">${newValue.trim()}</option>`;
+                        $(this).find('option[value="add_new"]').before(newOption);
+                        $(this).val(newValue.trim());
+                    } else {
+                        $(this).val('');
+                    }
+                }
+            });
+
+            // Handle CSV import
+            $('#csvFile').on('change', function (e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('csrf_token', csrfToken);
+
+                showLoading(true);
+                $.ajax({
+                    url: '/quality_control/api/upload_csv',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        loadQualityControls();
+                        $('#addQCModal').modal('hide');
+                        alert(response.message || 'CSV file imported successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error uploading CSV:', xhr);
+                        alert('Failed to import CSV file: ' + (xhr.responseJSON?.error || 'Please check the file format or try again later.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle new QC submission
+            $('#submit-qc').on('click', function () {
+                const rows = [];
+                $('#add-qc-table tbody tr').each(function (index) {
+                    const row = {
+                        inspection_id: $(this).find('input[name="inspection_id"]').val().trim(),
+                        item_code: $(this).find('input[name="item_code"]').val().trim(),
+                        material_description: $(this).find('input[name="material_description"]').val().trim(),
+                        po_no: $(this).find('input[name="po_no"]').val().trim(),
+                        inspection_status: $(this).find('select[name="inspection_status"]').val() || 'Pending',
+                        test_results: $(this).find('input[name="test_results"]').val().trim() || null,
+                        inspection_level: $(this).find('select[name="inspection_level"]').val() || null,
+                        inspection_agency: $(this).find('select[name="inspection_agency"]').val() || null,
+                        inspection_date: $(this).find('input[name="inspection_date"]').val(),
+                        project_no: $(this).find('input[name="project_no"]').val().trim(),
+                        inspector: $(this).find('input[name="inspector"]').val().trim() || null,
+                        defective_quantity: parseFloat($(this).find('input[name="defective_quantity"]').val()) || 0,
+                        remarks: $(this).find('textarea[name="remarks"]').val().trim() || null,
+                        workflow_status: 'QualityControl'
+                    };
+
+                    if (!validateRow(row, index + 1)) return;
+                    rows.push(row);
+                });
+
+                if (rows.length === 0) {
+                    alert('Please add at least one row.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: '/quality_control/api/inspections',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(rows),
+                    success: function (response) {
+                        loadQualityControls();
+                        $('#addQCModal').modal('hide');
+                        $('#add-qc-form')[0].reset();
+                        $('#add-qc-table tbody').empty();
+                        alert(response.message || 'Quality Control Inspections created successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error creating inspection:', xhr);
+                        alert('Failed to create inspection: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle update QC
+            $('#update-qc').on('click', function () {
+                const rows = [];
+                $('#edit-qc-table tbody tr').each(function (index) {
+                    const row = {
+                        inspection_id: $(this).find('input[name="inspection_id"]').val().trim(),
+                        item_code: $(this).find('input[name="item_code"]').val().trim(),
+                        material_description: $(this).find('input[name="material_description"]').val().trim(),
+                        po_no: $(this).find('input[name="po_no"]').val().trim(),
+                        inspection_status: $(this).find('select[name="inspection_status"]').val() || 'Pending',
+                        test_results: $(this).find('input[name="test_results"]').val().trim() || null,
+                        inspection_level: $(this).find('select[name="inspection_level"]').val() || null,
+                        inspection_agency: $(this).find('select[name="inspection_agency"]').val() || null,
+                        inspection_date: $(this).find('input[name="inspection_date"]').val(),
+                        project_no: $(this).find('input[name="project_no"]').val().trim(),
+                        inspector: $(this).find('input[name="inspector"]').val().trim() || null,
+                        defective_quantity: parseFloat($(this).find('input[name="defective_quantity"]').val()) || 0,
+                        remarks: $(this).find('textarea[name="remarks"]').val().trim() || null
+                    };
+
+                    if (!validateRow(row, index + 1)) return;
+                    rows.push(row);
+                });
+
+                if (rows.length === 0) {
+                    alert('Please add at least one row.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: `/quality_control/api/inspections/${rows[0].inspection_id}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(rows[0]), // Send single row for update
+                    success: function (response) {
+                        loadQualityControls();
+                        $('#editQCModal').modal('hide');
+                        alert(response.message || 'Quality Control Inspection updated successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error updating inspection:', xhr);
+                        alert('Failed to update inspection: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle approval submission
+            $('#submit-approval').on('click', function () {
+                const approvalData = {
+                    inspection_id: $('#approve-qc-form #inspection_id').val(),
+                    workflow_status: $('#approve-qc-form #workflow_status').val(),
+                    approval_status: $('#approve-qc-form #approval_status').val(),
+                    comments: $('#approve-qc-form #comments').val(),
+                    csrf_token: csrfToken
+                };
+
+                if (!approvalData.approval_status) {
+                    alert('Please select an approval status.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: '/quality_control/api/approve',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(approvalData),
+                    success: function (response) {
+                        loadQualityControls();
+                        $('#approveQCModal').modal('hide');
+                        alert(response.message || 'Approval submitted successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error submitting approval:', xhr);
+                        alert('Failed to submit approval: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle delete QC
+            $(document).on('click', '.delete-qc', function () {
+                const inspectionId = $(this).data('inspection-id');
+                if (confirm(`Are you sure you want to delete Inspection ${inspectionId}?`)) {
+                    showLoading(true);
+                    $.ajax({
+                        url: `/quality_control/api/inspections/${inspectionId}`,
+                        type: 'DELETE',
+                        headers: { 'X-CSRFToken': csrfToken },
+                        success: function (response) {
+                            loadQualityControls();
+                            alert(response.message || `Inspection ${inspectionId} deleted successfully!`);
+                        },
+                        error: function (xhr) {
+                            console.error('Error deleting inspection:', xhr);
+                            alert('Failed to delete inspection: ' + (xhr.responseJSON?.error || 'Please verify the Inspection ID exists or try again later.'));
+                        },
+                        complete: function () {
+                            showLoading(false);
+                        }
+                    });
+                }
+            });
+
+            // Export to CSV
+            $('#exportCSV').on('click', function () {
+                showLoading(true);
+                $.ajax({
+                    url: '/quality_control/api/export_csv',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data, status, xhr) {
+                        const disposition = xhr.getResponseHeader('Content-Disposition');
+                        const filename = disposition ? disposition.match(/filename="(.+)"/)[1] : 'quality_control_inspections.csv';
+                        const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = filename;
+                        link.click();
+                    },
+                    error: function (xhr) {
+                        console.error('Error exporting CSV:', xhr);
+                        alert('Failed to export CSV: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Ensure Help button works
+            $('#showHelp').on('click', function () {
+                $('#helpModal').modal('show');
+            });
+
+            // Minimize modal
+            $('.minimize-modal').on('click', function () {
+                const modal = $(this).closest('.modal');
+                modal.addClass('modal-minimized');
+                modal.modal('show');
+            });
+
+            // Maximize/Restore modal
+            $('.maximize-modal').on('click', function () {
+                const modal = $(this).closest('.modal');
+                const modalDialog = modal.find('.modal-dialog');
+                if (modalDialog.hasClass('modal-maximized')) {
+                    modalDialog.removeClass('modal-maximized');
+                    $(this).find('i').removeClass('fa-compress').addClass('fa-expand');
+                } else {
+                    modalDialog.addClass('modal-maximized');
+                    $(this).find('i').removeClass('fa-expand').addClass('fa-compress');
+                }
+                modal.removeClass('modal-minimized');
+            });
+
+            // Restore from minimized
+            $('.modal-header').on('click', function (e) {
+                if ($(e.target).closest('.modal-controls').length) return;
+                const modal = $(this).closest('.modal');
+                if (modal.hasClass('modal-minimized')) {
+                    modal.removeClass('modal-minimized');
+                }
+            });
+        });
+    </script>
+{% endblock %}

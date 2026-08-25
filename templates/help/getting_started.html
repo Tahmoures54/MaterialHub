@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Getting Started{% endblock %}
+{% block content %}
+<section class="page-hero"><div><span class="eyebrow">FIRST 30 MINUTES</span><h1>Getting Started</h1><p>A practical onboarding path for a new project team.</p></div></section>
+<div class="guide-layout">
+<aside class="guide-nav"><a href="#setup">1. Set up</a><a href="#demand">2. Register demand</a><a href="#procurement">3. Procure</a><a href="#delivery">4. Receive</a><a href="#warehouse">5. Trace & store</a><a href="#risk">6. Monitor risk</a></aside>
+<article class="content-card guide-content">
+<section id="setup"><h2>1. Set up the project</h2><p>Confirm the project, user roles, supplier records, warehouse locations and material coding convention. Keep item codes stable because they become the backbone of traceability and analytics.</p></section>
+<section id="demand"><h2>2. Register material demand</h2><p>Create Material Requisitions with item code, description, quantity, required date and project/work package. The required date is critical for schedule-aware risk analysis.</p></section>
+<section id="procurement"><h2>3. Run procurement</h2><p>Generate an RFQ, invite qualified suppliers, capture quotes and compare price, availability, lead time and supplier performance. Convert the selected offer into a Purchase Order.</p></section>
+<section id="delivery"><h2>4. Receive and control</h2><p>Track expected delivery, actual receipt, inspection status and supporting documents. Use the 3-way match to compare PO, receipt and invoice quantities/values before payment approval.</p></section>
+<section id="warehouse"><h2>5. Trace and store</h2><p>Create QR/barcode trace records and capture heat, lot, serial or batch numbers. Attach MTC, CoC and datasheet references. Record warehouse location and material status.</p></section>
+<section id="risk"><h2>6. Monitor risk</h2><p>Open Material Intelligence and review Material Readiness, supplier OTIF, lead-time signals and schedule-aware procurement risks. When a material becomes critical, follow the recommended action and document the decision.</p></section>
+<div class="callout"><strong>Recommended operating rhythm:</strong> Engineering updates demand daily; Procurement reviews open RFQs/POs daily; Warehouse updates receipts and stock continuously; Project Management reviews the risk radar at least once per day.</div>
+</article></div>
+{% endblock %}

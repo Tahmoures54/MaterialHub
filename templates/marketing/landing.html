@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mh-page">
+<section class="mh-workspace-hero" style="padding:3rem 2rem">
+  <span class="mh-muted">Material Operations Intelligence for Construction & EPC</span>
+  <h1 style="font-size:clamp(2rem,5vw,4rem);margin:.5rem 0">Know what you need. Know where it is. Know when it will arrive.</h1>
+  <p class="mh-muted" style="font-size:1.15rem;max-width:760px">MaterialHub connects demand, procurement, supplier performance, delivery, quality, warehouse traceability and AI-driven risk actions in one operational workspace.</p>
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem">
+    <a class="btn btn-primary" href="/demo">Explore Interactive Demo</a>
+    <a class="btn btn-secondary" href="/register">Start Free</a>
+  </div>
+</section>
+<section class="mh-grid mh-grid-3" style="margin-top:1rem">
+  <div class="mh-card"><h3>Procurement Control</h3><p>RFQ, quote comparison, PO and supplier performance in one flow.</p></div>
+  <div class="mh-card"><h3>Traceability</h3><p>QR, heat, lot, serial and material documentation from receipt to issue.</p></div>
+  <div class="mh-card"><h3>Material Intelligence</h3><p>Readiness, lead-time and schedule-risk signals with recommended actions.</p></div>
+</section>
+<section class="mh-card" style="margin-top:1rem">
+  <h2>Built for the people who move projects</h2>
+  <div class="mh-grid mh-grid-4">
+    <div><strong>Project Manager</strong><p class="mh-muted">Schedule exposure & readiness</p></div>
+    <div><strong>Procurement</strong><p class="mh-muted">RFQ → Quote → PO → Recovery</p></div>
+    <div><strong>Warehouse</strong><p class="mh-muted">Receive → Trace → Issue</p></div>
+    <div><strong>Quality</strong><p class="mh-muted">Inspect → Document → Release</p></div>
+  </div>
+</section>
+</div>
+{% endblock %}

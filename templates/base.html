@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="description" content="MaterialHub — integrated material procurement, delivery, warehouse and intelligence platform.">
+  <title>MaterialHub{% block title %}{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/documentation.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  {% block head %}{% endblock %}
+  <style>
+    :root{--mh-teal:#0f766e;--mh-teal-2:#14b8a6;--mh-ink:#10233b;--mh-muted:#64748b;--mh-bg:#f5f8fa;--mh-border:#e2e8f0;--mh-card:#fff;--mh-sidebar:#0b1728;--mh-sidebar-2:#10243a}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:var(--mh-bg);color:var(--mh-ink);font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh}
+    a{color:inherit}.mh-shell{min-height:100vh}.mh-topbar{height:68px;background:#fff;border-bottom:1px solid var(--mh-border);display:flex;align-items:center;gap:18px;padding:0 24px;position:sticky;top:0;z-index:1000}
+    .mh-brand{display:flex;align-items:center;gap:11px;text-decoration:none;min-width:210px}.mh-brand img{width:38px;height:38px;object-fit:contain}.mh-brand-mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--mh-teal),var(--mh-teal-2));display:grid;place-items:center;color:#fff;font-weight:900}.mh-brand strong{font-size:1.1rem}.mh-brand span{display:block;font-size:.72rem;color:var(--mh-muted);margin-top:2px}
+    .mh-menu{border:0;background:transparent;font-size:1.15rem;color:#334155;cursor:pointer}.mh-top-actions{margin-left:auto;display:flex;align-items:center;gap:10px}.mh-pill{padding:8px 11px;border:1px solid var(--mh-border);border-radius:999px;background:#fff;text-decoration:none;font-size:.86rem}.mh-pill.primary{background:var(--mh-teal);border-color:var(--mh-teal);color:#fff}.mh-avatar{width:36px;height:36px;border-radius:50%;background:#dff7f4;color:#0f766e;display:grid;place-items:center;font-weight:800}
+    .mh-layout{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:calc(100vh - 68px)}.mh-sidebar{background:linear-gradient(180deg,var(--mh-sidebar),var(--mh-sidebar-2));color:#dbeafe;padding:18px 12px;position:sticky;top:68px;height:calc(100vh - 68px);overflow:auto}.mh-nav-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:#7f91a8;padding:13px 12px 7px}.mh-nav a{display:flex;align-items:center;gap:11px;padding:10px 12px;margin:3px 0;border-radius:10px;text-decoration:none;color:#b8c6d8;font-size:.9rem}.mh-nav a:hover,.mh-nav a.active{background:rgba(20,184,166,.14);color:#fff}.mh-nav i{width:18px;text-align:center}.mh-content{min-width:0}.mh-main{max-width:1500px;margin:0 auto;padding:28px}.mh-footer{border-top:1px solid var(--mh-border);padding:20px 28px;color:#718096;background:#fff;font-size:.8rem}.mh-flashes{max-width:1500px;margin:18px auto 0;padding:0 28px}.mh-alert{padding:12px 15px;border-radius:12px;margin-bottom:10px;border:1px solid transparent}.mh-alert-success{background:#ecfdf5;color:#166534;border-color:#bbf7d0}.mh-alert-danger{background:#fef2f2;color:#991b1b;border-color:#fecaca}.mh-alert-info{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}.mh-alert-warning{background:#fffbeb;color:#92400e;border-color:#fde68a}
+    .mh-public-nav{display:flex;gap:8px;margin-left:auto}.mh-public-nav a{padding:8px 12px;text-decoration:none;color:#475569;border-radius:9px}.mh-public-nav a:hover{background:#f1f5f9}
+    @media(max-width:950px){.mh-layout{grid-template-columns:1fr}.mh-sidebar{position:fixed;left:-280px;top:68px;width:250px;z-index:999;transition:left .2s ease;box-shadow:10px 0 30px rgba(0,0,0,.15)}body.mh-sidebar-open .mh-sidebar{left:0}.mh-brand{min-width:0}.mh-public-nav{display:none}.mh-main{padding:20px}.mh-topbar{padding:0 15px}}
+    @media(max-width:600px){.mh-main{padding:14px}.mh-footer{padding:16px}.mh-topbar{height:62px}.mh-layout{min-height:calc(100vh - 62px)}.mh-sidebar{top:62px;height:calc(100vh - 62px)}}
+  </style>
+</head>
+<body>
+<div class="mh-shell">
+  <header class="mh-topbar">
+    {% if current_user.is_authenticated %}<button class="mh-menu" type="button" onclick="document.body.classList.toggle('mh-sidebar-open')" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>{% endif %}
+    <a class="mh-brand" href="{{ url_for('index') }}">
+      {% if url_for('static', filename='logo.png') %}<img src="{{ url_for('static', filename='logo.png') }}" alt="MaterialHub" onerror="this.style.display='none'">{% endif %}
+      <div class="mh-brand-mark">M</div><div><strong>MaterialHub</strong><span>Material Operations Platform</span></div>
+    </a>
+    {% if not current_user.is_authenticated %}
+      <nav class="mh-public-nav"><a href="{{ url_for('help.getting_started') }}">How it works</a><a href="{{ url_for('help.about') }}">About</a><a href="{{ url_for('auth.login') }}">Sign in</a><a class="mh-pill primary" href="{{ url_for('auth.register') }}">Get started</a></nav>
+    {% else %}
+      <div class="mh-top-actions"><a class="mh-pill" href="{{ url_for('control_center.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Control Center</a><a class="mh-pill" href="{{ url_for('intelligence.dashboard') }}"><i class="fas fa-brain"></i> Intelligence</a><a class="mh-avatar" title="{{ current_user.full_name }}" href="{{ url_for('role_workspace.my_workspace') }}">{{ (current_user.full_name or 'U')[:1]|upper }}</a></div>
+    {% endif %}
+  </header>
+
+  {% if current_user.is_authenticated %}
+  <div class="mh-layout">
+    <aside class="mh-sidebar">
+      <div class="mh-nav-label">Workspace</div>
+      <nav class="mh-nav">
+        <a href="{{ url_for('role_workspace.my_workspace') }}"><i class="fas fa-layer-group"></i> My Workspace</a>
+        <a href="{{ url_for('control_center.dashboard') }}"><i class="fas fa-chart-pie"></i> Control Center</a>
+        <a href="{{ url_for('intelligence.dashboard') }}"><i class="fas fa-brain"></i> Material Intelligence</a>
+      </nav>
+      <div class="mh-nav-label">Operations</div>
+      <nav class="mh-nav">
+        <a href="{{ url_for('material_requisitions.material_requisitions') }}"><i class="fas fa-clipboard-list"></i> Requisitions</a>
+        <a href="{{ url_for('purchase_order.purchase_order') }}"><i class="fas fa-file-invoice-dollar"></i> Purchase Orders</a>
+        <a href="{{ url_for('delivery.delivery_order') }}"><i class="fas fa-truck"></i> Deliveries</a>
+        <a href="{{ url_for('warehouse.warehouse_operations') }}"><i class="fas fa-warehouse"></i> Warehouse</a>
+        <a href="{{ url_for('quality_control.quality_control') }}"><i class="fas fa-shield-alt"></i> Quality Control</a>
+      </nav>
+      <div class="mh-nav-label">Materials & Data</div>
+      <nav class="mh-nav">
+        <a href="{{ url_for('materials') }}"><i class="fas fa-boxes"></i> Materials</a>
+        <a href="{{ url_for('material_marketplace') }}"><i class="fas fa-store"></i> Marketplace</a>
+        <a href="{{ url_for('intelligence.traceability') }}"><i class="fas fa-qrcode"></i> Traceability</a>
+        <a href="{{ url_for('intelligence.excel_import') }}"><i class="fas fa-file-excel"></i> Excel Import</a>
+      </nav>
+      <div class="mh-nav-label">Management</div>
+      <nav class="mh-nav">
+        {% if current_user.access_level.value == 'project_manager' %}<a href="{{ url_for('project_dashboard.dashboard') }}"><i class="fas fa-users-cog"></i> Project Team</a>{% endif %}
+        {% if current_user.is_admin %}<a href="{{ url_for('admin.admin') }}"><i class="fas fa-user-shield"></i> Administration</a>{% endif %}
+        <a href="{{ url_for('report.report') }}"><i class="fas fa-chart-bar"></i> Reports</a>
+      </nav>
+      <div class="mh-nav-label">Support</div>
+      <nav class="mh-nav">
+        <a href="{{ url_for('help.help') }}"><i class="fas fa-question-circle"></i> Help Center</a>
+        <a href="{{ url_for('auth.change_password') }}"><i class="fas fa-key"></i> Change Password</a>
+        <a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Sign out</a>
+      </nav>
+    </aside>
+    <div class="mh-content">
+  {% else %}
+    <div class="mh-content">
+  {% endif %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}<div class="mh-flashes">{% for category,message in messages %}<div class="mh-alert mh-alert-{{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+  {% endwith %}
+
+  <main class="mh-main">{% block content %}{% endblock %}</main>
+  <footer class="mh-footer"><strong>MaterialHub</strong> · Integrated material operations, procurement, delivery, warehouse and intelligence. <span style="float:right">© {{ current_year|default(2026) }}</span></footer>
+  </div></div>
+</div>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}").catch(function(){});}document.addEventListener('click',function(e){if(e.target.closest('.mh-sidebar a')&&window.innerWidth<951)document.body.classList.remove('mh-sidebar-open')});</script>
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script><script src="{{ url_for('static', filename='js/workspace.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body></html>

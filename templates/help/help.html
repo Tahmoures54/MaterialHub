@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Help Center{% endblock %}
+{% block content %}
+<section class="page-hero"><div><span class="eyebrow">MATERIALHUB SUPPORT</span><h1>Help Center</h1><p>Find the fastest path to learn the system, understand your role and operate the material lifecycle correctly.</p></div></section>
+<div class="feature-grid">
+ <a class="feature-card" href="{{ url_for('help.getting_started') }}" style="text-decoration:none;color:inherit"><div class="feature-icon"><i class="fas fa-rocket"></i></div><h3>Getting Started</h3><p>Set up a project and complete your first material workflow in minutes.</p></a>
+ <a class="feature-card" href="{{ url_for('help.user_guide') }}" style="text-decoration:none;color:inherit"><div class="feature-icon"><i class="fas fa-book"></i></div><h3>User Guide</h3><p>Role-based instructions for Engineering, Procurement, Quality, Delivery and Warehouse.</p></a>
+ <a class="feature-card" href="{{ url_for('help.about') }}" style="text-decoration:none;color:inherit"><div class="feature-icon"><i class="fas fa-info-circle"></i></div><h3>About MaterialHub</h3><p>Understand the product architecture, operating philosophy and end-to-end lifecycle.</p></a>
+</div>
+<section class="content-card"><h2>Common operating questions</h2><div class="guide-table"><table class="guide-table"><tr><th>Question</th><th>Go to</th></tr><tr><td>What should I review every morning?</td><td><a href="{{ url_for('control_center.dashboard') }}">Control Center</a> and <a href="{{ url_for('intelligence.dashboard') }}">Material Intelligence</a></td></tr><tr><td>Where do I register a material need?</td><td><a href="{{ url_for('material_requisitions.material_requisitions') }}">Material Requisition</a></td></tr><tr><td>How do I track heat/lot/serial?</td><td><a href="{{ url_for('intelligence.traceability') }}">Traceability</a></td></tr><tr><td>How do I validate an Excel register?</td><td><a href="{{ url_for('intelligence.excel_import') }}">Excel Import Wizard</a></td></tr><tr><td>How do I get support?</td><td><a href="{{ url_for('auth.contact_support') }}">Contact Support</a></td></tr></table></div></section>
+{% endblock %}

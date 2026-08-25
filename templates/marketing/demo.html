@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mh-page">
+<section class="mh-workspace-hero">
+<h1>MaterialHub Interactive Demo</h1>
+<p class="mh-muted">Explore a realistic project scenario without touching production data.</p>
+</section>
+<section class="mh-grid mh-grid-4">
+<div class="mh-card mh-kpi"><div class="mh-muted">Materials</div><div class="value">1,250</div></div>
+<div class="mh-card mh-kpi"><div class="mh-muted">Open POs</div><div class="value">42</div></div>
+<div class="mh-card mh-kpi"><div class="mh-muted">Delivery Risks</div><div class="value">8</div></div>
+<div class="mh-card mh-kpi"><div class="mh-muted">AI Actions</div><div class="value">5</div></div>
+</section>
+<section class="mh-card" style="margin-top:1rem">
+<h2>Example AI Material Risk</h2>
+<p><strong>12-inch CS Pipe</strong> may become a schedule risk within 9 days because available stock is below requirement and the open PO is late.</p>
+<div class="mh-action"><span>Recommended Action: Expedite the PO or activate a qualified alternate supplier.</span><a href="/register">Try MaterialHub →</a></div>
+</section>
+</div>
+{% endblock %}

@@ -1,0 +1,1234 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="warehouse-container">
+    <div class="dashboard-header">
+        <h1><i class="fas fa-warehouse me-2"></i>Warehouse Operations</h1>
+        <p>Manage warehouse operations for {{ company_name }}</p>
+    </div>
+
+    <!-- Notifications Container -->
+    <div id="notifications" class="notifications-container"></div>
+
+    <!-- Debug Info -->
+    <div class="alert alert-info">
+        <strong>Debug Info:</strong><br>
+        User: {{ current_user.full_name or 'Not set' }}<br>
+        Access Level: {{ current_user.access_level or 'Not set' }}<br>
+        Read Only: {{ read_only|default('Not set', true) }}<br>
+        Authenticated: {{ current_user.is_authenticated }}
+    </div>
+
+    <section class="warehouse-operations">
+        <h2>Warehouse Dashboard</h2>
+        <p>Oversee material receipt, inventory, and issuance to contractors.</p>
+
+        <!-- Buttons Group -->
+        <div class="button-group mb-3 d-flex align-items-center">
+            {% if current_user.is_authenticated and current_user.access_level.name == 'warehouse' and not read_only %}
+            <button class="btn btn-custom me-2" data-bs-toggle="modal" data-bs-target="#receiveMaterialModal" id="receiveMaterial">
+                <i class="fas fa-download me-2"></i>Receive Material
+            </button>
+            <button class="btn btn-custom me-2" data-bs-toggle="modal" data-bs-target="#issueMaterialModal" id="issueMaterial">
+                <i class="fas fa-truck-loading me-2"></i>Issue to Contractor
+            </button>
+            {% endif %}
+            <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#helpModal" id="showHelp">
+                <i class="fas fa-question-circle me-2"></i>Help
+            </button>
+            {% if current_user.is_authenticated %}
+            <button id="exportCSV" class="btn btn-custom ms-2">
+                <i class="fas fa-file-csv me-2"></i>Export to CSV
+            </button>
+            {% endif %}
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="ms-2 d-none">
+                <i class="fas fa-spinner fa-spin"></i> Loading...
+            </div>
+        </div>
+
+        <!-- OPI Dashboard -->
+        <div class="opi-dashboard mb-4">
+            <h5>Operational Performance Indicators (OPI)</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6>Inventory Accuracy</h6>
+                            <canvas id="inventoryAccuracyChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6>Stock Turnover Rate</h6>
+                            <canvas id="stockTurnoverChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6>Low Stock Alerts</h6>
+                            <canvas id="lowStockChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warehouse Inventory Cards -->
+        <div class="inventory-container">
+            <div id="inventoryList" class="row"></div>
+        </div>
+    </section>
+
+    <!-- Navigation -->
+    <section class="navigation">
+        <a href="{{ url_for('project_dashboard.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </section>
+
+    <!-- Modal for Receiving Material -->
+    <div class="modal fade" id="receiveMaterialModal" tabindex="-1" aria-labelledby="receiveMaterialModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="receiveMaterialModalLabel">Receive Material</h5>
+                    <div class="modal-controls">
+                        <button type="button" class="btn btn-sm btn-custom minimize-modal" title="Minimize">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-custom maximize-modal" title="Maximize/Restore">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <!-- Display Logged-in User -->
+                    <div class="mb-3">
+                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
+                    </div>
+                    <form id="receive-material-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="table-responsive">
+                            <table class="table table-bordered datasheet" id="receive-material-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 150px; background-color: #e6e6fa;">Stock ID</th>
+                                        <th style="width: 120px;">Delivery ID</th>
+                                        <th style="width: 120px;">Item Code</th>
+                                        <th style="width: 200px;">Description</th>
+                                        <th style="width: 120px;">Category</th>
+                                        <th style="width: 120px;">Received Quantity</th>
+                                        <th style="width: 120px;">Unit of Measure</th>
+                                        <th style="width: 120px;">Location</th>
+                                        <th style="width: 120px;">Receipt Date</th>
+                                        <th style="width: 120px;">Project No</th>
+                                        <th style="width: 120px;">Condition</th>
+                                        <th style="width: 200px;">Remarks</th>
+                                        <th style="width: 80px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rows populated dynamically -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-custom mt-2" id="add-receive-row">Add Row</button>
+                        </div>
+                        <div class="import-csv mt-3">
+                            <label for="receiveCsvFile" class="form-label">Import from CSV</label>
+                            <input type="file" class="form-control" id="receiveCsvFile" name="file" accept=".csv">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-custom" id="submit-receive">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Inventory -->
+    <div class="modal fade" id="editInventoryModal" tabindex="-1" aria-labelledby="editInventoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editInventoryModalLabel">Edit Inventory</h5>
+                    <div class="modal-controls">
+                        <button type="button" class="btn btn-sm btn-custom minimize-modal" title="Minimize">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-custom maximize-modal" title="Maximize/Restore">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <!-- Display Logged-in User -->
+                    <div class="mb-3">
+                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
+                    </div>
+                    <form id="edit-inventory-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="table-responsive">
+                            <table class="table table-bordered datasheet" id="edit-inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 150px; background-color: #e6e6fa;">Stock ID</th>
+                                        <th style="width: 120px;">Delivery ID</th>
+                                        <th style="width: 120px;">Item Code</th>
+                                        <th style="width: 200px;">Description</th>
+                                        <th style="width: 120px;">Category</th>
+                                        <th style="width: 120px;">Received Quantity</th>
+                                        <th style="width: 120px;">Unit of Measure</th>
+                                        <th style="width: 120px;">Location</th>
+                                        <th style="width: 120px;">Receipt Date</th>
+                                        <th style="width: 120px;">Project No</th>
+                                        <th style="width: 120px;">Condition</th>
+                                        <th style="width: 200px;">Remarks</th>
+                                        <th style="width: 80px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rows populated dynamically -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-custom mt-2" id="edit-add-row">Add Row</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-custom" id="update-inventory">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Issuing Material to Contractor -->
+    <div class="modal fade" id="issueMaterialModal" tabindex="-1" aria-labelledby="issueMaterialModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="issueMaterialModalLabel">Issue Material to Contractor</h5>
+                    <div class="modal-controls">
+                        <button type="button" class="btn btn-sm btn-custom minimize-modal" title="Minimize">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-custom maximize-modal" title="Maximize/Restore">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <!-- Display Logged-in User -->
+                    <div class="mb-3">
+                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
+                    </div>
+                    <form id="issue-material-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="table-responsive">
+                            <table class="table table-bordered datasheet" id="issue-material-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 150px; background-color: #e6e6fa;">Stock ID</th>
+                                        <th style="width: 120px;">Item Code</th>
+                                        <th style="width: 200px;">Description</th>
+                                        <th style="width: 120px;">Quantity to Issue</th>
+                                        <th style="width: 120px;">Unit of Measure</th>
+                                        <th style="width: 120px;">Contractor</th>
+                                        <th style="width: 120px;">Issue Date</th>
+                                        <th style="width: 120px;">Project No</th>
+                                        <th style="width: 200px;">Remarks</th>
+                                        <th style="width: 80px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rows populated dynamically -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-custom mt-2" id="add-issue-row">Add Row</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-custom" id="submit-issue">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Approving Warehouse Operation -->
+    <div class="modal fade" id="approveWarehouseModal" tabindex="-1" aria-labelledby="approveWarehouseModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="approveWarehouseModalLabel">Approve Warehouse Operation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="approve-warehouse-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="warehouse_id" class="form-label">Stock ID</label>
+                            <input type="text" class="form-control" id="warehouse_id" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="workflow_status" class="form-label">Current Stage</label>
+                            <input type="text" class="form-control" id="workflow_status" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="approval_status" class="form-label">Approval Status</label>
+                            <select class="form-control" id="approval_status" required>
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comments" class="form-label">Comments</label>
+                            <textarea class="form-control" id="comments" rows="4"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-custom" id="submit-approval">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="helpModalLabel">Help - Using Warehouse Operations</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4>Welcome to the Warehouse Operations Page!</h4>
+                    <p>This page helps you manage warehouse inventory, material receipt, and issuance to contractors. Here's a quick guide:</p>
+                    <ul>
+                        <li><strong>Receive Material:</strong> Click "Receive Material" to add new stock from delivery orders. Add multiple rows using "Add Row". Fill in the details and submit (Warehouse only).</li>
+                        <li><strong>Issue to Contractor:</strong> Click "Issue to Contractor" to allocate materials. Ensure sufficient stock before submission (Warehouse only).</li>
+                        <li><strong>Edit Inventory:</strong> Use the Edit button on inventory cards to modify stock details (Warehouse only).</li>
+                        <li><strong>Delete Inventory:</strong> Use the Delete button to remove stock entries (Warehouse only).</li>
+                        <li><strong>Approve Operation:</strong> Project Managers can approve or reject warehouse operations using the Approve button.</li>
+                        <li><strong>Import from CSV:</strong> Use the "Import from CSV" option in the Receive Material modal to upload a CSV file (Warehouse only).</li>
+                        <li><strong>Export to CSV:</strong> Click "Export to CSV" to download the inventory as a CSV file.</li>
+                        <li><strong>OPI Dashboard:</strong> Monitor inventory accuracy, stock turnover, and low stock alerts.</li>
+                    </ul>
+                    <p>If you encounter issues, check the browser console (F12 > Console) for errors or contact your system administrator.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSS and JS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .warehouse-container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .dashboard-header {
+            background: linear-gradient(90deg, #007bff, #00d4ff);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .notifications-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        .notifications-container .alert {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .warehouse-operations {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .navigation {
+            margin-top: 20px;
+        }
+        .button-group {
+            margin-bottom: 15px;
+        }
+        .inventory-container {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .inventory-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .inventory-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .inventory-card h5 {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+        .inventory-card a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .inventory-card a:hover {
+            text-decoration: underline;
+        }
+        .inventory-card p {
+            margin: 5px 0;
+            font-size: 0.95em;
+        }
+        .inventory-card .actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .inventory-card .actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #555;
+        }
+        .inventory-card .actions button:hover {
+            color: #007bff;
+        }
+        .btn-custom {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+        .btn-custom:hover {
+            background-color: #218838;
+        }
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-controls {
+            display: flex;
+            gap: 5px;
+        }
+        .opi-dashboard .card {
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .opi-dashboard .card:hover {
+            transform: translateY(-5px);
+        }
+        .datasheet th {
+            vertical-align: middle;
+            font-size: 0.9em;
+            white-space: nowrap;
+            background-color: #f1f3f5;
+        }
+        .datasheet td {
+            padding: 8px;
+        }
+        .datasheet input, .datasheet select, .datasheet textarea {
+            width: 100%;
+            font-size: 0.9em;
+            resize: both;
+            overflow: auto;
+            min-width: 80px;
+            min-height: 35px;
+        }
+        .resizable-input {
+            vertical-align: top;
+        }
+        .modal-minimized {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 300px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1050;
+        }
+        .modal-minimized.show {
+            transform: translateY(0);
+        }
+        .modal-minimized .modal-body, .modal-minimized .modal-footer {
+            display: none;
+        }
+        .modal-maximized {
+            max-width: 95vw !important;
+            height: 95vh !important;
+        }
+        .modal-maximized .modal-content {
+            height: 100%;
+        }
+        .import-csv {
+            margin-top: 15px;
+        }
+        #loadingIndicator {
+            color: #007bff;
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script>
+        $(document).ready(function () {
+            const rawAccessLevel = '{{ current_user.access_level or "Not set" }}';
+            console.log('Raw Access Level:', rawAccessLevel);
+            const currentUserAccessLevel = rawAccessLevel.toLowerCase().replace('accesslevel.', '');
+            console.log('Processed Access Level:', currentUserAccessLevel);
+            let inventoryDataCache = [];
+            const csrfToken = '{{ csrf_token() }}';
+
+            // Show loading indicator
+            function showLoading(show) {
+                $('#loadingIndicator').toggleClass('d-none', !show);
+            }
+
+            // Get current date in YYYY-MM-DD format
+            function getCurrentDate() {
+                const today = new Date();
+                return today.toISOString().split('T')[0];
+            }
+
+            // Validate receive form row
+            function validateReceiveRow(row, rowIndex) {
+                const requiredFields = ['warehouse_id', 'delivery_id', 'item_code', 'material_description', 
+                                       'received_quantity', 'unit_of_measure', 'receipt_date', 'project_no', 'condition'];
+                for (let field of requiredFields) {
+                    if (!row[field]) {
+                        alert(`Please fill required field: ${field.replace('_', ' ')} in row ${rowIndex}`);
+                        return false;
+                    }
+                }
+                if (row.received_quantity <= 0) {
+                    alert(`Received Quantity must be positive in row ${rowIndex}.`);
+                    return false;
+                }
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(row.receipt_date)) {
+                    alert(`Receipt Date must be in YYYY-MM-DD format in row ${rowIndex}.`);
+                    return false;
+                }
+                return true;
+            }
+
+            // Validate issue form row
+            function validateIssueRow(row, rowIndex) {
+                const requiredFields = ['warehouse_id', 'item_code', 'material_description', 
+                                       'issue_quantity', 'unit_of_measure', 'contractor', 'issue_date', 'project_no'];
+                for (let field of requiredFields) {
+                    if (!row[field]) {
+                        alert(`Please fill required field: ${field.replace('_', ' ')} in row ${rowIndex}`);
+                        return false;
+                    }
+                }
+                if (row.issue_quantity <= 0) {
+                    alert(`Issue Quantity must be positive in row ${rowIndex}.`);
+                    return false;
+                }
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(row.issue_date)) {
+                    alert(`Issue Date must be in YYYY-MM-DD format in row ${rowIndex}.`);
+                    return false;
+                }
+                return true;
+            }
+
+            // Load warehouse inventory
+            function loadInventory() {
+                showLoading(true);
+                $.ajax({
+                    url: '/warehouse/api/inventory',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        console.log('Inventory loaded:', data);
+                        inventoryDataCache = data;
+                        const inventoryList = $('#inventoryList');
+                        inventoryList.empty();
+                        if (data.length === 0) {
+                            inventoryList.append('<p class="text-muted">No inventory items found.</p>');
+                        } else {
+                            data.forEach(row => {
+                                const actions = currentUserAccessLevel === 'warehouse' ? `
+                                    <div class="actions">
+                                        <button class="edit-inventory" data-warehouse-id="${row.warehouse_id}" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="delete-inventory" data-warehouse-id="${row.warehouse_id}" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                ` : currentUserAccessLevel === 'project_manager' ? `
+                                    <div class="actions">
+                                        <button class="approve-inventory" data-warehouse-id="${row.warehouse_id}" title="Approve/Reject"><i class="fas fa-check-circle"></i></button>
+                                    </div>
+                                ` : '';
+                                inventoryList.append(`
+                                    <div class="col-md-4">
+                                        <div class="inventory-card">
+                                            ${actions}
+                                            <h5><a href="/warehouse/report/${row.warehouse_id}" target="_blank" class="warehouse-id-link">${row.warehouse_id || '-'}</a></h5>
+                                            <p><strong>Delivery ID:</strong> ${row.delivery_id || '-'}</p>
+                                            <p><strong>Item Code:</strong> ${row.item_code || '-'}</p>
+                                            <p><strong>Description:</strong> ${ row.material_description || '-'}</p>
+                                            <p><strong>Received Quantity:</strong> ${row.received_quantity || '-'}</p>
+                                            <p><strong>Condition:</strong> ${row.condition || '-'}</p>
+                                            <p><strong>Receipt Date:</strong> ${row.receipt_date || '-'}</p>
+                                            <p><strong>Workflow Stage:</strong> ${row.workflow_status || '-'}</p>
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        }
+                        updateOPICharts();
+                    },
+                    error: function (xhr) {
+                        console.error('Error loading inventory:', xhr);
+                        inventoryList.html('<p class="text-danger">Error loading inventory: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.') + '</p>');
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            }
+
+            // Update OPI Charts
+            function updateOPICharts() {
+                showLoading(true);
+                $.ajax({
+                    url: '/warehouse/api/opi',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        // Inventory Accuracy Chart
+                        new Chart(document.getElementById('inventoryAccuracyChart').getContext('2d'), {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Accurate', 'Inaccurate'],
+                                datasets: [{
+                                    data: data.accuracy ? [data.accuracy.accurate, data.accuracy.inaccurate] : [95, 5],
+                                    backgroundColor: ['#28a745', '#dc3545'],
+                                    borderColor: ['#fff', '#fff'],
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: { position: 'bottom' },
+                                    title: { display: true, text: 'Inventory Accuracy' }
+                                }
+                            }
+                        });
+
+                        // Stock Turnover Rate Chart
+                        new Chart(document.getElementById('stockTurnoverChart').getContext('2d'), {
+                            type: 'bar',
+                            data: {
+                                labels: data.turnover.labels || ['Q1', 'Q2', 'Q3', 'Q4'],
+                                datasets: [{
+                                    label: 'Turnover Rate',
+                                    data: data.turnover.data || [4.5, 5.2, 4.8, 5.0],
+                                    backgroundColor: '#007bff',
+                                    borderColor: '#0056b3',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    y: { beginAtZero: true, title: { display: true, text: 'Rate' } }
+                                },
+                                plugins: {
+                                    title: { display: true, text: 'Stock Turnover Rate' }
+                                }
+                            }
+                        });
+
+                        // Low Stock Alerts Chart
+                        new Chart(document.getElementById('lowStockChart').getContext('2d'), {
+                            type: 'pie',
+                            data: {
+                                labels: ['Normal', 'Low Stock'],
+                                datasets: [{
+                                    data: data.low_stock ? [data.low_stock.normal, data.low_stock.low] : [80, 20],
+                                    backgroundColor: ['#28a745', '#ffc107'],
+                                    borderColor: ['#fff', '#fff'],
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: { position: 'bottom' },
+                                    title: { display: true, text: 'Low Stock Alerts' }
+                                }
+                            }
+                        });
+                    },
+                    error: function (xhr) {
+                        console.error('Error loading OPI data:', xhr);
+                        alert('Failed to load OPI data: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            }
+
+            // Initial load
+            loadInventory();
+
+            // Add new row to receive table
+            function addNewRow(tableId, data = {}) {
+                const row = `
+                    <tr>
+                        <td><input type="text" class="form-control resizable-input" name="warehouse_id" value="${data.warehouse_id || ''}" readonly></td>
+                        <td><input type="text" class="form-control resizable-input" name="delivery_id" value="${data.delivery_id || ''}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="item_code" value="${data.item_code || ''}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="material_description" value="${data.material_description || ''}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="material_category" value="${data.material_category || ''}"></td>
+                        <td><input type="number" class="form-control resizable-input" name="received_quantity" value="${data.received_quantity || ''}" min="0" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="unit_of_measure" value="${data.unit_of_measure || ''}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="storage_location" value="${data.storage_location || ''}" placeholder="e.g., Shelf A-12"></td>
+                        <td><input type="date" class="form-control resizable-input" name="receipt_date" value="${data.receipt_date || getCurrentDate()}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="project_no" value="${data.project_no || ''}" required></td>
+                        <td>
+                            <select class="form-control resizable-input" name="condition" required>
+                                <option value="Good" ${data.condition === 'Good' ? 'selected' : ''}>Good</option>
+                                <option value="Damaged" ${data.condition === 'Damaged' ? 'selected' : ''}>Damaged</option>
+                                <option value="Needs Inspection" ${data.condition === 'Needs Inspection' ? 'selected' : ''}>Needs Inspection</option>
+                                <option value="add_new">Add New</option>
+                            </select>
+                        </td>
+                        <td><textarea class="form-control resizable-input" name="remarks" rows="2">${data.remarks || ''}</textarea></td>
+                        <td><button type="button" class="btn btn-danger btn-sm delete-row"><i class="fas fa-trash"></i></button></td>
+                    </tr>
+                `;
+                $(`#${tableId} tbody`).append(row);
+            }
+
+            // Add new row to issue table
+            function addIssueRow(tableId, data = {}) {
+                const row = `
+                    <tr>
+                        <td><input type="text" class="form-control resizable-input" name="warehouse_id" value="${data.warehouse_id || ''}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="item_code" value="${data.item_code || ''}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="material_description" value="${data.material_description || ''}" required></td>
+                        <td><input type="number" class="form-control resizable-input" name="issue_quantity" value="${data.issue_quantity || ''}" min="0" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="unit_of_measure" value="${data.unit_of_measure || ''}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="contractor" value="${data.contractor || ''}" required></td>
+                        <td><input type="date" class="form-control resizable-input" name="issue_date" value="${data.issue_date || getCurrentDate()}" required></td>
+                        <td><input type="text" class="form-control resizable-input" name="project_no" value="${data.project_no || ''}" required></td>
+                        <td><textarea class="form-control resizable-input" name="remarks" rows="2">${data.remarks || ''}</textarea></td>
+                        <td><button type="button" class="btn btn-danger btn-sm delete-row"><i class="fas fa-trash"></i></button></td>
+                    </tr>
+                `;
+                $(`#${tableId} tbody`).append(row);
+            }
+
+            // Handle modal for receive
+            $('#receiveMaterialModal').on('show.bs.modal', function () {
+                const modal = $(this);
+                modal.find('.modal-title').text('Receive Material');
+                $('#receive-material-form')[0].reset();
+                $('#receive-material-table tbody').empty();
+                showLoading(true);
+                $.ajax({
+                    url: '/warehouse/api/generate_warehouse_id',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('receive-material-table', { warehouse_id: data.warehouse_id });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating Warehouse ID:', xhr);
+                        alert('Failed to generate Warehouse ID: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle modal for edit
+            $(document).on('click', '.edit-inventory', function () {
+                const warehouseId = $(this).data('warehouse-id');
+                const inventoryData = inventoryDataCache.find(row => row.warehouse_id === warehouseId);
+                if (!inventoryData) {
+                    alert('Selected inventory not found. Please refresh the page or contact support.');
+                    return;
+                }
+                $('#edit-inventory-table tbody').empty();
+                addNewRow('edit-inventory-table', {
+                    warehouse_id: inventoryData.warehouse_id || '',
+                    delivery_id: inventoryData.delivery_id || '',
+                    item_code: inventoryData.item_code || '',
+                    material_description: inventoryData.material_description || '',
+                    material_category: inventoryData.material_category || '',
+                    received_quantity: inventoryData.received_quantity || '',
+                    unit_of_measure: inventoryData.unit_of_measure || '',
+                    storage_location: inventoryData.storage_location || '',
+                    receipt_date: inventoryData.receipt_date || getCurrentDate(),
+                    project_no: inventoryData.project_no || '',
+                    condition: inventoryData.condition || 'Good',
+                    remarks: inventoryData.remarks || ''
+                });
+                $('#editInventoryModal').modal('show');
+            });
+
+            // Handle modal for issue
+            $('#issueMaterialModal').on('show.bs.modal', function () {
+                $('#issue-material-form')[0].reset();
+                $('#issue-material-table tbody').empty();
+                addIssueRow('issue-material-table');
+            });
+
+            // Handle modal for approval
+            $(document).on('click', '.approve-inventory', function () {
+                const warehouseId = $(this).data('warehouse-id');
+                const inventoryData = inventoryDataCache.find(row => row.warehouse_id === warehouseId);
+                if (!inventoryData) {
+                    alert('Selected inventory not found. Please refresh the page or contact support.');
+                    return;
+                }
+                $('#approve-warehouse-form #warehouse_id').val(inventoryData.warehouse_id);
+                $('#approve-warehouse-form #workflow_status').val(inventoryData.workflow_status || 'Warehouse');
+                $('#approve-warehouse-form #approval_status').val('Pending');
+                $('#approve-warehouse-form #comments').val('');
+                $('#approveWarehouseModal').modal('show');
+            });
+
+            // Add row buttons
+            $('#add-receive-row').on('click', function () {
+                showLoading(true);
+                $.ajax({
+                    url: '/warehouse/api/generate_warehouse_id',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('receive-material-table', { warehouse_id: data.warehouse_id });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating Warehouse ID:', xhr);
+                        alert('Failed to generate Warehouse ID: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            $('#edit-add-row').on('click', function () {
+                showLoading(true);
+                $.ajax({
+                    url: '/warehouse/api/generate_warehouse_id',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data) {
+                        addNewRow('edit-inventory-table', { warehouse_id: data.warehouse_id });
+                    },
+                    error: function (xhr) {
+                        console.error('Error generating Warehouse ID:', xhr);
+                        alert('Failed to generate Warehouse ID: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            $('#add-issue-row').on('click', function () {
+                addIssueRow('issue-material-table');
+            });
+
+            // Delete row
+            $(document).on('click', '.delete-row', function () {
+                const tableId = $(this).closest('table').attr('id');
+                if ($(`#${tableId} tbody tr`).length > 1) {
+                    $(this).closest('tr').remove();
+                } else {
+                    alert('At least one row is required.');
+                }
+            });
+
+            // Handle "Add New" for combo boxes
+            $('select').on('change', function () {
+                if ($(this).val() === 'add_new') {
+                    const field = $(this).attr('name');
+                    const newValue = prompt(`Enter new ${field.replace('_', ' ')}:`);
+                    if (newValue && newValue.trim()) {
+                        const newOption = `<option value="${newValue.trim()}">${newValue.trim()}</option>`;
+                        $(this).find('option[value="add_new"]').before(newOption);
+                        $(this).val(newValue.trim());
+                    } else {
+                        $(this).val('');
+                    }
+                }
+            });
+
+            // Handle CSV import
+            $('#receiveCsvFile').on('change', function (e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('csrf_token', csrfToken);
+
+                showLoading(true);
+                $.ajax({
+                    url: '/warehouse/api/upload_csv',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        loadInventory();
+                        $('#receiveMaterialModal').modal('hide');
+                        alert(response.message || 'CSV file imported successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error uploading CSV:', xhr);
+                        alert('Failed to import CSV file: ' + (xhr.responseJSON?.error || 'Please check the file format or try again later.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle material receipt submission
+            $('#submit-receive').on('click', function () {
+                const rows = [];
+                $('#receive-material-table tbody tr').each(function (index) {
+                    const row = {
+                        warehouse_id: $(this).find('input[name="warehouse_id"]').val().trim(),
+                        delivery_id: $(this).find('input[name="delivery_id"]').val().trim(),
+                        item_code: $(this).find('input[name="item_code"]').val().trim(),
+                        material_description: $(this).find('input[name="material_description"]').val().trim(),
+                        material_category: $(this).find('input[name="material_category"]').val().trim() || null,
+                        received_quantity: parseFloat($(this).find('input[name="received_quantity"]').val()) || 0,
+                        unit_of_measure: $(this).find('input[name="unit_of_measure"]').val().trim(),
+                        storage_location: $(this).find('input[name="storage_location"]').val().trim() || null,
+                        receipt_date: $(this).find('input[name="receipt_date"]').val(),
+                        project_no: $(this).find('input[name="project_no"]').val().trim(),
+                        condition: $(this).find('select[name="condition"]').val() || 'Good',
+                        remarks: $(this).find('textarea[name="remarks"]').val().trim() || null,
+                        workflow_status: 'Warehouse'
+                    };
+
+                    if (!validateReceiveRow(row, index + 1)) return;
+                    rows.push(row);
+                });
+
+                if (rows.length === 0) {
+                    alert('Please add at least one row.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: '/warehouse/api/inventory',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(rows),
+                    success: function (response) {
+                        loadInventory();
+                        $('#receiveMaterialModal').modal('hide');
+                        $('#receive-material-form')[0].reset();
+                        $('#receive-material-table tbody').empty();
+                        alert(response.message || 'Materials received successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error receiving materials:', xhr);
+                        alert('Failed to receive materials: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle inventory update
+            $('#update-inventory').on('click', function () {
+                const rows = [];
+                $('#edit-inventory-table tbody tr').each(function (index) {
+                    const row = {
+                        warehouse_id: $(this).find('input[name="warehouse_id"]').val().trim(),
+                        delivery_id: $(this).find('input[name="delivery_id"]').val().trim(),
+                        item_code: $(this).find('input[name="item_code"]').val().trim(),
+                        material_description: $(this).find('input[name="material_description"]').val().trim(),
+                        material_category: $(this).find('input[name="material_category"]').val().trim() || null,
+                        received_quantity: parseFloat($(this).find('input[name="received_quantity"]').val()) || 0,
+                        unit_of_measure: $(this).find('input[name="unit_of_measure"]').val().trim(),
+                        storage_location: $(this).find('input[name="storage_location"]').val().trim() || null,
+                        receipt_date: $(this).find('input[name="receipt_date"]').val(),
+                        project_no: $(this).find('input[name="project_no"]').val().trim(),
+                        condition: $(this).find('select[name="condition"]').val() || 'Good',
+                        remarks: $(this).find('textarea[name="remarks"]').val().trim() || null,
+                        workflow_status: 'Warehouse'
+                    };
+
+                    if (!validateReceiveRow(row, index + 1)) return;
+                    rows.push(row);
+                });
+
+                if (rows.length === 0) {
+                    alert('Please add at least one row.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: `/warehouse/api/inventory/${rows[0].warehouse_id}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(rows[0]), // Send single row for update
+                    success: function (response) {
+                        loadInventory();
+                        $('#editInventoryModal').modal('hide');
+                        alert(response.message || 'Inventory updated successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error updating inventory:', xhr);
+                        alert('Failed to update inventory: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle material issue submission
+            $('#submit-issue').on('click', function () {
+                const rows = [];
+                $('#issue-material-table tbody tr').each(function (index) {
+                    const row = {
+                        warehouse_id: $(this).find('input[name="warehouse_id"]').val().trim(),
+                        item_code: $(this).find('input[name="item_code"]').val().trim(),
+                        material_description: $(this).find('input[name="material_description"]').val().trim(),
+                        issue_quantity: parseFloat($(this).find('input[name="issue_quantity"]').val()) || 0,
+                        unit_of_measure: $(this).find('input[name="unit_of_measure"]').val().trim(),
+                        contractor: $(this).find('input[name="contractor"]').val().trim(),
+                        issue_date: $(this).find('input[name="issue_date"]').val(),
+                        project_no: $(this).find('input[name="project_no"]').val().trim(),
+                        remarks: $(this).find('textarea[name="remarks"]').val().trim() || null,
+                        workflow_status: 'Warehouse'
+                    };
+
+                    if (!validateIssueRow(row, index + 1)) return;
+                    rows.push(row);
+                });
+
+                if (rows.length === 0) {
+                    alert('Please add at least one row.');
+                    return;
+                }
+
+                // Validate stock availability
+                showLoading(true);
+                $.ajax({
+                    url: '/warehouse/api/check_stock',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(rows),
+                    success: function (response) {
+                        // Proceed with submission if stock is valid
+                        $.ajax({
+                            url: '/warehouse/api/issue',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            headers: { 'X-CSRFToken': csrfToken },
+                            data: JSON.stringify(rows),
+                            success: function (response) {
+                                loadInventory();
+                                $('#issueMaterialModal').modal('hide');
+                                $('#issue-material-form')[0].reset();
+                                $('#issue-material-table tbody').empty();
+                                alert(response.message || 'Materials issued to contractor successfully!');
+                            },
+                            error: function (xhr) {
+                                console.error('Error issuing materials:', xhr);
+                                alert('Failed to issue materials: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                            },
+                            complete: function () {
+                                showLoading(false);
+                            }
+                        });
+                    },
+                    error: function (xhr) {
+                        console.error('Error checking stock:', xhr);
+                        alert('Failed to issue materials: ' + (xhr.responseJSON?.error || 'Insufficient stock or invalid items.'));
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle approval submission
+            $('#submit-approval').on('click', function () {
+                const approvalData = {
+                    warehouse_id: $('#approve-warehouse-form #warehouse_id').val(),
+                    workflow_status: $('#approve-warehouse-form #workflow_status').val(),
+                    approval_status: $('#approve-warehouse-form #approval_status').val(),
+                    comments: $('#approve-warehouse-form #comments').val(),
+                    csrf_token: csrfToken
+                };
+
+                if (!approvalData.approval_status) {
+                    alert('Please select an approval status.');
+                    return;
+                }
+
+                showLoading(true);
+                $.ajax({
+                    url: '/warehouse/api/approve',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: JSON.stringify(approvalData),
+                    success: function (response) {
+                        loadInventory();
+                        $('#approveWarehouseModal').modal('hide');
+                        alert(response.message || 'Approval submitted successfully!');
+                    },
+                    error: function (xhr) {
+                        console.error('Error submitting approval:', xhr);
+                        alert('Failed to submit approval: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Handle delete inventory
+            $(document).on('click', '.delete-inventory', function () {
+                const warehouseId = $(this).data('warehouse-id');
+                if (confirm(`Are you sure you want to delete inventory ${warehouseId}?`)) {
+                    showLoading(true);
+                    $.ajax({
+                        url: `/warehouse/api/inventory/${warehouseId}`,
+                        type: 'DELETE',
+                        headers: { 'X-CSRFToken': csrfToken },
+                        success: function (response) {
+                            loadInventory();
+                            alert(response.message || `Inventory ${warehouseId} deleted successfully!`);
+                        },
+                        error: function (xhr) {
+                            console.error('Error deleting inventory:', xhr);
+                            alert('Failed to delete inventory: ' + (xhr.responseJSON?.error || 'Please verify the Warehouse ID exists or try again later.'));
+                        },
+                        complete: function () {
+                            showLoading(false);
+                        }
+                    });
+                }
+            });
+
+            // Export to CSV
+            $('#exportCSV').on('click', function () {
+                showLoading(true);
+                $.ajax({
+                    url: '/warehouse/api/export_csv',
+                    type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    success: function (data, status, xhr) {
+                        const disposition = xhr.getResponseHeader('Content-Disposition');
+                        const filename = disposition ? disposition.match(/filename="(.+)"/)[1] : 'warehouse_inventory.csv';
+                        const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = filename;
+                        link.click();
+                    },
+                    error: function (xhr) {
+                        console.error('Error exporting CSV:', xhr);
+                        alert('Failed to export CSV: ' + (xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                    },
+                    complete: function () {
+                        showLoading(false);
+                    }
+                });
+            });
+
+            // Ensure Help button works
+            $('#showHelp').on('click', function () {
+                $('#helpModal').modal('show');
+            });
+
+            // Minimize modal
+            $('.minimize-modal').on('click', function () {
+                const modal = $(this).closest('.modal');
+                modal.addClass('modal-minimized');
+                modal.modal('show');
+            });
+
+            // Maximize/Restore modal
+            $('.maximize-modal').on('click', function () {
+                const modal = $(this).closest('.modal');
+                const modalDialog = modal.find('.modal-dialog');
+                if (modalDialog.hasClass('modal-maximized')) {
+                    modalDialog.removeClass('modal-maximized');
+                    $(this).find('i').removeClass('fa-compress').addClass('fa-expand');
+                } else {
+                    modalDialog.addClass('modal-maximized');
+                    $(this).find('i').removeClass('fa-expand').addClass('fa-compress');
+                }
+                modal.removeClass('modal-minimized');
+            });
+
+            // Restore from minimized
+            $('.modal-header').on('click', function (e) {
+                if ($(e.target).closest('.modal-controls').length) return;
+                const modal = $(this).closest('.modal');
+                if (modal.hasClass('modal-minimized')) {
+                    modal.removeClass('modal-minimized');
+                }
+            });
+        });
+    </script>
+{% endblock %}

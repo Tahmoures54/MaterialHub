@@ -1,0 +1,191 @@
+Folder PATH listing
+Volume serial number is 798A-C979
+C:.
+|   .dockerignore
+|   .env.example
+|   .env.local.example
+|   .gitignore
+|   ai_analysis.py
+|   app.py
+|   CHANGELOG.md
+|   COMPETITIVE_ANALYSIS.md
+|   DEPLOYMENT_CHECKLIST.md
+|   docker-compose.production.yml
+|   docker-compose.yml
+|   Dockerfile
+|   Dockerfile.production
+|   docs_USER_GUIDE.md
+|   errors.py
+|   extensions.py
+|   LICENSE
+|   models.py
+|   models_intelligence.py
+|   PRODUCT_GROWTH_READINESS.md
+|   PRODUCT_OVERVIEW.md
+|   README.md
+|   README_ENHANCED.md
+|   requirements-dev.txt
+|   requirements.txt
+|   ROLE_AWARE_CHANGELOG.md
+|   ROLE_AWARE_WORKSPACES.md
+|   role_workspace.py
+|   ROLE_WORKSPACE_ROADMAP.md
+|   run.py
+|   structure.txt
+|   TESTING.md
+|   UI_BACKEND_ALIGNMENT.md
+|   utils.py
+|   UX_DESIGN_SYSTEM.md
+|   VNEXT_FEATURES.md
+|   wsgi.py
+|   __init__.py
+|   
++---app
+|       growth.py
+|       health.py
+|       role_workspace.py
+|       workspaces.py
+|       
++---blueprints
+|       admin.py
+|       auth.py
+|       contact_support.py
+|       control_center.py
+|       delivery.py
+|       help.py
+|       intelligence.py
+|       material_requisition.py
+|       project_dashboard.py
+|       purchase_order.py
+|       quality_control.py
+|       report.py
+|       supplier.py
+|       warehouse.py
+|       __init__.py
+|       
++---config
+|       config.py
+|       production.py
+|       __init__.py
+|       
++---data
+|       country_codes.py
+|       __init__.py
+|       
++---forms
+|       auth_forms.py
+|       material_forms.py
+|       user_forms.py
+|       __init__.py
+|       
++---instance
++---static
+|   |   favicon.ico
+|   |   grok-logo.png
+|   |   logo.png
+|   |   manifest.json
+|   |   robots.txt
+|   |   service-worker.js
+|   |   sitemap.xml
+|   |   
+|   +---css
+|   |       design-system.css
+|   |       documentation.css
+|   |       style.css
+|   |       
+|   +---images
+|   |       favicon.ico
+|   |       pic_1.png
+|   |       
+|   \---js
+|           charts.js
+|           notifications.js
+|           workspace.js
+|           
++---templates
+|   |   base.html
+|   |   
+|   +---admin
+|   |       admin.html
+|   |       
+|   +---auth
+|   |       change_password.html
+|   |       login.html
+|   |       register.html
+|   |       reset_password.html
+|   |       reset_password_request.html
+|   |       reset_request.html
+|   |       
+|   +---dashboard
+|   |       control_center.html
+|   |       dashboard.html
+|   |       home.html
+|   |       project_dashboard.html
+|   |       supplier_dashboard.html
+|   |       
+|   +---errors
+|   |       404.html
+|   |       500.html
+|   |       
+|   +---help
+|   |       about.html
+|   |       getting_started.html
+|   |       help.html
+|   |       user_guide.html
+|   |       
+|   +---intelligence
+|   |       excel_import.html
+|   |       material_intelligence.html
+|   |       traceability.html
+|   |       
+|   +---legal
+|   |       privacy_policy.html
+|   |       terms_of_service.html
+|   |       
+|   +---marketing
+|   |       contact.html
+|   |       demo.html
+|   |       landing.html
+|   |       pricing.html
+|   |       
+|   +---procurement
+|   |       add_material.html
+|   |       edit_material.html
+|   |       materials.html
+|   |       material_marketplace.html
+|   |       material_requisition.html
+|   |       purchase_order.html
+|   |       tender.html
+|   |       
+|   +---quality
+|   |       quality_control.html
+|   |       
+|   +---reports
+|   |       report.html
+|   |       reports.html
+|   |       
+|   +---support
+|   |       contact_support.html
+|   |       
+|   +---warehouse
+|   |       delivery_order.html
+|   |       inventory.html
+|   |       warehouse_operations.html
+|   |       warehouse_report.html
+|   |       
+|   \---workspaces
+|           admin.html
+|           engineering.html
+|           procurement.html
+|           project_manager.html
+|           quality.html
+|           supplier.html
+|           warehouse.html
+|           
+\---tests
+        run_tests.py
+        test_app_integration.py
+        test_growth_assets.py
+        test_role_workspace_unit.py
+        test_startup_regression.py
+        

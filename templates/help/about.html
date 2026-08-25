@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}About MaterialHub{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div><span class="eyebrow">PRODUCT OVERVIEW</span><h1>MaterialHub</h1><p>MaterialHub is a construction and EPC material operations platform that connects engineering demand, procurement, supplier performance, logistics, quality, warehouse traceability and schedule risk in one operational workflow.</p></div>
+  <a class="primary-btn" href="{{ url_for('help.user_guide') }}">Open User Guide</a>
+</section>
+<div class="feature-grid">
+  {% for title,desc,icon in [
+    ('Plan','Create material demand, requisitions and project requirements with clear ownership and deadlines.','fa-project-diagram'),
+    ('Source','Run RFQs, compare supplier quotes and use lead-time and price history to make faster sourcing decisions.','fa-search-dollar'),
+    ('Control','Track purchase orders, deliveries, receipts, invoices, QC and document completeness.','fa-tasks'),
+    ('Trace','Trace heat, lot, serial and batch identity from supplier receipt to warehouse and project issue.','fa-qrcode'),
+    ('Predict','Use readiness, OTIF, lead-time and schedule-aware risk signals to identify future material constraints.','fa-brain'),
+    ('Act','Turn intelligence into recommended actions such as expediting a PO or activating an alternate supplier.','fa-bolt')
+  ] %}
+  <article class="feature-card"><div class="feature-icon"><i class="fas {{ icon }}"></i></div><h3>{{ title }}</h3><p>{{ desc }}</p></article>
+  {% endfor %}
+</div>
+<section class="content-card">
+ <h2>Product philosophy</h2>
+ <p>MaterialHub is designed around the idea that a material system should answer three questions continuously: <strong>What do we need?</strong> <strong>Where is it?</strong> and <strong>Will it arrive in time?</strong></p>
+ <div class="workflow"><span>Need</span><b>→</b><span>Source</span><b>→</b><span>Buy</span><b>→</b><span>Deliver</span><b>→</b><span>Inspect</span><b>→</b><span>Store</span><b>→</b><span>Issue</span><b>→</b><span>Predict</span></div>
+</section>
+{% endblock %}
