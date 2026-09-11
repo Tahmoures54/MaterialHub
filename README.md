@@ -7,7 +7,7 @@ It covers material requisitions, purchase orders, quality control, deliveries, w
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![Flask](https://img.shields.io/badge/Flask-3.0-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
-![Status](https://img.shields.io/badge/Status-v1.0.0-success)
+![Status](https://img.shields.io/badge/Status-v1.1.0-success)
 
 ---
 
@@ -78,6 +78,8 @@ python app.py
 
 Open → [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
+Guests land on the public product page. After sign-in, users are routed to their role workspace.
+
 ---
 
 ## Docker (Recommended)
@@ -103,6 +105,8 @@ docker-compose up --build
 | FLASK_ENV    | No       | `development` or `production`                    |
 | LOG_LEVEL    | No       | `DEBUG` / `INFO` / `WARNING` / `ERROR`           |
 | ADMIN_EMAIL  | No       | Email that becomes admin on registration         |
+
+Health checks: `GET /health`, `GET /health/live`, `GET /health/ready`.
 
 ---
 
@@ -162,7 +166,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-**MaterialHub v1.0.0** — Ready for use and further development.
+**MaterialHub v1.1.0** — Ready for use and further development.
 
 ## Documentation & Template Architecture
 
@@ -179,7 +183,7 @@ The UI templates are now organized by business domain instead of a single flat f
 - `templates/help/` — Help Center, User Guide, Getting Started and About
 - `templates/legal/` — privacy and terms
 - `templates/support/` — support contact
-- `templates/errors/` — 404/500 pages
+- `templates/errors/` — 404/403/500 pages
 
 ### In-app documentation
 - `/help` — Help Center

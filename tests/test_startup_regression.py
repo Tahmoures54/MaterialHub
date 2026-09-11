@@ -14,8 +14,17 @@ def test_material_requisition_import_target_exists():
 def test_python_sources_parse():
     errors=[]
     for p in ROOT.rglob("*.py"):
+        if ".venv" in p.parts or "__pycache__" in p.parts:
+            continue
         try:
             ast.parse(p.read_text(encoding="utf-8"), filename=str(p))
         except Exception as exc:
             errors.append((str(p), str(exc)))
     assert not errors, errors
+
+
+def test_auth_uses_moved_register_template():
+    auth = (ROOT / "blueprints" / "auth.py").read_text(encoding="utf-8")
+    assert "auth/register.html" in auth
+    assert "render_template(\n        'register.html'" not in auth
+    assert "'register.html'" not in auth

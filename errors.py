@@ -19,4 +19,4 @@ def internal_server_error(error):
 def forbidden(error):
     """403 handler."""
     logger.warning(f"403 Forbidden: {error}")
-    return render_template('errors/404.html'), 403  # reuse 404 template for now
+    return render_template('errors/403.html'), 403

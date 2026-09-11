@@ -45,7 +45,7 @@ class RegisterForm(FlaskForm):
     company_address = TextAreaField('Company Address', validators=[
         DataRequired(), Length(min=5, max=200)
     ])
-    country = SelectField('Country', choices=[('', 'Select a country')] + [(code, code) for code in COUNTRY_CODES.keys()],
+    country = SelectField('Country', choices=[('', 'Select a country')] + [(code, name) for name, code in sorted(COUNTRY_CODES.items())],
                          validators=[DataRequired(message='Please select a country.')])
     access_level = SelectField('Role', choices=[
         ('', 'Select a role'),

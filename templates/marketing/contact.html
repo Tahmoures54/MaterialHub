@@ -1,6 +1,18 @@
 {% extends "base.html" %}
+{% block title %} — Request a Demo{% endblock %}
 {% block content %}
-<div class="mh-page"><section class="mh-card"><h1>Request a MaterialHub Demo</h1><p class="mh-muted">Tell us about your project, material volume and procurement workflow. The team can prepare a focused demo around your use case.</p>
-<form method="post"><label>Name<input name="name" required></label><label>Work Email<input type="email" name="email" required></label><label>Company<input name="company"></label><label>Project Type<textarea name="message" rows="5"></textarea></label><button type="submit">Request Demo</button></form>
-</section></div>
+<div class="mh-page">
+  <section class="mh-card">
+    <h1>Request a MaterialHub Demo</h1>
+    <p class="mh-muted">Tell us about your project, material volume and procurement workflow. The team can prepare a focused demo around your use case.</p>
+    <form method="post" class="mh-form" style="margin-top:1.25rem">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Name<input name="name" required></label>
+      <label>Work Email<input type="email" name="email" required></label>
+      <label>Company<input name="company"></label>
+      <label>Project Type<textarea name="message" rows="5"></textarea></label>
+      <button class="btn btn-primary" type="submit">Request Demo</button>
+    </form>
+  </section>
+</div>
 {% endblock %}

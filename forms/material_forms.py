@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, SubmitField, IntegerField
 from wtforms.validators import DataRequired, Optional
 from data.country_codes import COUNTRY_CODES
-from models import Project, User, PurchaseOrder, MaterialRequisition, InspectionStatus, DeliveryStatus, PurchaseOrderStatus
+from models import Project, User, AccessLevel, PurchaseOrder, MaterialRequisition, InspectionStatus, DeliveryStatus, PurchaseOrderStatus
 
 class MaterialMarketplaceForm(FlaskForm):
     search = StringField("Search", validators=[Optional()])
@@ -28,7 +28,7 @@ class PurchaseOrderForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.project_id.choices = [(p.id, p.project_name) for p in Project.query.all()]
-        self.supplier_id.choices = [(u.id, u.company_name) for u in User.query.filter_by(access_level='supplier').all()]
+        self.supplier_id.choices = [(u.id, u.company_name) for u in User.query.filter_by(access_level=AccessLevel.supplier).all()]
 
 class QualityControlForm(FlaskForm):
     order_id = SelectField("Purchase Order", coerce=int, validators=[DataRequired()])

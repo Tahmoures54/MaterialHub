@@ -1,9 +1,12 @@
 from flask import Blueprint, render_template, redirect, url_for, jsonify
 from flask_login import current_user, login_required
+from datetime import date
 
 from models import (
     MaterialRequisition, PurchaseOrder, SupplierMaterial, Delivery,
     WarehouseInventory, QualityControl, Tender, User, AccessLevel,
+    ApprovalStatus, PurchaseOrderStatus, DeliveryStatus, InspectionStatus,
+    WorkflowStatus,
 )
 
 role_workspace_bp = Blueprint("role_workspace", __name__, url_prefix="/workspace")
@@ -54,25 +57,83 @@ def _company_query(model):
     return query
 
 
+def _safe_count(builder):
+    try:
+        return int(builder() or 0)
+    except Exception:
+        return 0
+
+
 def workspace_kpis(role):
-    counts = {
-        "materials": _company_query(SupplierMaterial).count(),
-        "material_requisitions": _company_query(MaterialRequisition).count(),
-        "purchase_orders": _company_query(PurchaseOrder).count(),
-        "suppliers": User.query.filter_by(access_level=AccessLevel.supplier).count(),
-        "deliveries": _company_query(Delivery).count(),
-        "inventory": _company_query(WarehouseInventory).count(),
-        "quality_controls": _company_query(QualityControl).count(),
-        "tenders": _company_query(Tender).count(),
-    }
+    today = date.today()
+    pending_mrs = _safe_count(lambda: _company_query(MaterialRequisition).filter(
+        MaterialRequisition.status == ApprovalStatus.pending).count())
+    overdue_mrs = _safe_count(lambda: _company_query(MaterialRequisition).filter(
+        MaterialRequisition.required_date < today,
+        MaterialRequisition.status != ApprovalStatus.rejected).count())
+    open_pos = _safe_count(lambda: _company_query(PurchaseOrder).filter(
+        PurchaseOrder.status.in_([PurchaseOrderStatus.pending, PurchaseOrderStatus.issued])).count())
+    delayed_deliveries = _safe_count(lambda: _company_query(Delivery).filter(
+        Delivery.status == DeliveryStatus.delayed).count())
+    pending_receipts = _safe_count(lambda: _company_query(Delivery).filter(
+        Delivery.status == DeliveryStatus.delivered).count())
+    inventory_lines = _safe_count(lambda: _company_query(WarehouseInventory).count())
+    low_stock = _safe_count(lambda: _company_query(WarehouseInventory).filter(
+        WarehouseInventory.received_qty < 20).count())
+    pending_qc = _safe_count(lambda: _company_query(QualityControl).filter(
+        QualityControl.status == InspectionStatus.pending).count())
+    failed_qc = _safe_count(lambda: _company_query(QualityControl).filter(
+        QualityControl.status == InspectionStatus.failed).count())
+    open_tenders = _safe_count(lambda: _company_query(Tender).count())
+    materials = _safe_count(lambda: _company_query(SupplierMaterial).count())
+    suppliers = _safe_count(lambda: User.query.filter_by(access_level=AccessLevel.supplier).count())
+    users = _safe_count(lambda: User.query.count())
+    pending_warehouse = _safe_count(lambda: _company_query(WarehouseInventory).filter(
+        WarehouseInventory.workflow_status == WorkflowStatus.warehouse).count())
+
     mapping = {
-        "project_manager": [("Material Records", counts["materials"]), ("Open Requisitions", counts["material_requisitions"]), ("Purchase Orders", counts["purchase_orders"]), ("Deliveries", counts["deliveries"])],
-        "engineering": [("Materials", counts["materials"]), ("Material Requisitions", counts["material_requisitions"]), ("Technical Documents", 0), ("Readiness Reviews", 0)],
-        "procurement": [("Open Requisitions", counts["material_requisitions"]), ("Purchase Orders", counts["purchase_orders"]), ("Suppliers", counts["suppliers"]), ("RFQs / Tenders", counts["tenders"])],
-        "warehouse": [("Inventory Records", counts["inventory"]), ("Deliveries", counts["deliveries"]), ("Materials", counts["materials"]), ("Pending Receipts", 0)],
-        "quality": [("QC Records", counts["quality_controls"]), ("Materials", counts["materials"]), ("Pending Inspections", 0), ("Document Reviews", 0)],
-        "supplier": [("Supplier Materials", counts["materials"]), ("RFQs / Tenders", counts["tenders"]), ("Purchase Orders", counts["purchase_orders"]), ("Delivery Records", counts["deliveries"])],
-        "admin": [("Users", User.query.count()), ("Materials", counts["materials"]), ("Purchase Orders", counts["purchase_orders"]), ("Suppliers", counts["suppliers"])],
+        "project_manager": [
+            ("Pending Approvals", pending_mrs),
+            ("Overdue Requisitions", overdue_mrs),
+            ("Open Purchase Orders", open_pos),
+            ("Delayed Deliveries", delayed_deliveries),
+        ],
+        "engineering": [
+            ("Open Requisitions", pending_mrs),
+            ("Overdue Need Dates", overdue_mrs),
+            ("Materials Catalog", materials),
+            ("Readiness Reviews", overdue_mrs),
+        ],
+        "procurement": [
+            ("Pending Requisitions", pending_mrs),
+            ("Open Purchase Orders", open_pos),
+            ("RFQs / Tenders", open_tenders),
+            ("Delayed Deliveries", delayed_deliveries),
+        ],
+        "warehouse": [
+            ("Inventory Records", inventory_lines),
+            ("Low Stock", low_stock),
+            ("Pending Receipts", pending_receipts),
+            ("Awaiting Approval", pending_warehouse),
+        ],
+        "quality": [
+            ("Pending Inspections", pending_qc),
+            ("Failed Inspections", failed_qc),
+            ("Delayed Deliveries", delayed_deliveries),
+            ("Low Stock Lots", low_stock),
+        ],
+        "supplier": [
+            ("Listed Materials", materials),
+            ("Open Tenders", open_tenders),
+            ("Purchase Orders", open_pos),
+            ("Deliveries", delayed_deliveries),
+        ],
+        "admin": [
+            ("Users", users),
+            ("Suppliers", suppliers),
+            ("Open Purchase Orders", open_pos),
+            ("Low Stock", low_stock),
+        ],
     }
     return [{"label": label, "value": value} for label, value in mapping.get(role, mapping["project_manager"])]
 
@@ -90,7 +151,11 @@ def role(role):
     actual = user_role()
     if requested != actual and actual != "admin":
         requested = actual
-    return render_template(WORKSPACE_TEMPLATES[requested], workspace_role=requested, workspace_kpis=workspace_kpis(requested))
+    return render_template(
+        WORKSPACE_TEMPLATES[requested],
+        workspace_role=requested,
+        workspace_kpis=workspace_kpis(requested),
+    )
 
 
 @role_workspace_bp.get("/api/kpis")

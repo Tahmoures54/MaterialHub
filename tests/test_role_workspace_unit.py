@@ -35,7 +35,7 @@ def test_all_role_workspace_templates_exist():
 
 
 def test_role_workspace_blueprint_contains_expected_routes():
-    source = (ROOT / "app" / "role_workspace.py").read_text(encoding="utf-8")
+    source = (ROOT / "role_workspace.py").read_text(encoding="utf-8")
     for route in ["/", "/<role>", "/api/kpis"]:
         assert route in source
     for role in EXPECTED:
@@ -43,7 +43,7 @@ def test_role_workspace_blueprint_contains_expected_routes():
 
 
 def test_role_aliases_cover_operational_roles():
-    source = (ROOT / "app" / "role_workspace.py").read_text(encoding="utf-8")
+    source = (ROOT / "role_workspace.py").read_text(encoding="utf-8")
     for alias in ["purchase", "buyer", "qc", "qa", "storekeeper", "delivery", "vendor"]:
         assert f'"{alias}"' in source
 

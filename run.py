@@ -1,4 +1,3 @@
-from app.role_workspace import role_workspace_bp
 """Local development entry point for MaterialHub."""
 from app import create_app
 
@@ -6,4 +5,3 @@ app = create_app()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=app.config.get('DEBUG', False))
-app.register_blueprint(role_workspace_bp)
