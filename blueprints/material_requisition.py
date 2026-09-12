@@ -2,8 +2,8 @@ from flask import (
     Blueprint, render_template, request, jsonify, abort, send_file
 )
 from flask_login import login_required, current_user
-from models import db, MaterialRequisition
-from utils import generate_next_mr_no
+from models import db, MaterialRequisition, ApprovalStatus
+from utils import generate_next_mr_no, parse_enum
 import csv
 import io
 import datetime
@@ -12,9 +12,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 material_requisition_bp = Blueprint(
-    'material_requisitions', __name__, url_prefix="/material_requisitions", template_folder='templates'
+    'material_requisitions', __name__, template_folder='templates'
 )
 
+@material_requisition_bp.route('/', methods=['GET'])
 @material_requisition_bp.route('/material_requisitions', methods=['GET'])
 @login_required
 def material_requisitions():
@@ -62,7 +63,7 @@ def api_create_material_requisitions():
         for row in material_requisitions_data:
             if not row.get('mr_no'):
                 row['mr_no'] = generate_next_mr_no(current_user.company_name)
-            mr = MaterialRequisition.from_dict(row, current_user.company_name)
+            mr = MaterialRequisition.from_dict(row, current_user.company_name, user_id=current_user.id)
             mr.added_by = current_user.full_name
             mr.edited_by = current_user.full_name
             mr.created_at = datetime.datetime.utcnow()
@@ -158,7 +159,7 @@ def api_upload_csv():
         for row in reader:
             if not row.get('mr_no'):
                 row['mr_no'] = generate_next_mr_no(current_user.company_name)
-            mr = MaterialRequisition.from_dict(row, current_user.company_name)
+            mr = MaterialRequisition.from_dict(row, current_user.company_name, user_id=current_user.id)
             mr.added_by = current_user.full_name
             mr.edited_by = current_user.full_name
             mr.created_at = datetime.datetime.utcnow()
@@ -187,19 +188,20 @@ def api_approve_mr():
         mr_no = data.get('mr_no')
         status = data.get('approval_status')
         comments = data.get('comments', '')
-        workflow_status = data.get('workflow_status', 'Engineering')
         mr = MaterialRequisition.query.filter_by(mr_no=mr_no, company_name=current_user.company_name).first()
         if not mr:
             logger.warning(f"User {current_user.company_email} attempted to approve non-existent MR {mr_no}")
             return jsonify({'error': 'MR not found.'}), 404
-        mr.status = status
-        mr.workflow_status = workflow_status
-        mr.remarks = comments
+        parsed_status = parse_enum(ApprovalStatus, status, mr.status)
+        if parsed_status:
+            mr.status = parsed_status
+        if comments:
+            mr.remarks = comments
         mr.edited_by = current_user.full_name
         mr.updated_at = datetime.datetime.utcnow()
         db.session.commit()
-        logger.info(f"User {current_user.company_email} set MR {mr_no} to status {status}")
-        return jsonify({'message': f'MR {mr_no} {status.lower()}.'}), 200
+        logger.info(f"User {current_user.company_email} set MR {mr_no} to status {parsed_status.value}")
+        return jsonify({'message': f'MR {mr_no} {parsed_status.value}.'}), 200
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error approving MR for user {current_user.company_email}: {str(e)}")
@@ -260,7 +262,7 @@ def material_requisition_report(mr_no):
             abort(404)
         logger.info(f"User {current_user.company_email} accessed report for MR {mr_no}")
         return render_template(
-            'material_requisition_report.html',
+            'procurement/material_requisition.html',
             mr=mr,
             company_name=current_user.company_name,
             current_user=current_user

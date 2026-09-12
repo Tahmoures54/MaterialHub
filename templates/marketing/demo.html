@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %} — Interactive Demo{% endblock %}
 {% block content %}
 <div class="mh-page">
 <section class="mh-workspace-hero">
@@ -14,7 +15,7 @@
 <section class="mh-card" style="margin-top:1rem">
 <h2>Example AI Material Risk</h2>
 <p><strong>12-inch CS Pipe</strong> may become a schedule risk within 9 days because available stock is below requirement and the open PO is late.</p>
-<div class="mh-action"><span>Recommended Action: Expedite the PO or activate a qualified alternate supplier.</span><a href="/register">Try MaterialHub →</a></div>
+<div class="mh-action"><span>Recommended Action: Expedite the PO or activate a qualified alternate supplier.</span><a href="{{ url_for('auth.register') }}">Try MaterialHub →</a></div>
 </section>
 </div>
 {% endblock %}

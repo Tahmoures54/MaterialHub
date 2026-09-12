@@ -65,6 +65,63 @@ class WorkflowStatus(enum.Enum):
     approved = 'Approved'
     rejected = 'Rejected'
 
+
+def _parse_date(value):
+    if value in (None, ''):
+        return None
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return value
+    if isinstance(value, datetime):
+        return value.date()
+    text = str(value).strip()
+    for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%Y/%m/%d'):
+        try:
+            return datetime.strptime(text[:10], fmt).date()
+        except ValueError:
+            continue
+    raise ValidationError(f'Invalid date: {value}')
+
+
+def _parse_float(value, default=None):
+    if value in (None, ''):
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        raise ValidationError(f'Invalid number: {value}')
+
+
+def _parse_enum(enum_cls, value, default=None):
+    if value in (None, ''):
+        return default
+    if isinstance(value, enum_cls):
+        return value
+    try:
+        return enum_cls(value)
+    except ValueError:
+        try:
+            return enum_cls[str(value).lower()]
+        except KeyError:
+            return default
+
+
+def ensure_project(project_no, company_name, project_name=None):
+    """Find or create a project so requisitions can be imported without a prior setup step."""
+    if not project_no:
+        raise ValidationError('Project number is required')
+    project = Project.query.filter_by(project_no=project_no, company_name=company_name).first()
+    if project:
+        return project
+    project = Project(
+        project_no=project_no,
+        project_name=project_name or project_no,
+        company_name=company_name,
+    )
+    db.session.add(project)
+    db.session.flush()
+    return project
+
+
 # --- Models ---
 
 class Project(db.Model):
@@ -191,6 +248,101 @@ class MaterialRequisition(db.Model):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
+
+    CSV_FIELDS = (
+        'mr_no', 'subject', 'drawing_no', 'drawing_revision', 'drawing_page',
+        'material_type', 'item_code', 'material_description', 'category',
+        'size_inches', 'thickness_mm', 'length_mm', 'discipline', 'required_date',
+        'unit_of_measure', 'quantity', 'spare_part_quantity', 'priority',
+        'standard_specification', 'estimated_cost', 'project_no', 'status',
+        'remarks', 'suggested_vendor',
+    )
+
+    @classmethod
+    def csv_fields(cls):
+        return list(cls.CSV_FIELDS)
+
+    @classmethod
+    def csv_headers(cls):
+        return [field.replace('_', ' ').title() for field in cls.CSV_FIELDS]
+
+    @classmethod
+    def from_dict(cls, data, company_name, user_id=None):
+        payload = dict(data or {})
+        project_no = (payload.get('project_no') or '').strip()
+        project_id = payload.get('project_id')
+        if not project_id:
+            project = ensure_project(project_no, company_name, payload.get('project_name'))
+            project_id = project.id
+            project_no = project.project_no
+        required_date = _parse_date(payload.get('required_date')) or date.today()
+        quantity = _parse_float(payload.get('quantity'), 0)
+        user_id = user_id or payload.get('user_id')
+        if not user_id:
+            raise ValidationError('User is required to create a material requisition')
+        return cls(
+            mr_no=payload.get('mr_no'),
+            subject=payload.get('subject') or payload.get('material_description') or payload.get('item_code'),
+            drawing_no=payload.get('drawing_no'),
+            drawing_revision=payload.get('drawing_revision'),
+            drawing_page=payload.get('drawing_page'),
+            material_type=payload.get('material_type') or payload.get('category'),
+            item_code=(payload.get('item_code') or '').strip(),
+            material_description=(payload.get('material_description') or payload.get('subject') or '').strip(),
+            category=payload.get('category'),
+            size_inches=_parse_float(payload.get('size_inches')),
+            thickness_mm=_parse_float(payload.get('thickness_mm')),
+            length_mm=_parse_float(payload.get('length_mm')),
+            discipline=payload.get('discipline') or 'General',
+            added_by=payload.get('added_by') or '',
+            edited_by=payload.get('edited_by') or payload.get('added_by') or '',
+            required_date=required_date,
+            unit_of_measure=payload.get('unit_of_measure') or payload.get('unit') or 'EA',
+            quantity=quantity,
+            spare_part_quantity=_parse_float(payload.get('spare_part_quantity'), 0.0),
+            priority=payload.get('priority') or 'Normal',
+            standard_specification=payload.get('standard_specification'),
+            estimated_cost=_parse_float(payload.get('estimated_cost')),
+            project_no=project_no,
+            project_id=project_id,
+            company_name=company_name,
+            status=_parse_enum(ApprovalStatus, payload.get('status'), ApprovalStatus.pending),
+            remarks=payload.get('remarks'),
+            documents=payload.get('documents'),
+            suggested_vendor=payload.get('suggested_vendor'),
+            user_id=int(user_id),
+        )
+
+    def update_from_dict(self, data):
+        payload = dict(data or {})
+        assignable = {
+            'subject', 'drawing_no', 'drawing_revision', 'drawing_page',
+            'material_type', 'item_code', 'material_description', 'category',
+            'size_inches', 'thickness_mm', 'length_mm', 'discipline',
+            'unit_of_measure', 'quantity', 'spare_part_quantity', 'priority',
+            'standard_specification', 'estimated_cost', 'remarks', 'documents',
+            'suggested_vendor', 'project_no',
+        }
+        for key in assignable:
+            if key not in payload:
+                continue
+            value = payload[key]
+            if key in ('size_inches', 'thickness_mm', 'length_mm', 'quantity', 'spare_part_quantity', 'estimated_cost'):
+                value = _parse_float(value, getattr(self, key))
+            setattr(self, key, value)
+        if 'required_date' in payload:
+            parsed = _parse_date(payload.get('required_date'))
+            if parsed:
+                self.required_date = parsed
+        if 'status' in payload:
+            parsed_status = _parse_enum(ApprovalStatus, payload.get('status'), self.status)
+            if parsed_status:
+                self.status = parsed_status
+        if payload.get('project_no') and payload.get('project_no') != self.project_no:
+            project = ensure_project(payload['project_no'], self.company_name)
+            self.project_id = project.id
+            self.project_no = project.project_no
+        return self
 
     def __repr__(self):
         return f"<MaterialRequisition {self.mr_no}: {self.project_no}>"
@@ -404,7 +556,7 @@ class WarehouseInventory(db.Model):
     __tablename__ = 'warehouse_inventory'
     id = db.Column(db.Integer, primary_key=True)
     warehouse_id = db.Column(db.String(50), unique=True, nullable=False, index=True)
-    delivery_id = db.Column(db.String(50), db.ForeignKey('delivery.id'), nullable=False, index=True)
+    delivery_id = db.Column(db.String(50), db.ForeignKey('delivery.delivery_id'), nullable=False, index=True)
     item_code = db.Column(db.String(50), nullable=False, index=True)
     material_description = db.Column(db.Text, nullable=False)
     material_category = db.Column(db.String(50))
@@ -458,6 +610,77 @@ class WarehouseInventory(db.Model):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
+
+    CSV_FIELDS = (
+        'warehouse_id', 'delivery_id', 'item_code', 'material_description',
+        'material_category', 'received_qty', 'unit', 'storage_location_id',
+        'receipt_date', 'project_no', 'reason', 'remarks', 'workflow_status',
+    )
+
+    @classmethod
+    def csv_fields(cls):
+        return list(cls.CSV_FIELDS)
+
+    @classmethod
+    def csv_headers(cls):
+        return [field.replace('_', ' ').title() for field in cls.CSV_FIELDS]
+
+    @property
+    def received_quantity(self):
+        return self.received_qty
+
+    @received_quantity.setter
+    def received_quantity(self, value):
+        self.received_qty = value
+
+    @classmethod
+    def from_dict(cls, data, company_name, user_id):
+        payload = dict(data or {})
+        qty = _parse_float(payload.get('received_qty', payload.get('received_quantity')), 0)
+        receipt_date = _parse_date(payload.get('receipt_date')) or date.today()
+        return cls(
+            warehouse_id=payload.get('warehouse_id'),
+            delivery_id=str(payload.get('delivery_id') or ''),
+            item_code=(payload.get('item_code') or '').strip(),
+            material_description=(payload.get('material_description') or '').strip(),
+            material_category=payload.get('material_category') or payload.get('category'),
+            received_qty=qty,
+            unit=payload.get('unit') or payload.get('unit_of_measure') or 'EA',
+            storage_location_id=payload.get('storage_location_id'),
+            receipt_date=receipt_date,
+            project_no=payload.get('project_no') or 'UNASSIGNED',
+            reason=payload.get('reason'),
+            remarks=payload.get('remarks'),
+            workflow_status=_parse_enum(WorkflowStatus, payload.get('workflow_status'), WorkflowStatus.warehouse),
+            company_name=company_name,
+            user_id=int(user_id),
+        )
+
+    def update_from_dict(self, data):
+        payload = dict(data or {})
+        if 'received_quantity' in payload and 'received_qty' not in payload:
+            payload['received_qty'] = payload['received_quantity']
+        assignable = {
+            'item_code', 'material_description', 'material_category',
+            'received_qty', 'unit', 'storage_location_id', 'project_no',
+            'reason', 'remarks', 'delivery_id',
+        }
+        for key in assignable:
+            if key not in payload:
+                continue
+            value = payload[key]
+            if key == 'received_qty':
+                value = _parse_float(value, self.received_qty)
+            setattr(self, key, value)
+        if 'receipt_date' in payload:
+            parsed = _parse_date(payload.get('receipt_date'))
+            if parsed:
+                self.receipt_date = parsed
+        if 'workflow_status' in payload:
+            parsed_status = _parse_enum(WorkflowStatus, payload.get('workflow_status'), self.workflow_status)
+            if parsed_status:
+                self.workflow_status = parsed_status
+        return self
 
     def __repr__(self):
         return f"<WarehouseInventory {self.warehouse_id}: {self.material_description}>"
@@ -671,3 +894,29 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return f"<User {self.company_email}: {self.access_level.value}>"
+
+
+class ContactInquiry(db.Model):
+    """Inbound demo / sales requests from the public growth funnel."""
+    __tablename__ = 'contact_inquiry'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), nullable=False, index=True)
+    company = db.Column(db.String(120), nullable=True)
+    message = db.Column(db.Text, nullable=True)
+    source = db.Column(db.String(50), nullable=False, default='website')
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'company': self.company,
+            'message': self.message,
+            'source': self.source,
+            'created_at': self.created_at.isoformat(),
+        }
+
+    def __repr__(self):
+        return f"<ContactInquiry {self.email}>"

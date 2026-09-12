@@ -62,8 +62,21 @@ class ProductionConfig(Config):
     SESSION_COOKIE_SECURE = True
 
 
+class TestingConfig(Config):
+    TESTING = True
+    DEBUG = True
+    WTF_CSRF_ENABLED = False
+    SECRET_KEY = 'materialhub-test-secret'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(Config.INSTANCE_DIR, 'test.db')
+    SESSION_COOKIE_SECURE = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+    }
+
+
 config_by_name = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
+    'testing': TestingConfig,
     'default': DevelopmentConfig
 }

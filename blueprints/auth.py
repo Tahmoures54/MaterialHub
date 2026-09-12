@@ -111,7 +111,7 @@ def register():
             session.pop('captcha_answer', None)
             session.pop('captcha_question', None)
             return render_template(
-                'register.html',
+                'auth/register.html',
                 form=form,
                 totp_form=totp_form,
                 qr_code=user.qr_code_base64,
@@ -179,7 +179,7 @@ def confirm_totp():
                 flash(f"Error in {form[field].label.text}: {error}", 'danger')
 
     return render_template(
-        'register.html',
+        'auth/register.html',
         form=RegisterForm(),
         totp_form=form,
         qr_code=user.qr_code_base64,

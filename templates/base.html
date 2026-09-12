@@ -34,7 +34,7 @@
       <div class="mh-brand-mark">M</div><div><strong>MaterialHub</strong><span>Material Operations Platform</span></div>
     </a>
     {% if not current_user.is_authenticated %}
-      <nav class="mh-public-nav"><a href="{{ url_for('help.getting_started') }}">How it works</a><a href="{{ url_for('help.about') }}">About</a><a href="{{ url_for('auth.login') }}">Sign in</a><a class="mh-pill primary" href="{{ url_for('auth.register') }}">Get started</a></nav>
+      <nav class="mh-public-nav"><a href="{{ url_for('product_overview') }}">Product</a><a href="{{ url_for('growth.demo') }}">Demo</a><a href="{{ url_for('growth.pricing') }}">Pricing</a><a href="{{ url_for('auth.login') }}">Sign in</a><a class="mh-pill primary" href="{{ url_for('auth.register') }}">Get started</a></nav>
     {% else %}
       <div class="mh-top-actions"><a class="mh-pill" href="{{ url_for('control_center.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Control Center</a><a class="mh-pill" href="{{ url_for('intelligence.dashboard') }}"><i class="fas fa-brain"></i> Intelligence</a><a class="mh-avatar" title="{{ current_user.full_name }}" href="{{ url_for('role_workspace.my_workspace') }}">{{ (current_user.full_name or 'U')[:1]|upper }}</a></div>
     {% endif %}

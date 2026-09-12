@@ -13,6 +13,9 @@ def test_marketing_pages_exist():
 def test_health_and_wsgi_exist():
     assert (ROOT/'wsgi.py').exists()
     assert (ROOT/'app'/'health.py').exists()
+    health = (ROOT/'app'/'health.py').read_text(encoding='utf-8')
+    assert '/health/live' in health
+    assert '/health/ready' in health
 
 def test_production_docker_assets_exist():
     assert (ROOT/'Dockerfile.production').exists()

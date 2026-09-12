@@ -25,4 +25,4 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 5000
 
 # Use Gunicorn in production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "--timeout", "120", "app:create_app()"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "--timeout", "120", "wsgi:app"]

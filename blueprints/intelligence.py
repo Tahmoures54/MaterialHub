@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, render_template, request, flash, redirect,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from extensions import db
-from models import MaterialRequisition, SupplierMaterial, User, AccessLevel, PurchaseOrder
+from models import MaterialRequisition, SupplierMaterial, User, AccessLevel, PurchaseOrder, ApprovalStatus, PurchaseOrderStatus, WarehouseInventory
 from models_intelligence import (MaterialTrace, MaterialDocument, SupplierScore, RFQ, RFQSupplier,
     Receipt, SupplierInvoice, ThreeWayMatch, MaterialPriceHistory, ScheduleRisk, RFQStatus, MatchStatus, DocumentType)
 
@@ -33,9 +33,9 @@ def score_supplier(supplier_id):
     db.session.commit(); return score
 
 def readiness(item_code, required_qty=0, required_date=None):
-    stock=sum((x.received_qty or 0) for x in __import__('models').WarehouseInventory.query.filter_by(item_code=item_code).all())
+    stock=sum((x.received_qty or 0) for x in WarehouseInventory.query.filter_by(item_code=item_code).all())
     open_po=0
-    for po in PurchaseOrder.query.filter(PurchaseOrder.status.in_([__import__('models').PurchaseOrderStatus.pending,__import__('models').PurchaseOrderStatus.issued])).all():
+    for po in PurchaseOrder.query.filter(PurchaseOrder.status.in_([PurchaseOrderStatus.pending,PurchaseOrderStatus.issued])).all():
         for it in po.items:
             if it.material_requisition and it.material_requisition.item_code==item_code: open_po+=it.quantity or 0
     coverage=stock+open_po
@@ -50,7 +50,7 @@ def readiness(item_code, required_qty=0, required_date=None):
 
 def generate_copilot():
     alerts=[]
-    for mr in company_filter(MaterialRequisition.query,MaterialRequisition).filter(MaterialRequisition.status!='rejected').order_by(MaterialRequisition.required_date.asc()).limit(100).all():
+    for mr in company_filter(MaterialRequisition.query,MaterialRequisition).filter(MaterialRequisition.status!=ApprovalStatus.rejected).order_by(MaterialRequisition.required_date.asc()).limit(100).all():
         idx,stock,open_po=readiness(mr.item_code,mr.quantity,mr.required_date)
         if idx<75:
             days=max((mr.required_date-date.today()).days,0) if mr.required_date else 999
@@ -133,8 +133,11 @@ def excel_import():
                 rows=list(csv.DictReader(io.StringIO(f.stream.read().decode('utf-8-sig'))))
             else:
                 import openpyxl
-                wb=openpyxl.load_workbook(f,read_only=True,data_only=True); ws=wb.active; headers=[str(c.value).strip() if c.value is not None else '' for c in next(ws.iter_rows())]
-                rows=[dict(zip(headers,[c.value for c in row])) for row in ws.iter_rows()]
+                wb=openpyxl.load_workbook(f,read_only=True,data_only=True); ws=wb.active
+                rows_iter=ws.iter_rows()
+                header_row=next(rows_iter, None)
+                headers=[str(c.value).strip() if c.value is not None else '' for c in (header_row or [])]
+                rows=[dict(zip(headers,[c.value for c in row])) for row in rows_iter]
             errors=[]; valid=[]
             required={'item_code','material_description','quantity','required_date'}
             for n,r in enumerate(rows,2):

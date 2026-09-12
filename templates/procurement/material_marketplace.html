@@ -393,11 +393,11 @@
                 <div class="materials-grid">
                     {% for material in materials %}
                         <div class="material-card">
-                            <h3>{{ material.name }}</h3>
-                            <p class="material-price">Price: ${{ material.price | round(2) }}</p>
+                            <h3>{{ material.material_name or material.name }}</h3>
+                            <p class="material-price">Price: ${{ '%.2f'|format(material.price or 0) }}</p>
                             <p class="material-unit">Unit: {{ material.unit }}</p>
                             <p class="material-country">Country: {{ COUNTRY_NAMES_BY_CODE.get(material.country_code, 'Unknown') }}</p>
-                            <button class="contact-button" onclick="window.location.href='{{ url_for('auth.contact_support') }}?material={{ material.id }}'">Contact Supplier</button>
+                            <button class="contact-button" onclick="window.location.href='{{ url_for('contact_support') }}?material={{ material.id }}'">Contact Supplier</button>
                         </div>
                     {% endfor %}
                 </div>

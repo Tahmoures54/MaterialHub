@@ -9,7 +9,7 @@ from models import db, WarehouseInventory, Delivery, WorkflowStatus, AccessLevel
 
 # Configure logging
 logger = logging.getLogger(__name__)
-warehouse_bp = Blueprint('warehouse', __name__, url_prefix='/warehouse', template_folder='templates')
+warehouse_bp = Blueprint('warehouse', __name__, template_folder='templates')
 
 @warehouse_bp.route('/', methods=['GET'])
 @warehouse_bp.route('/warehouse', methods=['GET'])
@@ -63,7 +63,8 @@ def api_receive_inventory():
         if not isinstance(data, list):
             data = [data]
         for item in data:
-            if not all(key in item for key in ['warehouse_id', 'delivery_id', 'item_code', 'material_description', 'received_quantity']):
+            required = ['warehouse_id', 'delivery_id', 'item_code', 'material_description']
+            if not all(key in item for key in required) or not (item.get('received_quantity') or item.get('received_qty')):
                 logger.warning(f"Missing required fields in inventory data for user {current_user.id}")
                 return jsonify({'error': 'Missing required fields'}), 400
             inventory = WarehouseInventory.from_dict(item, current_user.company_name, current_user.id)
@@ -228,12 +229,8 @@ def api_generate_warehouse_id():
         if current_user.access_level != AccessLevel.warehouse:
             logger.warning(f"Unauthorized warehouse ID generation attempt by user {current_user.id}")
             return jsonify({'error': 'Unauthorized'}), 403
-        last_item = WarehouseInventory.query.order_by(WarehouseInventory.id.desc()).first()
-        if last_item and last_item.warehouse_id.startswith('WH-'):
-            last_number = int(last_item.warehouse_id.split('-')[1])
-            warehouse_id = f"WH-{last_number + 1:04d}"
-        else:
-            warehouse_id = "WH-0001"
+        from utils import generate_next_warehouse_id
+        warehouse_id = generate_next_warehouse_id(current_user.company_name)
         logger.info(f"User {current_user.id} generated warehouse ID {warehouse_id}")
         return jsonify({'warehouse_id': warehouse_id}), 200
     except Exception as e:
@@ -360,8 +357,8 @@ def api_get_opi():
         inventory = WarehouseInventory.query.filter_by(company_name=current_user.company_name).all()
         total_items = len(inventory)
         low_stock_threshold = 10.0  # Example threshold
-        low_stock_items = sum(1 for item in inventory if item.received_quantity <= low_stock_threshold)
-        accurate_items = sum(1 for item in inventory if item.condition == 'Good')  # Example metric
+        low_stock_items = sum(1 for item in inventory if (item.received_qty or 0) <= low_stock_threshold)
+        accurate_items = sum(1 for item in inventory if item.workflow_status == WorkflowStatus.approved)
         turnover_data = [4.5, 5.2, 4.8, 5.0]  # Placeholder; replace with real data
         opi_data = {
             'accuracy': {

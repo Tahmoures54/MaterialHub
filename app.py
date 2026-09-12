@@ -1,12 +1,26 @@
 import logging
 import os
 import sys
-from flask import Flask, render_template, redirect, url_for, flash
+import importlib.util
+from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from logging.handlers import RotatingFileHandler
 from extensions import db, migrate, login_manager, csrf
 from config.config import config_by_name
 from data.country_codes import COUNTRY_NAMES_BY_CODE
+
+
+def _load_sidecar(module_name, filename):
+    """Load modules from the app/ directory without colliding with this app.py module."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', filename)
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+
 def create_app(config_name=None):
     """Application factory."""
     if config_name is None:
@@ -14,16 +28,23 @@ def create_app(config_name=None):
 
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_by_name.get(config_name, config_by_name['default']))
-    # Initialize extensions
+
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+
+    @app.before_request
+    def _csrf_token_from_json():
+        if request.method in ('POST', 'PUT', 'PATCH', 'DELETE') and request.is_json:
+            payload = request.get_json(silent=True) or {}
+            token = payload.get('csrf_token')
+            if token:
+                request.environ['HTTP_X_CSRFTOKEN'] = str(token)
+
     csrf.init_app(app)
 
-    # Logging Configuration
-    log_level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'))
-    
-    # Console Handler (Standard Output for Vercel/Cloud logs)
+    log_level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'), logging.INFO)
+
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(logging.Formatter(
         '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
@@ -31,7 +52,6 @@ def create_app(config_name=None):
     console_handler.setLevel(log_level)
     app.logger.handlers = [console_handler]
 
-    # File Handler (Only if filesystem allows writing, like local dev)
     try:
         os.makedirs(app.instance_path, exist_ok=True)
         log_handler = RotatingFileHandler(
@@ -46,7 +66,6 @@ def create_app(config_name=None):
         log_handler.setLevel(log_level)
         app.logger.addHandler(log_handler)
     except OSError:
-        # Read-only filesystem (e.g. Vercel Serverless environment)
         pass
 
     app.logger.setLevel(log_level)
@@ -67,12 +86,10 @@ def create_app(config_name=None):
     except AttributeError:
         pass
 
-    # Import models & forms after extensions are ready
     from forms.material_forms import MaterialMarketplaceForm, AddMaterialForm
     from models import SupplierMaterial, User, AccessLevel
     import models_intelligence  # register vNext intelligence tables
 
-    # Register Blueprints
     from blueprints.auth import auth_bp
     from blueprints.supplier import supplier_bp
     from blueprints.help import help_bp
@@ -87,6 +104,8 @@ def create_app(config_name=None):
     from blueprints.control_center import control_center_bp
     from blueprints.intelligence import intelligence_bp
     from role_workspace import role_workspace_bp
+    growth_bp = _load_sidecar('materialhub_growth', 'growth.py').growth_bp
+    health_bp = _load_sidecar('materialhub_health', 'health.py').health_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(supplier_bp, url_prefix='/supplier')
@@ -102,6 +121,8 @@ def create_app(config_name=None):
     app.register_blueprint(control_center_bp)
     app.register_blueprint(intelligence_bp)
     app.register_blueprint(role_workspace_bp)
+    app.register_blueprint(growth_bp)
+    app.register_blueprint(health_bp)
 
     with app.app_context():
         try:
@@ -114,9 +135,14 @@ def create_app(config_name=None):
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
-    # ---------- General routes ----------
     @app.route('/')
     def index():
+        if current_user.is_authenticated:
+            return redirect(url_for('role_workspace.my_workspace'))
+        return render_template('marketing/landing.html')
+
+    @app.route('/overview')
+    def product_overview():
         return render_template('dashboard/home.html')
 
     @app.route('/dashboard')
@@ -128,6 +154,26 @@ def create_app(config_name=None):
     def health():
         return {'status': 'ok', 'service': 'MaterialHub'}, 200
 
+    @app.route('/getting-started')
+    def getting_started_alias():
+        return redirect(url_for('help.getting_started'))
+
+    @app.route('/user-guide')
+    def user_guide_alias():
+        return redirect(url_for('help.user_guide'))
+
+    @app.route('/about')
+    def about_alias():
+        return redirect(url_for('help.about'))
+
+    @app.route('/register')
+    def register_alias():
+        return redirect(url_for('auth.register'))
+
+    @app.route('/login')
+    def login_alias():
+        return redirect(url_for('auth.login'))
+
     @app.route('/inventory')
     @login_required
     def inventory():
@@ -136,16 +182,15 @@ def create_app(config_name=None):
     @app.route('/material_marketplace', methods=['GET', 'POST'])
     def material_marketplace():
         form = MaterialMarketplaceForm()
-        materials = SupplierMaterial.query.all()
+        query = SupplierMaterial.query
         if form.validate_on_submit():
             search_query = form.search.data
             country_code = form.country.data
-            query = SupplierMaterial.query
             if search_query:
                 query = query.filter(SupplierMaterial.material_name.ilike(f'%{search_query}%'))
             if country_code:
                 query = query.filter(SupplierMaterial.country_code == country_code)
-            materials = query.all()
+        materials = query.order_by(SupplierMaterial.updated_at.desc()).all()
         return render_template(
             'procurement/material_marketplace.html',
             form=form,
@@ -188,7 +233,14 @@ def create_app(config_name=None):
         if material.user_id != current_user.id:
             flash('You can only edit your own materials.', 'danger')
             return redirect(url_for('material_marketplace'))
-        form = AddMaterialForm(obj=material)
+        form = AddMaterialForm()
+        if request.method == 'GET':
+            form.material_name.data = material.material_name
+            form.description.data = material.material_name
+            form.category.data = material.material_type
+            form.unit_price.data = material.price
+            form.available_quantity.data = material.available_qty
+            form.unit_of_measure.data = material.unit
         if form.validate_on_submit():
             material.material_name = form.material_name.data
             material.material_type = form.category.data
@@ -204,7 +256,10 @@ def create_app(config_name=None):
     @app.route('/materials')
     @login_required
     def materials():
-        materials = SupplierMaterial.query.all()
+        query = SupplierMaterial.query
+        if not current_user.is_admin:
+            query = query.filter_by(company_name=current_user.company_name)
+        materials = query.order_by(SupplierMaterial.updated_at.desc()).all()
         return render_template('procurement/materials.html', materials=materials)
 
     @app.route('/tender')
@@ -224,7 +279,6 @@ def create_app(config_name=None):
     def contact_support():
         return render_template('support/contact_support.html')
 
-    # Error handlers
     from errors import page_not_found, internal_server_error, forbidden
     app.register_error_handler(404, page_not_found)
     app.register_error_handler(500, internal_server_error)
@@ -234,8 +288,7 @@ def create_app(config_name=None):
     return app
 
 
-# ایجاد نمونه‌ی اصلی در سطح فایل برای Vercel
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=app.config.get('DEBUG', False))
