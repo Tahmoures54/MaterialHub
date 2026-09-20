@@ -17,7 +17,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   {% block head %}{% endblock %}
   <style>
-    /* Shell — Industrial Iranian Sky · consistent full-width chrome */
     :root {
       --mh-teal: #0E7490;
       --mh-teal-2: #0891B2;
@@ -32,10 +31,7 @@
       --mh-sidebar-w: 248px;
     }
     * { box-sizing: border-box; }
-    html {
-      scroll-behavior: smooth;
-      height: 100%;
-    }
+    html { scroll-behavior: smooth; height: 100%; }
     body {
       margin: 0 !important;
       padding: 0 !important;
@@ -48,7 +44,6 @@
     }
     a { color: inherit; text-decoration: none; }
 
-    /* Full-height shell: topbar + body + footer always aligned */
     .mh-shell {
       min-height: 100vh;
       min-height: 100dvh;
@@ -57,7 +52,7 @@
       width: 100%;
     }
 
-    /* ── Topbar: always full viewport width ── */
+    /* Topbar — full width always */
     .mh-topbar {
       height: var(--mh-topbar-h);
       width: 100%;
@@ -82,104 +77,49 @@
     }
     .mh-brand img { width: 36px; height: 36px; object-fit: contain; }
     .mh-brand-mark {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+      width: 36px; height: 36px; border-radius: 10px;
       background: linear-gradient(145deg, #0E7490, #0891B2);
-      display: grid;
-      place-items: center;
-      color: #fff;
-      font-weight: 900;
-      font-size: 0.95rem;
-      letter-spacing: -0.02em;
-      box-shadow: 0 2px 8px rgba(14, 116, 144, 0.25);
-      flex-shrink: 0;
+      display: grid; place-items: center; color: #fff;
+      font-weight: 900; font-size: 0.95rem; letter-spacing: -0.02em;
+      box-shadow: 0 2px 8px rgba(14, 116, 144, 0.25); flex-shrink: 0;
     }
     .mh-brand strong { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }
     .mh-brand span {
-      display: block;
-      font-size: 0.7rem;
-      color: var(--mh-muted);
-      margin-top: 1px;
-      font-weight: 500;
-      white-space: nowrap;
+      display: block; font-size: 0.7rem; color: var(--mh-muted);
+      margin-top: 1px; font-weight: 500; white-space: nowrap;
     }
-
     .mh-menu {
-      border: 0;
-      background: transparent;
-      font-size: 1.1rem;
-      color: #334155;
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 8px;
-      flex-shrink: 0;
+      border: 0; background: transparent; font-size: 1.1rem; color: #334155;
+      cursor: pointer; padding: 6px; border-radius: 8px; flex-shrink: 0;
     }
     .mh-menu:hover { background: #F1F5F9; }
-
     .mh-top-actions {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
+      margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
     }
     .mh-pill {
-      padding: 7px 12px;
-      border: 1px solid var(--mh-border);
-      border-radius: 8px;
-      background: #fff;
-      text-decoration: none;
-      font-size: 0.84rem;
-      font-weight: 600;
-      color: #334155;
+      padding: 7px 12px; border: 1px solid var(--mh-border); border-radius: 8px;
+      background: #fff; text-decoration: none; font-size: 0.84rem; font-weight: 600;
+      color: #334155; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
       transition: background 0.15s, border-color 0.15s, color 0.15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
     }
     .mh-pill:hover { background: #F8FAFC; border-color: #94A3B8; }
-    .mh-pill.primary {
-      background: #0E7490;
-      border-color: #0E7490;
-      color: #fff;
-    }
+    .mh-pill.primary { background: #0E7490; border-color: #0E7490; color: #fff; }
     .mh-pill.primary:hover { background: #0C637A; border-color: #0C637A; }
-
     .mh-avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: #ECFEFF;
-      color: #0E7490;
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      font-size: 0.85rem;
-      border: 1px solid #A5F3FC;
-      flex-shrink: 0;
+      width: 34px; height: 34px; border-radius: 50%; background: #ECFEFF; color: #0E7490;
+      display: grid; place-items: center; font-weight: 800; font-size: 0.85rem;
+      border: 1px solid #A5F3FC; flex-shrink: 0;
     }
-
     .mh-public-nav {
-      display: flex;
-      gap: 4px;
-      margin-left: auto;
-      align-items: center;
-      flex-shrink: 0;
+      display: flex; gap: 4px; margin-left: auto; align-items: center; flex-shrink: 0;
     }
     .mh-public-nav a {
-      padding: 7px 12px;
-      text-decoration: none;
-      color: #475569;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      font-weight: 550;
-      white-space: nowrap;
+      padding: 7px 12px; text-decoration: none; color: #475569; border-radius: 8px;
+      font-size: 0.875rem; font-weight: 550; white-space: nowrap;
     }
     .mh-public-nav a:hover { background: #F1F5F9; color: #0F172A; }
 
-    /* ── Body region grows between topbar and footer ── */
+    /* Body fills space between topbar and footer */
     .mh-body {
       flex: 1 1 auto;
       display: flex;
@@ -187,8 +127,6 @@
       min-height: 0;
       width: 100%;
     }
-
-    /* Authenticated: sidebar + content */
     .mh-layout {
       display: grid;
       grid-template-columns: var(--mh-sidebar-w) minmax(0, 1fr);
@@ -196,71 +134,40 @@
       min-height: 0;
       width: 100%;
     }
-
     .mh-sidebar {
       background: linear-gradient(180deg, #0B1622 0%, #122033 100%);
-      color: #94A3B8;
-      padding: 16px 10px;
-      position: sticky;
-      top: var(--mh-topbar-h);
+      color: #94A3B8; padding: 16px 10px;
+      position: sticky; top: var(--mh-topbar-h);
       height: calc(100vh - var(--mh-topbar-h));
       height: calc(100dvh - var(--mh-topbar-h));
-      overflow-y: auto;
-      overflow-x: hidden;
-      align-self: start;
+      overflow-y: auto; overflow-x: hidden; align-self: start;
     }
     .mh-nav-label {
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #64748B;
-      padding: 14px 12px 6px;
-      font-weight: 700;
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: #64748B; padding: 14px 12px 6px; font-weight: 700;
     }
     .mh-nav a {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 12px;
-      margin: 2px 0;
-      border-radius: 8px;
-      text-decoration: none;
-      color: #94A3B8;
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: background 0.15s, color 0.15s;
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px; margin: 2px 0;
+      border-radius: 8px; text-decoration: none; color: #94A3B8;
+      font-size: 0.875rem; font-weight: 500; transition: background 0.15s, color 0.15s;
     }
-    .mh-nav a:hover,
-    .mh-nav a.active {
-      background: rgba(14, 116, 144, 0.18);
-      color: #E0F2FE;
+    .mh-nav a:hover, .mh-nav a.active {
+      background: rgba(14, 116, 144, 0.18); color: #E0F2FE;
     }
     .mh-nav i { width: 18px; text-align: center; font-size: 0.85rem; opacity: 0.9; }
 
     .mh-content {
-      min-width: 0;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 auto;
+      min-width: 0; width: 100%;
+      display: flex; flex-direction: column; flex: 1 1 auto;
     }
-
     .mh-flashes {
-      width: 100%;
-      max-width: 1500px;
-      margin: 16px auto 0;
-      padding: 0 26px;
+      width: 100%; max-width: 1500px; margin: 16px auto 0; padding: 0 26px;
     }
-
     .mh-main {
-      width: 100%;
-      max-width: 1500px;
-      margin: 0 auto;
-      padding: 26px;
-      flex: 1 1 auto;
+      width: 100%; max-width: 1500px; margin: 0 auto; padding: 26px; flex: 1 1 auto;
     }
 
-    /* ── Footer: always full viewport width, pinned under body ── */
+    /* Footer — full width always */
     .mh-footer {
       width: 100%;
       border-top: 1px solid var(--mh-border);
@@ -278,23 +185,16 @@
     .mh-footer strong { color: #0F172A; }
 
     .mh-sidebar-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.45);
-      z-index: 998;
+      display: none; position: fixed; inset: 0;
+      background: rgba(15, 23, 42, 0.45); z-index: 998;
     }
     body.mh-sidebar-open .mh-sidebar-backdrop { display: block; }
 
     @media (max-width: 950px) {
       .mh-layout { grid-template-columns: 1fr; }
       .mh-sidebar {
-        position: fixed;
-        left: -280px;
-        top: var(--mh-topbar-h);
-        width: var(--mh-sidebar-w);
-        z-index: 999;
-        transition: left 0.2s ease;
+        position: fixed; left: -280px; top: var(--mh-topbar-h);
+        width: var(--mh-sidebar-w); z-index: 999; transition: left 0.2s ease;
         box-shadow: 12px 0 32px rgba(0, 0, 0, 0.25);
         height: calc(100vh - var(--mh-topbar-h));
         height: calc(100dvh - var(--mh-topbar-h));
@@ -305,8 +205,6 @@
       .mh-topbar { padding: 0 14px; }
       .mh-flashes { padding: 0 18px; }
       .mh-footer { padding: 14px 18px; }
-      .mh-top-actions .mh-pill span,
-      .mh-top-actions .mh-pill { font-size: 0.8rem; }
     }
     @media (max-width: 600px) {
       :root { --mh-topbar-h: 58px; }
@@ -321,7 +219,6 @@
 <body>
 <div class="mh-shell">
 
-  {# ════════ TOPBAR — always full width ════════ #}
   <header class="mh-topbar">
     {% if current_user.is_authenticated %}
       <button class="mh-menu" type="button" onclick="document.body.classList.toggle('mh-sidebar-open')" aria-label="Toggle navigation">
@@ -361,7 +258,6 @@
     {% endif %}
   </header>
 
-  {# ════════ BODY ════════ #}
   <div class="mh-body">
     {% if current_user.is_authenticated %}
       <div class="mh-sidebar-backdrop" onclick="document.body.classList.remove('mh-sidebar-open')"></div>
@@ -373,7 +269,6 @@
             <a href="{{ url_for('control_center.dashboard') }}"><i class="fas fa-chart-pie"></i> Control Center</a>
             <a href="{{ url_for('intelligence.dashboard') }}"><i class="fas fa-brain"></i> Material Intelligence</a>
           </nav>
-
           <div class="mh-nav-label">Operations</div>
           <nav class="mh-nav">
             <a href="{{ url_for('material_requisitions.material_requisitions') }}"><i class="fas fa-clipboard-list"></i> Requisitions</a>
@@ -382,7 +277,6 @@
             <a href="{{ url_for('warehouse.warehouse_operations') }}"><i class="fas fa-warehouse"></i> Warehouse</a>
             <a href="{{ url_for('quality_control.quality_control') }}"><i class="fas fa-shield-alt"></i> Quality Control</a>
           </nav>
-
           <div class="mh-nav-label">Materials & Data</div>
           <nav class="mh-nav">
             <a href="{{ url_for('materials') }}"><i class="fas fa-boxes"></i> Materials</a>
@@ -390,7 +284,6 @@
             <a href="{{ url_for('intelligence.traceability') }}"><i class="fas fa-qrcode"></i> Traceability</a>
             <a href="{{ url_for('intelligence.excel_import') }}"><i class="fas fa-file-excel"></i> Excel Import</a>
           </nav>
-
           <div class="mh-nav-label">Management</div>
           <nav class="mh-nav">
             {% if current_user.access_level.value == 'project_manager' %}
@@ -401,7 +294,6 @@
             {% endif %}
             <a href="{{ url_for('report.report') }}"><i class="fas fa-chart-bar"></i> Reports</a>
           </nav>
-
           <div class="mh-nav-label">Support</div>
           <nav class="mh-nav">
             <a href="{{ url_for('help.help') }}"><i class="fas fa-question-circle"></i> Help Center</a>
@@ -409,8 +301,11 @@
             <a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Sign out</a>
           </nav>
         </aside>
-
         <div class="mh-content">
+    {% else %}
+        <div class="mh-content">
+    {% endif %}
+
           {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
               <div class="mh-flashes">
@@ -420,27 +315,19 @@
               </div>
             {% endif %}
           {% endwith %}
-          <main class="mh-main">{% block content %}{% endblock %}</main>
-        </div>
-      </div>
 
-    {% else %}
-      <div class="mh-content">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="mh-flashes">
-              {% for category, message in messages %}
-                <div class="mh-alert mh-alert-{{ category }}">{{ message }}</div>
-              {% endfor %}
-            </div>
-          {% endif %}
-        {% endwith %}
-        <main class="mh-main">{% block content %}{% endblock %}</main>
-      </div>
+          <main class="mh-main">
+            {% block content %}{% endblock %}
+          </main>
+
+        </div>{# /.mh-content #}
+
+    {% if current_user.is_authenticated %}
+      </div>{# /.mh-layout #}
     {% endif %}
+
   </div>{# /.mh-body #}
 
-  {# ════════ FOOTER — always full width ════════ #}
   <footer class="mh-footer">
     <span><strong>MaterialHub</strong> · Integrated material operations, procurement, delivery, warehouse and intelligence.</span>
     <span>© {{ current_year|default(2026) }}</span>
