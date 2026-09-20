@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 env:
   PYTHONPATH: ${{ github.workspace }}
@@ -55,3 +56,40 @@ jobs:
         with:
           name: trivy-report
           path: trivy-report.json
+      - name: Report Trivy findings to PR (diagnostic)
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          trivy image --severity HIGH,CRITICAL materialhub:ci --format json > trivy.json 2>/dev/null || true
+          {
+            echo "### Trivy scan findings (HIGH,CRITICAL) on materialhub:ci"
+            echo ""
+            python3 - <<'PYEOF'
+          import json
+          try:
+              data = json.load(open("trivy.json"))
+          except Exception:
+              print("_trivy did not produce a report_")
+              raise SystemExit(0)
+          rows = []
+          for r in data:
+              for res in r.get("Results", []) or []:
+                  for v in res.get("Vulnerabilities", []) or []:
+                      rows.append(
+                          "| {id} | {sev} | {tgt} | {fix} |".format(
+                              id=v.get("VulnerabilityID"),
+                              sev=v.get("Severity"),
+                              tgt=res.get("Target", "?"),
+                              fix=(v.get("PatchedVersion") or {}).get("PatchedVersion") or "unfixed",
+                          )
+                      )
+          if rows:
+              print("| ID | Severity | Target | Fixed in |")
+              print("|----|----------|--------|----------|")
+              print("\n".join(rows))
+          else:
+              print("No HIGH/CRITICAL findings.")
+          PYEOF
+          } > trivy-comment.md
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --body-file trivy-comment.md
