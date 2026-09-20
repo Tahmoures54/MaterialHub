@@ -308,6 +308,9 @@ def test_end_to_end_procurement_delivery_qc_warehouse_tenant_boundary(client, ap
     other = _persist_user(
         app, "e2e-other@example.com", AccessLevel.warehouse, "Other E2E"
     )
+    supplier = _persist_user(
+        app, "e2e-supplier@example.com", AccessLevel.supplier, "E2E EPC"
+    )
 
     with app.app_context():
         db.session.add(project)
@@ -326,6 +329,7 @@ def test_end_to_end_procurement_delivery_qc_warehouse_tenant_boundary(client, ap
             order_no="PO-0001",
             project_id=project.id,
             user_id=purchase.id,
+            supplier_id=supplier.id,
             total_price=1000,
             status=PurchaseOrderStatus.issued,
             company_name="E2E EPC",
