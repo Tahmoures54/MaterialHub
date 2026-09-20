@@ -246,3 +246,31 @@ def test_material_requisition_delete_and_access_control(client, app):
         "project_no": "PRJ-DEL",
         "discipline": "Piping",
     }).status_code == 403
+
+def test_public_robots_and_sitemap(client):
+    robots = client.get("/robots.txt")
+    assert robots.status_code == 200
+    assert b"Disallow: /admin" in robots.data
+    assert b"Sitemap:" in robots.data
+
+    sitemap = client.get("/sitemap.xml")
+    assert sitemap.status_code == 200
+    assert sitemap.mimetype in ("application/xml", "text/xml")
+    for path in ("/", "/demo", "/pricing", "/contact"):
+        assert path.encode() in sitemap.data
+
+
+def test_contact_form_accepts_database_aligned_max_lengths(client, app):
+    email = ("a" * 242) + "@example.com"  # 254 characters
+    response = client.post("/contact", data={
+        "name": "N" * 120,
+        "email": email,
+        "company": "C" * 160,
+        "message": "M",
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    with app.app_context():
+        inquiry = ContactInquiry.query.filter_by(email=email).first()
+        assert inquiry is not None
+        assert len(inquiry.email) == 254
+        assert len(inquiry.company) == 160
