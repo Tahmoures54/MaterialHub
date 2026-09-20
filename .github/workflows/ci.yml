@@ -50,6 +50,7 @@ jobs:
           output: trivy-report.json
           severity: HIGH,CRITICAL
           exit-code: '1'
+          trivyignores: .trivyignore
       - name: Upload Trivy report
         if: always()
         uses: actions/upload-artifact@v4
@@ -67,7 +68,7 @@ jobs:
             echo ""
             echo '```'
             if command -v trivy > /dev/null 2>&1; then
-              trivy image --severity HIGH,CRITICAL materialhub:ci --format table 2>&1 | tail -80
+              trivy image --ignorefile .trivyignore --severity HIGH,CRITICAL materialhub:ci --format table 2>&1 | tail -200
             else
               echo "trivy is not on PATH in this step"
             fi

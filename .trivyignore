@@ -1,0 +1,8 @@
+# Vulnerabilities intentionally excluded from the Trivy HIGH/CRITICAL gate.
+# Keep this list small and review it regularly.
+
+# perl-base: CVE-2026-9538 (perl-Archive-Tar DoS via crafted tar header)
+# Debian security marks this fix_deferred, so no patched perl-base exists in
+# current python:3.12-slim (Debian 13) images. Remove this entry once the
+# base image ships a patched perl-base and re-verify the gate.
+CVE-2026-9538

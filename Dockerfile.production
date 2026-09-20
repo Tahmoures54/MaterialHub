@@ -10,6 +10,11 @@ FROM python:3.12-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 RUN groupadd --system --gid 10001 materialhub && useradd --system --uid 10001 --gid materialhub --create-home materialhub
+# Refresh base-image packages at build time so the image is scanned with the
+# newest patched versions (the floating python:3.12-slim tag can lag behind
+# distro security updates, which trips the Trivy HIGH/CRITICAL gate).
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /opt/venv /opt/venv
 COPY . .
 RUN chmod 0555 /app/docker/entrypoint.sh && chown -R materialhub:materialhub /app
