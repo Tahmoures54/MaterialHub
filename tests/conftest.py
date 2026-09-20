@@ -1,4 +1,8 @@
 """Shared pytest fixtures for Flask integration tests."""
+import os
+
+os.environ.setdefault("SECRET_KEY", "test-secret-key-materialhub-0123456789abcdef")
+
 import pytest
 
 from app import create_app
