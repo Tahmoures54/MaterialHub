@@ -170,11 +170,11 @@ def test_auth_invalid_totp_and_unknown_user(client, app):
 
 
 def test_auth_reset_and_change_password_pages(client, app):
-    assert client.get("/reset_password_request").status_code == 200
-    assert client.get("/change_password", follow_redirects=False).status_code in (302, 401)
+    assert client.get("/auth/reset_password_request").status_code == 200
+    assert client.get("/auth/change_password", follow_redirects=False).status_code in (302, 401)
     user = _persist_user(app, "change@example.com")
     _authenticate_session(client, user)
-    assert client.get("/change_password").status_code == 200
+    assert client.get("/auth/change_password").status_code == 200
 
 
 def test_material_requisition_api_workflow_and_tenant_boundary(client, app):
