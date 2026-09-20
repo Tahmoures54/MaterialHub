@@ -163,7 +163,7 @@ def test_auth_invalid_totp_and_unknown_user(client, app):
         "submit": "Login",
     })
     assert response.status_code in (200, 302)
-    response = client.post("/login", data={
+    response = client.post("/auth/login", data={
         "email": "missing@example.com",
         "totp_code": "000000",
         "submit": "Login",
@@ -193,7 +193,7 @@ def test_material_requisition_api_workflow_and_tenant_boundary(client, app):
     created = client.post("/material_requisitions/api/material_requisitions", json=payload)
     assert created.status_code == 201
     mr_no = created.get_json()["mr_nos"][0]
-    assert client.get("/api/material_requisitions").status_code == 200
+    assert client.get("/material_requisitions/api/material_requisitions").status_code == 200
     assert client.get(f"/material_requisitions/api/material_requisitions/{mr_no}").status_code == 200
     updated = client.put(f"/material_requisitions/api/material_requisitions/{mr_no}", json={"quantity": 7})
     assert updated.status_code == 200
@@ -226,7 +226,7 @@ def test_material_requisition_csv_export_and_import(client, app):
 def test_material_requisition_delete_and_access_control(client, app):
     user = _persist_user(app, "delete@example.com", AccessLevel.engineering, "Delete EPC")
     _authenticate_session(client, user)
-    created = client.post("/api/material_requisitions", json={
+    created = client.post("/material_requisitions/api/material_requisitions", json={
         "item_code": "DEL-1",
         "material_description": "Delete Me",
         "quantity": 1,
