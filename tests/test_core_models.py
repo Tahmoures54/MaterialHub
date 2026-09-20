@@ -52,6 +52,8 @@ def test_user_validation_password_totp_and_serialization(app):
     with app.app_context():
         user = make_user("Acme", "core-user@example.com")
         user.set_password("StrongPassword123")
+        db.session.add(user)
+        db.session.commit()
         assert user.check_password("StrongPassword123")
         assert not user.check_password("wrong")
         secret = pyotp.random_base32()
