@@ -313,7 +313,7 @@ def test_end_to_end_procurement_delivery_qc_warehouse_tenant_boundary(client, ap
         db.session.add(project)
         db.session.flush()
         mr = MaterialRequisition.from_dict({
-            "mr_no": "MR-E2E-0001",
+            "mr_no": "MR-0001",
             "item_code": "E2E-PIPE",
             "material_description": "E2E Pipe",
             "quantity": 10,
