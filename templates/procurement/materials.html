@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Available Materials</h2>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Quantity</th>
+        <th>Price (USD)</th>
+        <th>Type</th>
+        <th>Company</th>
+    </tr>
+    {% for material in materials %}
+    <tr>
+        <td>{{ material.name }}</td>
+        <td>{{ material.description }}</td>
+        <td>{{ material.quantity }}</td>
+        <td>{{ material.price }}</td>
+        <td>{{ 'Surplus' if material.is_surplus else 'Supplier' }}</td>
+        <td>{{ material.owner.company_name }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

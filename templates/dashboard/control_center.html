@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Control Center - MaterialHub{% endblock %}
+{% block content %}
+<style>
+.cc { max-width: 1400px; margin: 0 auto; }
+.cc-hero { display:flex; justify-content:space-between; gap:20px; align-items:center; padding:28px; border-radius:22px; background:linear-gradient(135deg,#0f766e,#134e4a); color:#fff; box-shadow:0 16px 40px rgba(15,118,110,.18); }
+.cc-hero h1 { margin:0 0 7px; font-size:2rem; } .cc-hero p { margin:0; opacity:.84; }
+.cc-date { padding:10px 14px; background:rgba(255,255,255,.12); border-radius:12px; white-space:nowrap; }
+.kpi-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin:18px 0; }
+.kpi { background:#fff; border:1px solid #e6edf0; border-radius:18px; padding:18px; box-shadow:0 8px 25px rgba(15,23,42,.05); }
+.kpi .label { color:#64748b; font-size:.84rem; } .kpi .value { font-size:1.8rem; font-weight:800; margin:7px 0; color:#0f172a; } .kpi .hint { font-size:.78rem; color:#0f766e; }
+.cc-grid { display:grid; grid-template-columns:1.45fr 1fr; gap:18px; }
+.panel { background:#fff; border:1px solid #e6edf0; border-radius:18px; padding:20px; box-shadow:0 8px 25px rgba(15,23,42,.04); }
+.panel h2 { margin:0 0 15px; font-size:1.1rem; color:#0f172a; }
+.table-wrap { overflow:auto; } table { width:100%; border-collapse:collapse; } th,td { text-align:left; padding:11px 9px; border-bottom:1px solid #eef2f4; font-size:.88rem; } th { color:#64748b; font-weight:600; }
+.badge { display:inline-flex; padding:5px 9px; border-radius:999px; font-size:.74rem; font-weight:700; background:#ecfeff; color:#0f766e; } .badge.danger { background:#fef2f2;color:#b91c1c; } .badge.warn { background:#fffbeb;color:#a16207; }
+.risk-item { padding:13px 0; border-bottom:1px solid #eef2f4; } .risk-row { display:flex; justify-content:space-between; gap:10px; } .risk-bar { height:7px; background:#edf2f3; border-radius:10px; margin-top:8px; overflow:hidden; } .risk-bar span { display:block; height:100%; background:#ef4444; border-radius:10px; }
+.quick { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:18px; } .quick a { text-decoration:none; padding:15px; border-radius:14px; background:#f8fafc; border:1px solid #e2e8f0; color:#0f172a; font-weight:700; } .quick small { display:block; color:#64748b; margin-top:5px; font-weight:400; }
+@media(max-width:1050px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.cc-grid{grid-template-columns:1fr}}
+@media(max-width:650px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.cc-hero{flex-direction:column;align-items:flex-start}.quick{grid-template-columns:1fr}.kpi .value{font-size:1.4rem}}
+</style>
+<div class="cc">
+  <section class="cc-hero">
+    <div><h1>MaterialHub Control Center</h1><p>One operational view from requisition to procurement, delivery and warehouse receipt.</p></div>
+    <div class="cc-date">{{ today.strftime('%d %b %Y') }}</div>
+  </section>
+
+  <section class="kpi-grid">
+    <div class="kpi"><div class="label">Material Requisitions</div><div class="value">{{ overview.counts.requisitions }}</div><div class="hint">{{ overview.counts.pending_requisitions }} awaiting approval</div></div>
+    <div class="kpi"><div class="label">Open Purchase Orders</div><div class="value">{{ overview.counts.open_purchase_orders }}</div><div class="hint">{{ '%.2f'|format(overview.total_pipeline_value) }} pipeline value</div></div>
+    <div class="kpi"><div class="label">Delivery Risk</div><div class="value">{{ overview.counts.delayed_deliveries }}</div><div class="hint">high-risk / delayed shipments</div></div>
+    <div class="kpi"><div class="label">Low Stock Signals</div><div class="value">{{ overview.counts.low_stock }}</div><div class="hint">AI reorder candidates</div></div>
+    <div class="kpi"><div class="label">Open Tenders</div><div class="value">{{ overview.counts.open_tenders }}</div><div class="hint">supplier competition</div></div>
+  </section>
+
+  <div class="cc-grid">
+    <section class="panel">
+      <h2>Procurement Pipeline</h2>
+      <div class="table-wrap"><table><thead><tr><th>MR</th><th>Material</th><th>Project</th><th>Priority</th><th>Status</th></tr></thead><tbody>
+      {% for r in overview.requisitions %}<tr><td><strong>{{ r.no }}</strong></td><td>{{ r.description|truncate(42) }}</td><td>{{ r.project }}</td><td>{{ r.priority }}</td><td><span class="badge">{{ r.status }}</span></td></tr>{% else %}<tr><td colspan="5">No requisitions yet.</td></tr>{% endfor %}
+      </tbody></table></div>
+    </section>
+    <section class="panel">
+      <h2>Delivery Risk Radar</h2>
+      {% for d in overview.delivery_risks %}<div class="risk-item"><div class="risk-row"><strong>{{ d.id }}</strong><span class="badge danger">{{ (d.risk*100)|round|int }}% risk</span></div><div class="risk-bar"><span style="width:{{ (d.risk*100)|round|int }}%"></span></div><small>{{ d.status|replace('_',' ')|capitalize }}{% if d.expected %} · {{ d.expected }}{% endif %}</small></div>{% else %}<p>No material delivery risk detected.</p>{% endfor %}
+    </section>
+  </div>
+
+  <div class="cc-grid" style="margin-top:18px">
+    <section class="panel"><h2>Low Stock / Reorder Signals</h2><div class="table-wrap"><table><thead><tr><th>Item</th><th>Description</th><th>Qty</th><th>Location</th></tr></thead><tbody>{% for i in overview.low_stock %}<tr><td><strong>{{ i.item_code }}</strong></td><td>{{ i.description|truncate(38) }}</td><td><span class="badge warn">{{ i.qty }} {{ i.unit }}</span></td><td>{{ i.location or 'Unassigned' }}</td></tr>{% else %}<tr><td colspan="4">No low-stock signals.</td></tr>{% endfor %}</tbody></table></div></section>
+    <section class="panel"><h2>Fast Actions</h2><div class="quick"><a href="{{ url_for('material_requisitions.material_requisitions') }}">New MR<small>Request project materials</small></a><a href="{{ url_for('purchase_order.purchase_order') }}">Purchase Orders<small>Review procurement</small></a><a href="{{ url_for('warehouse.warehouse') }}">Warehouse<small>Receive & control stock</small></a><a href="{{ url_for('delivery.delivery_order') }}">Deliveries<small>Track shipments</small></a><a href="{{ url_for('quality_control.quality_control') }}">Quality<small>Inspect incoming materials</small></a><a href="{{ url_for('supplier.supplier_dashboard') }}">Suppliers<small>Marketplace & tenders</small></a></div></section>
+  </div>
+</div>
+{% endblock %}

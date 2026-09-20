@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Reports</h2>
+<h3>KPI Overview</h3>
+<canvas id="kpiChart"></canvas>
+<a href="{{ url_for('report.report') }}" class="button">Download PDF Report</a>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('kpiChart').getContext('2d');
+    const kpiChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Total Materials', 'Surplus %', 'Quality Approval %'],
+            datasets: [{
+                label: 'KPI Metrics',
+                data: [{{ kpi.total_materials }}, {{ kpi.surplus_percentage }}, {{ kpi.quality_approval_rate }}],
+                backgroundColor: ['#007BFF', '#28A745', '#FFC107']
+            }]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+    });
+</script>
+{% endblock %}

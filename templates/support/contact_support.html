@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block title %}Contact Support - MaterialHub{% endblock %}
+{% block content %}
+<div class="support-container">
+    <div class="support-card">
+        <h2 class="support-title">Need Help? We're Here!</h2>
+        <p class="support-subtitle">Whether you lost access to Microsoft Authenticator or have other issues, follow these steps or reach out to us.</p>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="authenticator-guide">
+            <h3 class="guide-title">Set Up Microsoft Authenticator</h3>
+            <p class="guide-text">To secure your account, install Microsoft Authenticator on your device. Follow these steps:</p>
+            <ol class="guide-steps">
+                <li>Download the app using the links below.</li>
+                <li>Open the app and scan the QR code provided during registration.</li>
+                <li>Use the 6-digit code from the app to log in.</li>
+            </ol>
+            <div class="download-buttons">
+                <a href="https://play.google.com/store/apps/details?id=com.azure.authenticator" target="_blank" class="download-btn android">
+                    <i class="fab fa-google-play"></i> Get for Android
+                </a>
+                <a href="https://apps.apple.com/us/app/microsoft-authenticator/id983156458" target="_blank" class="download-btn ios">
+                    <i class="fab fa-apple"></i> Get for iOS
+                </a>
+            </div>
+        </div>
+
+        <div class="contact-methods">
+            <h3 class="contact-title">Still Need Help?</h3>
+            <div class="contact-item">
+                <i class="fas fa-envelope"></i>
+                <div class="contact-details">
+                    <h4>Email Support</h4>
+                    <a href="mailto:materialhub2025@gmail.com" class="contact-link">materialhub2025@gmail.com</a>
+                </div>
+            </div>
+        </div>
+
+        <a href="{{ url_for('auth.login') }}" class="back-btn">Back to Login</a>
+
+        <!-- Footer -->
+        <footer class="support-footer">
+            <div class="footer-content">
+                <p>© 2025 MaterialHub. All Rights Reserved.</p>
+                <div class="footer-links">
+                    <a href="{{ url_for('auth.privacy_policy') }}">Privacy Policy</a>
+                    <a href="{{ url_for('auth.terms_of_service') }}">Terms of Service</a>
+                    <a href="{{ url_for('auth.contact_support') }}">Contact Us</a>
+                    <a href="{{ url_for('help.help') }}">Help Center</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<style>
+.support-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 100px);
+    background: linear-gradient(135deg, #e6f0fa 0%, #f4f7fa 100%);
+    padding: 20px;
+}
+
+.support-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem;
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.support-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a2a44;
+    margin-bottom: 0.5rem;
+}
+
+.support-subtitle {
+    font-size: 1.1rem;
+    color: #6b7280;
+    margin-bottom: 2rem;
+}
+
+.authenticator-guide {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.guide-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #1a2a44;
+    margin-bottom: 0.5rem;
+}
+
+.guide-text {
+    font-size: 1rem;
+    color: #4b5563;
+    margin-bottom: 1rem;
+}
+
+.guide-steps {
+    font-size: 1rem;
+    color: #4b5563;
+    padding-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.download-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.download-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.download-btn:hover {
+    transform: translateY(-2px);
+}
+
+.download-btn.android {
+    background-color: #3ddC84;
+    color: #ffffff;
+}
+
+.download-btn.android:hover {
+    background-color: #34c775;
+}
+
+.download-btn.ios {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+.download-btn.ios:hover {
+    background-color: #333333;
+}
+
+.contact-methods {
+    margin-bottom: 2rem;
+}
+
+.contact-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #1a2a44;
+    margin-bottom: 1rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.contact-item i {
+    font-size: 1.8rem;
+    color: #3b82f6;
+}
+
+.contact-details h4 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #1a2a44;
+    margin-bottom: 0.25rem;
+}
+
+.contact-link {
+    font-size: 1rem;
+    color: #3b82f6;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.contact-link:hover {
+    color: #1d4ed8;
+}
+
+.back-btn {
+    display: inline-block;
+    font-size: 1rem;
+    color: #6b7280;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+    color: #1a2a44;
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    transform: translateY(-2px);
+}
+
+.support-footer {
+    margin-top: 2rem;
+}
+
+/* Flash Messages */
+.flash-messages {
+    margin: 20px 0;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 1em;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+@media (max-width: 480px) {
+    .support-card {
+        padding: 1.5rem;
+    }
+
+    .support-title {
+        font-size: 1.6rem;
+    }
+
+    .support-subtitle, .guide-text, .guide-steps {
+        font-size: 0.9rem;
+    }
+
+    .download-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+}
+</style>
+{% endblock %}

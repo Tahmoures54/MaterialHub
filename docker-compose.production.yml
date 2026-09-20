@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-materialhub}
+      POSTGRES_USER: ${POSTGRES_USER:-materialhub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in environment}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+volumes:
+  postgres_data:

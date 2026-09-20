@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Reset Password Request{% endblock %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-box">
+        <h2 class="auth-title">Reset Your Password</h2>
+        <p class="auth-subtitle">Enter your email and TOTP code to proceed</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="POST" class="auth-form">
+            <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="your@email.com" required>
+            </div>
+            <div class="input-group">
+                <label for="totp_code">TOTP Code</label>
+                <input type="text" id="totp_code" name="totp_code" placeholder="6-digit code" required>
+            </div>
+            <button type="submit" class="auth-btn">Submit</button>
+        </form>
+        <p class="auth-link"><a href="{{ url_for('auth.login') }}">Back to Login</a></p>
+    </div>
+</div>
+{% endblock %}

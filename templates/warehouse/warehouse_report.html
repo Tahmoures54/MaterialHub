@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Warehouse Report{% endblock %}
+{% block content %}
+<section class="page-hero"><div><span class="eyebrow">WAREHOUSE</span><h1>Inventory Report</h1><p>Operational view of the selected inventory record and its current warehouse status.</p></div></section>
+<section class="content-card">
+<table class="guide-table"><tbody>
+{% for key, value in inventory.__dict__.items() if not key.startswith('_') and key != 'metadata' %}
+<tr><th>{{ key.replace('_',' ')|title }}</th><td>{{ value if value is not none else '—' }}</td></tr>
+{% endfor %}
+</tbody></table>
+</section>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<script>
+window.MaterialHubRole = {{ workspace_role|default("project_manager")|tojson }};
+window.MaterialHubKPIs = {{ workspace_kpis|default([])|tojson }};
+</script>
+<div class="mh-page">
+  <section class="mh-workspace-hero">
+    <h1>Engineering Workspace</h1><p class="mh-muted">Convert technical requirements into traceable, procurement-ready material demand.</p>
+    <div class="mh-workspace-nav"><a href="/materials">Create MR</a>
+<a href="/materials">Datasheet Control</a>
+<a href="/materials">Technical Queries</a>
+<a href="/materials">Material Readiness</a></div>
+  </section>
+  <section id="live-kpis" class="mh-grid mh-grid-4"><div class="mh-card mh-kpi"><div class="mh-muted" id="kpi-label-0">Loading…</div><div class="value" id="kpi-value-0">—</div><small class="mh-muted">Live database metric</small></div><div class="mh-card mh-kpi"><div class="mh-muted" id="kpi-label-1">Loading…</div><div class="value" id="kpi-value-1">—</div><small class="mh-muted">Live database metric</small></div><div class="mh-card mh-kpi"><div class="mh-muted" id="kpi-label-2">Loading…</div><div class="value" id="kpi-value-2">—</div><small class="mh-muted">Live database metric</small></div><div class="mh-card mh-kpi"><div class="mh-muted" id="kpi-label-3">Loading…</div><div class="value" id="kpi-value-3">—</div><small class="mh-muted">Live database metric</small></div></section>
+  <section class="mh-card mh-priority" style="margin-top:1rem">
+    <h3>Priority Work</h3>
+    <div class="mh-action"><span>Review items requiring attention</span><a href="/materials">Open workspace →</a></div>
+    <div class="mh-action"><span>Use Material Intelligence for risk-driven decisions</span><a href="{{ url_for('intelligence.dashboard') }}">Analyze →</a></div>
+    <div class="mh-action"><span>AI Copilot recommendations</span><a href="{{ url_for('intelligence.dashboard') }}">View actions →</a></div>
+  </section>
+</div>
+<script id="role-kpi-loader">
+(function(){
+  function render(kpis){
+    (kpis||[]).slice(0,4).forEach(function(k,i){
+      var l=document.getElementById("kpi-label-"+i), v=document.getElementById("kpi-value-"+i);
+      if(l) l.textContent=k.label; if(v) v.textContent=k.value;
+    });
+  }
+  render(window.MaterialHubKPIs);
+  fetch("{{ url_for('role_workspace.api_kpis') }}",{headers:{"X-Requested-With":"XMLHttpRequest"}})
+    .then(function(r){return r.ok?r.json():null}).then(function(d){if(d) render(d.kpis)})
+    .catch(function(){});
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %} — Administration{% endblock %}
+{% block content %}
+<div class="mh-page" style="padding:0">
+  <section class="mh-workspace-hero"><h1 style="margin:.1rem 0 .4rem">Administration</h1><p class="mh-muted">Users, companies, access levels and platform governance.</p></section>
+  <section class="mh-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2 style="margin:0">Users</h2><p class="mh-muted" style="margin:.35rem 0 0">{{ users|length }} registered account(s)</p></div><a class="mh-btn" style="background:#0f766e;color:#fff" href="{{ url_for('role_workspace.my_workspace') }}">Back to workspace</a></div>
+    <div style="overflow:auto;margin-top:18px"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:11px;border-bottom:1px solid #e2e8f0">Company</th><th style="text-align:left;padding:11px;border-bottom:1px solid #e2e8f0">User</th><th style="text-align:left;padding:11px;border-bottom:1px solid #e2e8f0">Email</th><th style="text-align:left;padding:11px;border-bottom:1px solid #e2e8f0">Role</th><th style="text-align:left;padding:11px;border-bottom:1px solid #e2e8f0">Admin</th></tr></thead><tbody>{% for user in users %}<tr><td style="padding:11px;border-bottom:1px solid #f1f5f9">{{ user.company_name }}</td><td style="padding:11px;border-bottom:1px solid #f1f5f9"><strong>{{ user.full_name }}</strong></td><td style="padding:11px;border-bottom:1px solid #f1f5f9">{{ user.company_email }}</td><td style="padding:11px;border-bottom:1px solid #f1f5f9">{{ user.access_level.value|replace('_',' ')|title }}</td><td style="padding:11px;border-bottom:1px solid #f1f5f9">{{ 'Yes' if user.is_admin else 'No' }}</td></tr>{% else %}<tr><td colspan="5" style="padding:20px;color:#64748b">No users found.</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+</div>
+{% endblock %}
