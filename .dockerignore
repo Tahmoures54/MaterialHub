@@ -2,9 +2,14 @@
 .gitignore
 .env
 .env.*
+.env.prod
 instance/
+secrets/
 *.db
 *.sqlite3
 __pycache__/
 *.pyc
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+tests/
