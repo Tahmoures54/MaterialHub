@@ -88,7 +88,10 @@ def create_app(config_name=None):
             config_name = 'production'
 
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_object(config_by_name.get(config_name, config_by_name['default']))
+    config_class = config_by_name.get(config_name, config_by_name['default'])
+    app.config.from_object(config_class)
+    if config_class is config_by_name['production']:
+        config_class.validate()
 
     db.init_app(app)
     migrate.init_app(app, db)
