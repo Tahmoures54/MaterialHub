@@ -339,7 +339,7 @@ def test_end_to_end_procurement_delivery_qc_warehouse_tenant_boundary(client, ap
         delivery = Delivery(
             order_id=po.id,
             user_id=delivery_user.id,
-            delivery_id="DLV-E2E-0001",
+            delivery_id="DLV-0001",
             status=DeliveryStatus.delivered,
             company_name="E2E EPC",
         )
@@ -373,7 +373,7 @@ def test_end_to_end_procurement_delivery_qc_warehouse_tenant_boundary(client, ap
     _authenticate_session(client, other)
     assert client.get("/purchase_order/get_purchase_orders").status_code == 200
     assert b"PO-0001" not in client.get("/purchase_order/get_purchase_orders").data
-    assert b"DLV-E2E-0001" not in client.get("/delivery/get_deliveries").data
+    assert b"DLV-0001" not in client.get("/delivery/get_deliveries").data
     assert b"E2E-PIPE" not in client.get("/warehouse/api/inventory").data
 
 
