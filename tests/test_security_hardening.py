@@ -41,3 +41,14 @@ def test_wsgi_is_import_only():
     wsgi = (ROOT / "wsgi.py").read_text(encoding="utf-8")
     assert "app = create_app()" in wsgi
     assert "app.run(" not in wsgi
+
+def test_contact_inquiry_schema_matches_public_limits():
+    models = (ROOT / "models.py").read_text(encoding="utf-8")
+    migration = ROOT / "migrations" / "versions" / "20260922_0003_contact_inquiry_limits.py"
+    assert "db.String(254)" in models
+    assert "db.String(160)" in models
+    assert migration.exists()
+    migration_text = migration.read_text(encoding="utf-8")
+    assert "20260921_0002" in migration_text
+    assert "length=254" in migration_text
+    assert "length=160" in migration_text
