@@ -14,23 +14,6 @@ from utils import generate_next_mr_no, generate_next_po_no
 from datetime import date, timedelta
 
 
-@pytest.fixture
-def app():
-    application = create_app("testing")
-    application.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
-    with application.app_context():
-        db.drop_all()
-        db.create_all()
-        yield application
-        db.session.remove()
-        db.drop_all()
-
-
-@pytest.fixture
-def client(app):
-    return app.test_client()
-
-
 def test_health_endpoint(client):
     response = client.get("/health")
     assert response.status_code == 200
