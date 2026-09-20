@@ -4,8 +4,7 @@ import sys
 import importlib.util
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from logging.handlers import RotatingFileHandler
-from extensions import db, migrate, login_manager, csrf
+from extensions import db, migrate, login_manager, csrf, limiter
 from config.config import config_by_name
 from data.country_codes import COUNTRY_NAMES_BY_CODE
 
@@ -42,6 +41,7 @@ def create_app(config_name=None):
                 request.environ['HTTP_X_CSRFTOKEN'] = str(token)
 
     csrf.init_app(app)
+    limiter.init_app(app)
 
     log_level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'), logging.INFO)
 
@@ -52,22 +52,6 @@ def create_app(config_name=None):
     console_handler.setLevel(log_level)
     app.logger.handlers = [console_handler]
 
-    try:
-        os.makedirs(app.instance_path, exist_ok=True)
-        log_handler = RotatingFileHandler(
-            os.path.join(app.instance_path, 'warehouse.log'),
-            maxBytes=10_000_000,
-            backupCount=5,
-            encoding='utf-8'
-        )
-        log_handler.setFormatter(logging.Formatter(
-            '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-        ))
-        log_handler.setLevel(log_level)
-        app.logger.addHandler(log_handler)
-    except OSError:
-        pass
-
     app.logger.setLevel(log_level)
 
     @app.after_request
@@ -76,6 +60,12 @@ def create_app(config_name=None):
         response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
         response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
         response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        response.headers.setdefault(
+            'Content-Security-Policy',
+            "default-src 'self'; base-uri 'self'; object-src 'none'; "
+            "frame-ancestors 'self'; img-src 'self' data:; "
+            "style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+        )
         if app.config.get('SESSION_COOKIE_SECURE'):
             response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
         return response
@@ -124,13 +114,14 @@ def create_app(config_name=None):
     app.register_blueprint(growth_bp)
     app.register_blueprint(health_bp)
 
-    with app.app_context():
-        try:
-            db.create_all()
-            app.logger.info("Database tables created successfully.")
-        except Exception as e:
-            app.logger.error(f"Error creating database tables: {e}")
-
+    # Development/test convenience only. Production schema changes are managed by Flask-Migrate.
+    if not app.config.get('IS_PRODUCTION'):
+        with app.app_context():
+            try:
+                db.create_all()
+                app.logger.info("Development database tables ensured.")
+            except Exception as e:
+                app.logger.error(f"Development database initialization failed: {e}")
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, int(user_id))
@@ -291,4 +282,6 @@ def create_app(config_name=None):
 app = create_app()
 
 if __name__ == '__main__':
+    if app.config.get('IS_PRODUCTION'):
+        raise RuntimeError('Do not run MaterialHub with Flask development server in production. Use Gunicorn.')
     app.run(host='0.0.0.0', port=5000, debug=app.config.get('DEBUG', False))
