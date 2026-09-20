@@ -14,6 +14,10 @@ def company_filter(q, model):
     return q if current_user.is_admin else q.filter(model.company_name==current_user.company_name)
 
 def score_supplier(supplier_id):
+    supplier=company_filter(User.query,User).filter_by(id=supplier_id, access_level=AccessLevel.supplier).first()
+    if not supplier:
+        return 0
+    target_company=supplier.company_name
     order_query=PurchaseOrder.query.filter_by(supplier_id=supplier_id)
     if not current_user.is_admin:
         order_query=order_query.filter_by(company_name=current_user.company_name)
@@ -31,9 +35,9 @@ def score_supplier(supplier_id):
     except Exception: pass
     otif=100*delivered/len(orders)
     score=round(0.45*otif+0.35*quality+0.20*100,1)
-    s=SupplierScore.query.filter_by(supplier_id=supplier_id,period=date.today().strftime('%Y-%m')).first()
+    s=SupplierScore.query.filter_by(supplier_id=supplier_id,period=date.today().strftime('%Y-%m'),company_name=target_company).first()
     if not s:
-        s=SupplierScore(supplier_id=supplier_id,period=date.today().strftime('%Y-%m'),company_name=current_user.company_name)
+        s=SupplierScore(supplier_id=supplier_id,period=date.today().strftime('%Y-%m'),company_name=target_company)
         db.session.add(s)
     s.quality_score=round(quality,1); s.otif_score=round(otif,1); s.price_score=100; s.responsiveness_score=100; s.lead_time_score=100; s.overall_score=score; s.orders_count=len(orders)
     db.session.commit(); return score
