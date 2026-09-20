@@ -61,35 +61,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          trivy image --severity HIGH,CRITICAL materialhub:ci --format json > trivy.json 2>/dev/null || true
+          set +e
           {
             echo "### Trivy scan findings (HIGH,CRITICAL) on materialhub:ci"
             echo ""
-            python3 - <<'PYEOF'
-          import json
-          try:
-              data = json.load(open("trivy.json"))
-          except Exception:
-              print("_trivy did not produce a report_")
-              raise SystemExit(0)
-          rows = []
-          for r in data:
-              for res in r.get("Results", []) or []:
-                  for v in res.get("Vulnerabilities", []) or []:
-                      rows.append(
-                          "| {id} | {sev} | {tgt} | {fix} |".format(
-                              id=v.get("VulnerabilityID"),
-                              sev=v.get("Severity"),
-                              tgt=res.get("Target", "?"),
-                              fix=(v.get("PatchedVersion") or {}).get("PatchedVersion") or "unfixed",
-                          )
-                      )
-          if rows:
-              print("| ID | Severity | Target | Fixed in |")
-              print("|----|----------|--------|----------|")
-              print("\n".join(rows))
-          else:
-              print("No HIGH/CRITICAL findings.")
-          PYEOF
+            echo '```'
+            if command -v trivy > /dev/null 2>&1; then
+              trivy image --severity HIGH,CRITICAL materialhub:ci --format table 2>&1 | tail -80
+            else
+              echo "trivy is not on PATH in this step"
+            fi
+            echo '```'
           } > trivy-comment.md
           gh pr comment "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --body-file trivy-comment.md
+          exit 0
