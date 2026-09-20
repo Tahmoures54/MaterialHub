@@ -12,7 +12,7 @@ WORKDIR /app
 RUN groupadd --system --gid 10001 materialhub && useradd --system --uid 10001 --gid materialhub --create-home materialhub
 COPY --from=builder /opt/venv /opt/venv
 COPY . .
-RUN chown -R materialhub:materialhub /app
+RUN chmod 0555 /app/docker/entrypoint.sh && chown -R materialhub:materialhub /app
 USER materialhub
 EXPOSE 8000
 STOPSIGNAL SIGTERM
