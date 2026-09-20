@@ -75,7 +75,7 @@ def test_user_legacy_werkzeug_hash_is_rehashed(app):
     "kwargs",
     [
         {"company_email": "bad"},
-        {"company_phone": "123"},
+        {"company_phone": "0"},
         {"full_name": ""},
         {"company_address": ""},
         {"country": ""},
