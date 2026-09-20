@@ -40,9 +40,7 @@
     line-height: 1.12;
     color: #0F172A;
   }
-  .lp-hero h1 span {
-    color: #0E7490;
-  }
+  .lp-hero h1 span { color: #0E7490; }
   .lp-hero-lead {
     margin: 0;
     max-width: 560px;
@@ -77,13 +75,9 @@
     font-weight: 500;
   }
 
-  /* Section head */
-  .lp-section {
-    margin-bottom: 1.75rem;
-  }
-  .lp-section-head {
-    margin-bottom: 1.15rem;
-  }
+  /* Section */
+  .lp-section { margin-bottom: 1.75rem; }
+  .lp-section-head { margin-bottom: 1.15rem; }
   .lp-section-head h2 {
     margin: 0 0 0.35rem;
     font-size: 1.35rem;
@@ -98,47 +92,155 @@
     max-width: 520px;
   }
 
-  /* Feature cards */
-  .lp-features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-    gap: 1rem;
+  /* Capability banner carousel */
+  .lp-banner {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #CBD5E1;
+    background: linear-gradient(135deg, #0B1622 0%, #122033 50%, #0E4A5C 100%);
+    min-height: 200px;
   }
-  .lp-feature {
-    background: #fff;
-    border: 1px solid #E2E8F0;
-    border-radius: 12px;
-    padding: 1.4rem 1.35rem;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  .lp-banner-track {
+    position: relative;
+    min-height: 200px;
   }
-  .lp-feature:hover {
-    border-color: #A5F3FC;
-    box-shadow: 0 8px 24px rgba(14, 116, 144, 0.08);
-    transform: translateY(-2px);
+  .lp-banner-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.75rem 1.75rem 2.5rem;
+    opacity: 0;
+    transform: translateX(28px);
+    pointer-events: none;
+    transition: opacity 0.32s ease, transform 0.32s ease;
   }
-  .lp-feature-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: linear-gradient(145deg, #ECFEFF, #CFFAFE);
-    color: #0E7490;
+  .lp-banner-slide.is-active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+    z-index: 1;
+  }
+  .lp-banner-slide.is-exit {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  .lp-banner-icon {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+    background: rgba(8, 145, 178, 0.22);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    color: #67E8F9;
     display: grid;
     place-items: center;
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
+    font-size: 1.55rem;
   }
-  .lp-feature h3 {
-    margin: 0 0 0.4rem;
-    font-size: 1.05rem;
+  .lp-banner-body { min-width: 0; flex: 1; }
+  .lp-banner-label {
+    display: inline-block;
+    font-size: 0.7rem;
     font-weight: 700;
-    color: #0F172A;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #67E8F9;
+    margin-bottom: 0.4rem;
   }
-  .lp-feature p {
+  .lp-banner-body h3 {
+    margin: 0 0 0.45rem;
+    font-size: clamp(1.15rem, 2.5vw, 1.45rem);
+    font-weight: 800;
+    color: #F8FAFC;
+    letter-spacing: -0.02em;
+  }
+  .lp-banner-body p {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     line-height: 1.55;
-    color: #64748B;
+    color: #94A3B8;
+    max-width: 520px;
+  }
+  .lp-banner-nav {
+    position: absolute;
+    bottom: 14px;
+    left: 1.75rem;
+    right: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 2;
+  }
+  .lp-banner-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .lp-banner-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 0;
+    padding: 0;
+    background: rgba(148, 163, 184, 0.4);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s, width 0.2s;
+  }
+  .lp-banner-dot.is-active {
+    background: #22D3EE;
+    width: 20px;
+    border-radius: 4px;
+  }
+  .lp-banner-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, #0891B2, #22D3EE);
+    z-index: 3;
+  }
+  .lp-banner-progress.is-running {
+    animation: lp-progress 2.4s linear forwards;
+  }
+  @keyframes lp-progress {
+    from { width: 0%; }
+    to { width: 100%; }
+  }
+  .lp-banner-btns {
+    display: flex;
+    gap: 6px;
+  }
+  .lp-banner-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(15, 23, 42, 0.35);
+    color: #E2E8F0;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 0.75rem;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .lp-banner-btn:hover {
+    background: rgba(8, 145, 178, 0.35);
+    border-color: #22D3EE;
+  }
+
+  @media (max-width: 600px) {
+    .lp-banner-slide {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.35rem 1.25rem 2.75rem;
+    }
+    .lp-banner-track { min-height: 240px; }
+    .lp-banner { min-height: 240px; }
+    .lp-banner-nav { left: 1.25rem; right: 1.25rem; }
   }
 
   /* Flow */
@@ -181,10 +283,7 @@
     color: #0F172A;
     margin-bottom: 0.2rem;
   }
-  .lp-step span {
-    font-size: 0.75rem;
-    color: #64748B;
-  }
+  .lp-step span { font-size: 0.75rem; color: #64748B; }
 
   /* Roles */
   .lp-roles {
@@ -200,9 +299,7 @@
     border-left: 3px solid #0E7490;
     transition: box-shadow 0.15s;
   }
-  .lp-role:hover {
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-  }
+  .lp-role:hover { box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06); }
   .lp-role strong {
     display: block;
     font-size: 0.95rem;
@@ -304,43 +401,77 @@
     </div>
   </section>
 
-  <!-- Capabilities -->
+  <!-- Capabilities — rotating banner -->
   <section class="lp-section">
     <div class="lp-section-head">
       <h2>What you control</h2>
       <p>From first demand signal to material on site — visibility and accountability at every step.</p>
     </div>
-    <div class="lp-features">
-      <article class="lp-feature">
-        <div class="lp-feature-icon"><i class="fas fa-file-invoice-dollar"></i></div>
-        <h3>Procurement Control</h3>
-        <p>RFQ, quote comparison, purchase orders and supplier performance in one controlled flow.</p>
-      </article>
-      <article class="lp-feature">
-        <div class="lp-feature-icon"><i class="fas fa-truck"></i></div>
-        <h3>Delivery & Logistics</h3>
-        <p>Track shipments, ETAs and exceptions so schedule exposure is visible before it becomes delay.</p>
-      </article>
-      <article class="lp-feature">
-        <div class="lp-feature-icon"><i class="fas fa-warehouse"></i></div>
-        <h3>Warehouse Operations</h3>
-        <p>Receive, locate, hold and issue materials with clear stock positions and audit history.</p>
-      </article>
-      <article class="lp-feature">
-        <div class="lp-feature-icon"><i class="fas fa-qrcode"></i></div>
-        <h3>Full Traceability</h3>
-        <p>QR, heat, lot, serial and documentation from receipt through issue — audit-ready.</p>
-      </article>
-      <article class="lp-feature">
-        <div class="lp-feature-icon"><i class="fas fa-shield-alt"></i></div>
-        <h3>Quality Control</h3>
-        <p>Inspection, release and non-conformance handling tied to the same material record.</p>
-      </article>
-      <article class="lp-feature">
-        <div class="lp-feature-icon"><i class="fas fa-brain"></i></div>
-        <h3>Material Intelligence</h3>
-        <p>Readiness, lead-time and schedule-risk signals with recommended operational actions.</p>
-      </article>
+
+    <div class="lp-banner" id="lp-banner" aria-roledescription="carousel" aria-label="Capabilities">
+      <div class="lp-banner-progress" id="lp-banner-progress"></div>
+      <div class="lp-banner-track">
+        <div class="lp-banner-slide is-active" data-index="0">
+          <div class="lp-banner-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+          <div class="lp-banner-body">
+            <span class="lp-banner-label">Capability 01 / 06</span>
+            <h3>Procurement Control</h3>
+            <p>RFQ, quote comparison, purchase orders and supplier performance in one controlled flow.</p>
+          </div>
+        </div>
+        <div class="lp-banner-slide" data-index="1">
+          <div class="lp-banner-icon"><i class="fas fa-truck"></i></div>
+          <div class="lp-banner-body">
+            <span class="lp-banner-label">Capability 02 / 06</span>
+            <h3>Delivery & Logistics</h3>
+            <p>Track shipments, ETAs and exceptions so schedule exposure is visible before it becomes delay.</p>
+          </div>
+        </div>
+        <div class="lp-banner-slide" data-index="2">
+          <div class="lp-banner-icon"><i class="fas fa-warehouse"></i></div>
+          <div class="lp-banner-body">
+            <span class="lp-banner-label">Capability 03 / 06</span>
+            <h3>Warehouse Operations</h3>
+            <p>Receive, locate, hold and issue materials with clear stock positions and audit history.</p>
+          </div>
+        </div>
+        <div class="lp-banner-slide" data-index="3">
+          <div class="lp-banner-icon"><i class="fas fa-qrcode"></i></div>
+          <div class="lp-banner-body">
+            <span class="lp-banner-label">Capability 04 / 06</span>
+            <h3>Full Traceability</h3>
+            <p>QR, heat, lot, serial and documentation from receipt through issue — audit-ready.</p>
+          </div>
+        </div>
+        <div class="lp-banner-slide" data-index="4">
+          <div class="lp-banner-icon"><i class="fas fa-shield-alt"></i></div>
+          <div class="lp-banner-body">
+            <span class="lp-banner-label">Capability 05 / 06</span>
+            <h3>Quality Control</h3>
+            <p>Inspection, release and non-conformance handling tied to the same material record.</p>
+          </div>
+        </div>
+        <div class="lp-banner-slide" data-index="5">
+          <div class="lp-banner-icon"><i class="fas fa-brain"></i></div>
+          <div class="lp-banner-body">
+            <span class="lp-banner-label">Capability 06 / 06</span>
+            <h3>Material Intelligence</h3>
+            <p>Readiness, lead-time and schedule-risk signals with recommended operational actions.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="lp-banner-nav">
+        <div class="lp-banner-dots" id="lp-banner-dots" role="tablist"></div>
+        <div class="lp-banner-btns">
+          <button type="button" class="lp-banner-btn" id="lp-banner-prev" aria-label="Previous">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button type="button" class="lp-banner-btn" id="lp-banner-next" aria-label="Next">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -411,13 +542,98 @@
   <section class="lp-cta">
     <h2>Ready to run materials with control?</h2>
     <p>Start free. Scale when your projects demand it.</p>
-    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}">
-      Create account
-    </a>
-    <a class="btn btn-lg lp-cta-secondary" href="{{ url_for('growth.demo') }}">
-      View demo
-    </a>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}">Create account</a>
+    <a class="btn btn-lg lp-cta-secondary" href="{{ url_for('growth.demo') }}">View demo</a>
   </section>
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var INTERVAL = 2400; // ms per slide — snappy, not sluggish
+  var root = document.getElementById('lp-banner');
+  if (!root) return;
+
+  var slides = Array.prototype.slice.call(root.querySelectorAll('.lp-banner-slide'));
+  var dotsWrap = document.getElementById('lp-banner-dots');
+  var progress = document.getElementById('lp-banner-progress');
+  var prevBtn = document.getElementById('lp-banner-prev');
+  var nextBtn = document.getElementById('lp-banner-next');
+  var i = 0;
+  var timer = null;
+  var paused = false;
+
+  slides.forEach(function (_, idx) {
+    var d = document.createElement('button');
+    d.type = 'button';
+    d.className = 'lp-banner-dot' + (idx === 0 ? ' is-active' : '');
+    d.setAttribute('aria-label', 'Slide ' + (idx + 1));
+    d.addEventListener('click', function () { go(idx); });
+    dotsWrap.appendChild(d);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+
+  function restartProgress() {
+    progress.classList.remove('is-running');
+    void progress.offsetWidth;
+    progress.classList.add('is-running');
+  }
+
+  function go(next) {
+    if (next === i) { restartProgress(); return; }
+    slides[i].classList.remove('is-active');
+    slides[i].classList.add('is-exit');
+    dots[i].classList.remove('is-active');
+
+    var prev = i;
+    i = (next + slides.length) % slides.length;
+
+    slides[i].classList.remove('is-exit');
+    slides[i].classList.add('is-active');
+    dots[i].classList.add('is-active');
+
+    setTimeout(function () {
+      slides[prev].classList.remove('is-exit');
+    }, 340);
+
+    restartProgress();
+    if (!paused) schedule();
+  }
+
+  function schedule() {
+    clearTimeout(timer);
+    timer = setTimeout(function () { go(i + 1); }, INTERVAL);
+  }
+
+  function pause() {
+    paused = true;
+    clearTimeout(timer);
+    progress.classList.remove('is-running');
+  }
+  function resume() {
+    paused = false;
+    restartProgress();
+    schedule();
+  }
+
+  prevBtn.addEventListener('click', function () { go(i - 1); });
+  nextBtn.addEventListener('click', function () { go(i + 1); });
+  root.addEventListener('mouseenter', pause);
+  root.addEventListener('mouseleave', resume);
+  root.addEventListener('focusin', pause);
+  root.addEventListener('focusout', function (e) {
+    if (!root.contains(e.relatedTarget)) resume();
+  });
+
+  // Respect reduced motion
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    INTERVAL = 6000;
+  }
+
+  restartProgress();
+  schedule();
+})();
+</script>
 {% endblock %}
