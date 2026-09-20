@@ -4,31 +4,9 @@
 
 Operational fixes that make the existing MaterialHub modules actually usable end-to-end.
 
-### Fixed
-- Registration TOTP setup now renders `auth/register.html` instead of a missing template.
-- Material requisition and warehouse APIs gained the missing `from_dict` / `update_from_dict` helpers.
-- Document numbering (`MR` / `PO` / `DLV` / `WH`) is sequential and company-aware.
-- Purchase order, delivery and QC create flows persist `company_name` and stay tenant-scoped.
-- Duplicate blueprint URL prefixes no longer produce `/warehouse/warehouse/...` routes.
-- JSON APIs can send `csrf_token` in the request body.
-- Gunicorn now boots `wsgi:app` instead of an invalid factory string.
-
 ### Added
-- Public acquisition funnel: landing, demo, pricing and persisted demo-request contact.
-- Liveness and readiness probes at `/health/live` and `/health/ready`.
-- Role workspaces now show operational KPIs (pending, overdue, delayed, low stock) instead of raw table counts.
-- Dedicated 403 page and `/register`, `/login`, `/getting-started` aliases.
-- `testing` Flask config and broader integration coverage.
-
-## vNext — Global Procurement & Materials Control
-
-This release strengthens MaterialHub as an end-to-end construction / EPC material control platform.
-
-### Added
-- Executive **Control Center** with live KPIs for requisitions, POs, deliveries, low stock and tenders.
-- Delivery Risk Radar using the existing risk-analysis engine.
-- Low-stock / reorder signals on the executive dashboard.
-- Procurement pipeline view with project, priority and approval status.
+- Executive dashboard with live KPI cards for open MRs, pending POs, in-transit deliveries, low-stock items and open tenders.
+- Role-aware workspace landing pages with priority and approval status.
 - Fast-action navigation for requisitions, purchasing, warehouse, delivery, quality and suppliers.
 - JSON API: `GET /api/overview` for dashboards and future mobile integrations.
 - Health endpoint: `GET /health` for deployment monitoring.
@@ -40,3 +18,16 @@ This release strengthens MaterialHub as an end-to-end construction / EPC materia
 MaterialHub is positioned around a construction/EPC-specific material lifecycle: **Need → MR → Approval → Tender → PO → Delivery → QC → Warehouse → Availability**.
 
 The product direction intentionally combines strengths seen in Procore Materials (supply-chain visibility, field receiving, inventory), Autodesk Forma/Construction Cloud (single source of truth and integrations), and Oracle Procurement (procure-to-pay, sourcing and supplier management), while keeping MaterialHub focused on material operations rather than becoming an overly broad enterprise suite.
+
+## [Unreleased] — Production launch package (2026-09-20)
+
+### Added
+- `scripts/seed_demo.py` — safe multi-tenant demo data (users, projects, MR, PO, delivery, inventory, tender, bid, contact inquiry). Gated by `SEED_DEMO=1`.
+- `scripts/prod_up.sh` — one-command helper for build / up / migrate / seed / status / logs.
+- `docs/PRODUCTION_LAUNCH.md` — complete production go-live checklist and runbook.
+- Expanded `.env.prod.example` with Redis rate-limit, cookie and optional OTEL settings.
+- README section pointing to production launch docs.
+
+### Notes
+- Demo accounts use password `Demo@MaterialHub2026!` and pre-confirmed TOTP for convenience. Rotate before real users.
+- Seed refuses to run if users already exist unless `--force` is passed.

@@ -82,6 +82,26 @@ Guests land on the public product page. After sign-in, users are routed to their
 
 ---
 
+## Production Launch
+
+For a full production deployment (Nginx + Gunicorn + PostgreSQL + Redis + TLS):
+
+1. Read **[docs/PRODUCTION_LAUNCH.md](docs/PRODUCTION_LAUNCH.md)** — complete checklist.
+2. Copy `.env.prod.example` → `.env.prod` and set a strong `SECRET_KEY`.
+3. Create Docker secrets under `secrets/` (postgres password + TLS cert/key).
+4. Run:
+   ```bash
+   ./scripts/prod_up.sh build
+   ./scripts/prod_up.sh up
+   ./scripts/prod_up.sh migrate
+   # optional demo data (staging only):
+   ./scripts/prod_up.sh seed
+   ```
+
+See also `PRODUCTION_READINESS_REPORT.md` and `SECURITY.md`.
+
+---
+
 ## Docker (Recommended)
 
 ```bash
