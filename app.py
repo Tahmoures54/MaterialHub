@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import importlib.util
+import logging
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from extensions import db, migrate, login_manager, csrf, limiter
