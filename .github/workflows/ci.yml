@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 env:
   PYTHONPATH: ${{ github.workspace }}
@@ -57,22 +56,3 @@ jobs:
         with:
           name: trivy-report
           path: trivy-report.json
-      - name: Report Trivy findings to PR (diagnostic)
-        if: always() && github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set +e
-          {
-            echo "### Trivy scan findings (HIGH,CRITICAL) on materialhub:ci"
-            echo ""
-            echo '```'
-            if command -v trivy > /dev/null 2>&1; then
-              trivy image --ignorefile .trivyignore --severity HIGH,CRITICAL materialhub:ci --format table 2>&1 | tail -200
-            else
-              echo "trivy is not on PATH in this step"
-            fi
-            echo '```'
-          } > trivy-comment.md
-          gh pr comment "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --body-file trivy-comment.md
-          exit 0
