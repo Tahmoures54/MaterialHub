@@ -9,7 +9,8 @@ fi
 : "${POSTGRES_DB:?POSTGRES_DB is required}"
 : "${POSTGRES_PASSWORD:?Postgres password secret is required}"
 
-export DATABASE_URL="postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+ENCODED_PASSWORD="$(python -c 'import os; from urllib.parse import quote; print(quote(os.environ["POSTGRES_PASSWORD"], safe=""))')"
+export DATABASE_URL="postgresql+psycopg2://${POSTGRES_USER}:${ENCODED_PASSWORD}@db:5432/${POSTGRES_DB}"
 unset POSTGRES_PASSWORD
 
 exec "$@"
