@@ -23,7 +23,7 @@ jobs:
       - name: Ruff
         run: ruff check . --select E4,E7,E9,F --ignore E401,E402,E701,E702,F401
       - name: Mypy
-        run: mypy --ignore-missing-imports app.py extensions.py config blueprints models.py models_intelligence.py role_workspace.py utils.py
+        run: mypy --ignore-missing-imports --explicit-package-bases app.py extensions.py config blueprints models.py models_intelligence.py role_workspace.py utils.py
       - name: Pytest with coverage
         run: pytest --cov=. --cov-report=term-missing --cov-fail-under=80
       - name: Bandit
