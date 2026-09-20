@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   {% block head %}{% endblock %}
   <style>
-    /* Shell layout — Industrial Iranian Sky */
+    /* Shell — Industrial Iranian Sky · consistent full-width chrome */
     :root {
       --mh-teal: #0E7490;
       --mh-teal-2: #0891B2;
@@ -28,28 +28,39 @@
       --mh-card: #FFFFFF;
       --mh-sidebar: #0B1622;
       --mh-sidebar-2: #122033;
+      --mh-topbar-h: 64px;
+      --mh-sidebar-w: 248px;
     }
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+      height: 100%;
+    }
     body {
       margin: 0 !important;
       padding: 0 !important;
       background: var(--mh-bg) !important;
       color: var(--mh-ink);
       font-family: Inter, "Segoe UI", system-ui, sans-serif;
-      min-height: 100vh;
+      min-height: 100%;
+      height: 100%;
       -webkit-font-smoothing: antialiased;
     }
     a { color: inherit; text-decoration: none; }
 
+    /* Full-height shell: topbar + body + footer always aligned */
     .mh-shell {
       min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
+      width: 100%;
     }
 
+    /* ── Topbar: always full viewport width ── */
     .mh-topbar {
-      height: 64px;
+      height: var(--mh-topbar-h);
+      width: 100%;
       background: #FFFFFF;
       border-bottom: 1px solid var(--mh-border);
       display: flex;
@@ -66,7 +77,8 @@
       align-items: center;
       gap: 11px;
       text-decoration: none;
-      min-width: 210px;
+      min-width: 0;
+      flex-shrink: 0;
     }
     .mh-brand img { width: 36px; height: 36px; object-fit: contain; }
     .mh-brand-mark {
@@ -83,13 +95,14 @@
       box-shadow: 0 2px 8px rgba(14, 116, 144, 0.25);
       flex-shrink: 0;
     }
-    .mh-brand strong { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; }
+    .mh-brand strong { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }
     .mh-brand span {
       display: block;
       font-size: 0.7rem;
       color: var(--mh-muted);
       margin-top: 1px;
       font-weight: 500;
+      white-space: nowrap;
     }
 
     .mh-menu {
@@ -100,6 +113,7 @@
       cursor: pointer;
       padding: 6px;
       border-radius: 8px;
+      flex-shrink: 0;
     }
     .mh-menu:hover { background: #F1F5F9; }
 
@@ -108,6 +122,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-shrink: 0;
     }
     .mh-pill {
       padding: 7px 12px;
@@ -122,6 +137,7 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      white-space: nowrap;
     }
     .mh-pill:hover { background: #F8FAFC; border-color: #94A3B8; }
     .mh-pill.primary {
@@ -145,11 +161,40 @@
       flex-shrink: 0;
     }
 
+    .mh-public-nav {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .mh-public-nav a {
+      padding: 7px 12px;
+      text-decoration: none;
+      color: #475569;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 550;
+      white-space: nowrap;
+    }
+    .mh-public-nav a:hover { background: #F1F5F9; color: #0F172A; }
+
+    /* ── Body region grows between topbar and footer ── */
+    .mh-body {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      width: 100%;
+    }
+
+    /* Authenticated: sidebar + content */
     .mh-layout {
       display: grid;
-      grid-template-columns: 248px minmax(0, 1fr);
-      flex: 1;
+      grid-template-columns: var(--mh-sidebar-w) minmax(0, 1fr);
+      flex: 1 1 auto;
       min-height: 0;
+      width: 100%;
     }
 
     .mh-sidebar {
@@ -157,10 +202,12 @@
       color: #94A3B8;
       padding: 16px 10px;
       position: sticky;
-      top: 64px;
-      height: calc(100vh - 64px);
+      top: var(--mh-topbar-h);
+      height: calc(100vh - var(--mh-topbar-h));
+      height: calc(100dvh - var(--mh-topbar-h));
       overflow-y: auto;
       overflow-x: hidden;
+      align-self: start;
     }
     .mh-nav-label {
       font-size: 0.65rem;
@@ -192,51 +239,43 @@
 
     .mh-content {
       min-width: 0;
+      width: 100%;
       display: flex;
       flex-direction: column;
-      flex: 1;
+      flex: 1 1 auto;
     }
-
-    .mh-main {
-      max-width: 1500px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 26px;
-      flex: 1;
-    }
-
-    .mh-footer {
-      border-top: 1px solid var(--mh-border);
-      padding: 18px 26px;
-      color: #64748B;
-      background: #fff;
-      font-size: 0.78rem;
-      flex-shrink: 0;
-    }
-    .mh-footer strong { color: #0F172A; }
 
     .mh-flashes {
-      max-width: 1500px;
       width: 100%;
+      max-width: 1500px;
       margin: 16px auto 0;
       padding: 0 26px;
     }
 
-    .mh-public-nav {
+    .mh-main {
+      width: 100%;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 26px;
+      flex: 1 1 auto;
+    }
+
+    /* ── Footer: always full viewport width, pinned under body ── */
+    .mh-footer {
+      width: 100%;
+      border-top: 1px solid var(--mh-border);
+      padding: 16px 26px;
+      color: #64748B;
+      background: #fff;
+      font-size: 0.78rem;
+      flex-shrink: 0;
       display: flex;
-      gap: 4px;
-      margin-left: auto;
       align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    .mh-public-nav a {
-      padding: 7px 12px;
-      text-decoration: none;
-      color: #475569;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      font-weight: 550;
-    }
-    .mh-public-nav a:hover { background: #F1F5F9; color: #0F172A; }
+    .mh-footer strong { color: #0F172A; }
 
     .mh-sidebar-backdrop {
       display: none;
@@ -252,31 +291,37 @@
       .mh-sidebar {
         position: fixed;
         left: -280px;
-        top: 64px;
-        width: 250px;
+        top: var(--mh-topbar-h);
+        width: var(--mh-sidebar-w);
         z-index: 999;
         transition: left 0.2s ease;
         box-shadow: 12px 0 32px rgba(0, 0, 0, 0.25);
+        height: calc(100vh - var(--mh-topbar-h));
+        height: calc(100dvh - var(--mh-topbar-h));
       }
       body.mh-sidebar-open .mh-sidebar { left: 0; }
-      .mh-brand { min-width: 0; }
       .mh-public-nav { display: none; }
       .mh-main { padding: 18px; }
       .mh-topbar { padding: 0 14px; }
       .mh-flashes { padding: 0 18px; }
+      .mh-footer { padding: 14px 18px; }
+      .mh-top-actions .mh-pill span,
+      .mh-top-actions .mh-pill { font-size: 0.8rem; }
     }
     @media (max-width: 600px) {
+      :root { --mh-topbar-h: 58px; }
       .mh-main { padding: 14px; }
-      .mh-footer { padding: 14px; }
-      .mh-topbar { height: 58px; }
-      .mh-sidebar { top: 58px; height: calc(100vh - 58px); }
+      .mh-footer { padding: 12px 14px; font-size: 0.72rem; }
       .mh-flashes { padding: 0 14px; }
+      .mh-brand span { display: none; }
+      .mh-top-actions .mh-pill:not(.primary) { display: none; }
     }
   </style>
 </head>
 <body>
 <div class="mh-shell">
 
+  {# ════════ TOPBAR — always full width ════════ #}
   <header class="mh-topbar">
     {% if current_user.is_authenticated %}
       <button class="mh-menu" type="button" onclick="document.body.classList.toggle('mh-sidebar-open')" aria-label="Toggle navigation">
@@ -316,58 +361,71 @@
     {% endif %}
   </header>
 
-  {% if current_user.is_authenticated %}
-    <div class="mh-sidebar-backdrop" onclick="document.body.classList.remove('mh-sidebar-open')"></div>
-    <div class="mh-layout">
-      <aside class="mh-sidebar">
-        <div class="mh-nav-label">Workspace</div>
-        <nav class="mh-nav">
-          <a href="{{ url_for('role_workspace.my_workspace') }}"><i class="fas fa-layer-group"></i> My Workspace</a>
-          <a href="{{ url_for('control_center.dashboard') }}"><i class="fas fa-chart-pie"></i> Control Center</a>
-          <a href="{{ url_for('intelligence.dashboard') }}"><i class="fas fa-brain"></i> Material Intelligence</a>
-        </nav>
+  {# ════════ BODY ════════ #}
+  <div class="mh-body">
+    {% if current_user.is_authenticated %}
+      <div class="mh-sidebar-backdrop" onclick="document.body.classList.remove('mh-sidebar-open')"></div>
+      <div class="mh-layout">
+        <aside class="mh-sidebar">
+          <div class="mh-nav-label">Workspace</div>
+          <nav class="mh-nav">
+            <a href="{{ url_for('role_workspace.my_workspace') }}"><i class="fas fa-layer-group"></i> My Workspace</a>
+            <a href="{{ url_for('control_center.dashboard') }}"><i class="fas fa-chart-pie"></i> Control Center</a>
+            <a href="{{ url_for('intelligence.dashboard') }}"><i class="fas fa-brain"></i> Material Intelligence</a>
+          </nav>
 
-        <div class="mh-nav-label">Operations</div>
-        <nav class="mh-nav">
-          <a href="{{ url_for('material_requisitions.material_requisitions') }}"><i class="fas fa-clipboard-list"></i> Requisitions</a>
-          <a href="{{ url_for('purchase_order.purchase_order') }}"><i class="fas fa-file-invoice-dollar"></i> Purchase Orders</a>
-          <a href="{{ url_for('delivery.delivery_order') }}"><i class="fas fa-truck"></i> Deliveries</a>
-          <a href="{{ url_for('warehouse.warehouse_operations') }}"><i class="fas fa-warehouse"></i> Warehouse</a>
-          <a href="{{ url_for('quality_control.quality_control') }}"><i class="fas fa-shield-alt"></i> Quality Control</a>
-        </nav>
+          <div class="mh-nav-label">Operations</div>
+          <nav class="mh-nav">
+            <a href="{{ url_for('material_requisitions.material_requisitions') }}"><i class="fas fa-clipboard-list"></i> Requisitions</a>
+            <a href="{{ url_for('purchase_order.purchase_order') }}"><i class="fas fa-file-invoice-dollar"></i> Purchase Orders</a>
+            <a href="{{ url_for('delivery.delivery_order') }}"><i class="fas fa-truck"></i> Deliveries</a>
+            <a href="{{ url_for('warehouse.warehouse_operations') }}"><i class="fas fa-warehouse"></i> Warehouse</a>
+            <a href="{{ url_for('quality_control.quality_control') }}"><i class="fas fa-shield-alt"></i> Quality Control</a>
+          </nav>
 
-        <div class="mh-nav-label">Materials & Data</div>
-        <nav class="mh-nav">
-          <a href="{{ url_for('materials') }}"><i class="fas fa-boxes"></i> Materials</a>
-          <a href="{{ url_for('material_marketplace') }}"><i class="fas fa-store"></i> Marketplace</a>
-          <a href="{{ url_for('intelligence.traceability') }}"><i class="fas fa-qrcode"></i> Traceability</a>
-          <a href="{{ url_for('intelligence.excel_import') }}"><i class="fas fa-file-excel"></i> Excel Import</a>
-        </nav>
+          <div class="mh-nav-label">Materials & Data</div>
+          <nav class="mh-nav">
+            <a href="{{ url_for('materials') }}"><i class="fas fa-boxes"></i> Materials</a>
+            <a href="{{ url_for('material_marketplace') }}"><i class="fas fa-store"></i> Marketplace</a>
+            <a href="{{ url_for('intelligence.traceability') }}"><i class="fas fa-qrcode"></i> Traceability</a>
+            <a href="{{ url_for('intelligence.excel_import') }}"><i class="fas fa-file-excel"></i> Excel Import</a>
+          </nav>
 
-        <div class="mh-nav-label">Management</div>
-        <nav class="mh-nav">
-          {% if current_user.access_level.value == 'project_manager' %}
-            <a href="{{ url_for('project_dashboard.dashboard') }}"><i class="fas fa-users-cog"></i> Project Team</a>
-          {% endif %}
-          {% if current_user.is_admin %}
-            <a href="{{ url_for('admin.admin') }}"><i class="fas fa-user-shield"></i> Administration</a>
-          {% endif %}
-          <a href="{{ url_for('report.report') }}"><i class="fas fa-chart-bar"></i> Reports</a>
-        </nav>
+          <div class="mh-nav-label">Management</div>
+          <nav class="mh-nav">
+            {% if current_user.access_level.value == 'project_manager' %}
+              <a href="{{ url_for('project_dashboard.dashboard') }}"><i class="fas fa-users-cog"></i> Project Team</a>
+            {% endif %}
+            {% if current_user.is_admin %}
+              <a href="{{ url_for('admin.admin') }}"><i class="fas fa-user-shield"></i> Administration</a>
+            {% endif %}
+            <a href="{{ url_for('report.report') }}"><i class="fas fa-chart-bar"></i> Reports</a>
+          </nav>
 
-        <div class="mh-nav-label">Support</div>
-        <nav class="mh-nav">
-          <a href="{{ url_for('help.help') }}"><i class="fas fa-question-circle"></i> Help Center</a>
-          <a href="{{ url_for('auth.change_password') }}"><i class="fas fa-key"></i> Change Password</a>
-          <a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Sign out</a>
-        </nav>
-      </aside>
+          <div class="mh-nav-label">Support</div>
+          <nav class="mh-nav">
+            <a href="{{ url_for('help.help') }}"><i class="fas fa-question-circle"></i> Help Center</a>
+            <a href="{{ url_for('auth.change_password') }}"><i class="fas fa-key"></i> Change Password</a>
+            <a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Sign out</a>
+          </nav>
+        </aside>
 
+        <div class="mh-content">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              <div class="mh-flashes">
+                {% for category, message in messages %}
+                  <div class="mh-alert mh-alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% endwith %}
+          <main class="mh-main">{% block content %}{% endblock %}</main>
+        </div>
+      </div>
+
+    {% else %}
       <div class="mh-content">
-  {% else %}
-      <div class="mh-content">
-  {% endif %}
-
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             <div class="mh-flashes">
@@ -377,20 +435,16 @@
             </div>
           {% endif %}
         {% endwith %}
+        <main class="mh-main">{% block content %}{% endblock %}</main>
+      </div>
+    {% endif %}
+  </div>{# /.mh-body #}
 
-        <main class="mh-main">
-          {% block content %}{% endblock %}
-        </main>
-
-        <footer class="mh-footer">
-          <strong>MaterialHub</strong> · Integrated material operations, procurement, delivery, warehouse and intelligence.
-          <span style="float:right">© {{ current_year|default(2026) }}</span>
-        </footer>
-      </div>{# /.mh-content #}
-
-  {% if current_user.is_authenticated %}
-    </div>{# /.mh-layout #}
-  {% endif %}
+  {# ════════ FOOTER — always full width ════════ #}
+  <footer class="mh-footer">
+    <span><strong>MaterialHub</strong> · Integrated material operations, procurement, delivery, warehouse and intelligence.</span>
+    <span>© {{ current_year|default(2026) }}</span>
+  </footer>
 
 </div>{# /.mh-shell #}
 
