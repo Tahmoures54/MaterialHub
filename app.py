@@ -418,4 +418,4 @@ if __name__ == '__main__':
     _app = create_app()
     if _app.config.get('IS_PRODUCTION'):
         raise RuntimeError('Do not run MaterialHub with Flask development server in production. Use Gunicorn.')
-    _app.run(host='0.0.0.0', port=5000, debug=_app.config.get('DEBUG', False))
+    _app.run(host='0.0.0.0', port=5000, debug=_app.config.get('DEBUG', False))  # nosec B104  # Dev-only entry point; production uses Gunicorn (wsgi.py)

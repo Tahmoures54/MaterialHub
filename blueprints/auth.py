@@ -1,6 +1,6 @@
 import os
 import logging
-import random
+import secrets
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, current_user, login_required
@@ -54,8 +54,8 @@ def register():
 
     # Generate dynamic CAPTCHA if not already set
     if 'captcha_answer' not in session:
-        num1 = random.randint(1, 10)
-        num2 = random.randint(1, 10)
+        num1 = secrets.randbelow(10) + 1
+        num2 = secrets.randbelow(10) + 1
         session['captcha_answer'] = str(num1 + num2)
         session['captcha_question'] = f"What is {num1} + {num2}?"
 
@@ -71,8 +71,8 @@ def register():
         if str(form.captcha_answer.data) != session.get('captcha_answer'):
             flash('Incorrect CAPTCHA answer. Please try again.', 'danger')
             # Regenerate CAPTCHA
-            num1 = random.randint(1, 10)
-            num2 = random.randint(1, 10)
+            num1 = secrets.randbelow(10) + 1
+            num2 = secrets.randbelow(10) + 1
             session['captcha_answer'] = str(num1 + num2)
             session['captcha_question'] = f"What is {num1} + {num2}?"
             return render_template('auth/register.html', form=form, totp_form=totp_form, qr_code=None, registered=False,
