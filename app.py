@@ -266,6 +266,27 @@ def create_app(config_name=None):
             return redirect(url_for('role_workspace.my_workspace'))
         return render_template('marketing/landing.html')
 
+    @app.get('/robots.txt')
+    def robots_txt():
+        sitemap = url_for('sitemap_xml', _external=True)
+        return Response(
+            f"User-agent: *\\nAllow: /\\nDisallow: /admin\\nDisallow: /control-center\\nDisallow: /api/\\nSitemap: {sitemap}\\n",
+            mimetype='text/plain',
+        )
+
+    @app.get('/sitemap.xml')
+    def sitemap_xml():
+        public_endpoints = [
+            'index', 'product_overview', 'growth.demo', 'growth.pricing',
+            'growth.contact', 'help.getting_started', 'help.user_guide', 'help.about',
+        ]
+        urls = ''.join(
+            f'<url><loc>{url_for(endpoint, _external=True)}</loc></url>'
+            for endpoint in public_endpoints
+        )
+        xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
+        return Response(xml, mimetype='application/xml')
+
     @app.route('/overview')
     def product_overview():
         return render_template('dashboard/home.html')
