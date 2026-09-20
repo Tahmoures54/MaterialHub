@@ -20,7 +20,7 @@ def upgrade():
         type_=sa.String(length=512),
         existing_nullable=True,
     )
-    op.execute(sa.text("UPDATE "user" SET qr_code_base64 = NULL"))
+    op.execute(sa.text('UPDATE "user" SET qr_code_base64 = NULL'))
 
 
 def downgrade():
