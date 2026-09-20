@@ -2,6 +2,10 @@ import enum
 import re
 from datetime import date, datetime
 import pytz
+import base64
+import hashlib
+from cryptography.fernet import Fernet, InvalidToken
+from config.config import Config
 from flask_login import UserMixin
 from sqlalchemy import Enum
 from extensions import db
@@ -803,7 +807,7 @@ class User(db.Model, UserMixin):
     store_name = db.Column(db.String(100), nullable=True)
     is_admin = db.Column(db.Boolean, default=False)
     password_hash = db.Column(db.String(128), nullable=True)
-    totp_secret = db.Column(db.String(32), nullable=True)
+    totp_secret = db.Column(db.String(512), nullable=True)
     qr_code_base64 = db.Column(db.Text, nullable=True)
     totp_confirmed = db.Column(db.Boolean, default=False)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True, index=True)
@@ -829,18 +833,62 @@ class User(db.Model, UserMixin):
         if 'country' in kwargs and not kwargs['country'].strip():
             raise ValidationError('Country cannot be empty')
 
+    @staticmethod
+    def _password_hasher():
+        from argon2 import PasswordHasher
+        return PasswordHasher()
+
+    @staticmethod
+    def _totp_cipher():
+        key_material = Config.SECRET_KEY.encode('utf-8')
+        key = base64.urlsafe_b64encode(hashlib.sha256(key_material).digest())
+        return Fernet(key)
+
+    @classmethod
+    def encrypt_totp_secret(cls, secret):
+        if not secret:
+            return None
+        return 'enc:' + cls._totp_cipher().encrypt(secret.encode('utf-8')).decode('ascii')
+
+    def decrypt_totp_secret(self):
+        if not self.totp_secret:
+            raise ValidationError('TOTP secret not set')
+        if not self.totp_secret.startswith('enc:'):
+            return self.totp_secret
+        try:
+            return self._totp_cipher().decrypt(
+                self.totp_secret[4:].encode('ascii')
+            ).decode('utf-8')
+        except (InvalidToken, ValueError, UnicodeDecodeError) as exc:
+            raise ValidationError('Stored TOTP secret cannot be decrypted') from exc
+
+    def set_totp_secret(self, secret):
+        self.totp_secret = self.encrypt_totp_secret(secret)
+
     def set_password(self, password):
-        from werkzeug.security import generate_password_hash
         if password:
             if len(password) < 8:
                 raise ValidationError('Password must be at least 8 characters long')
-            self.password_hash = generate_password_hash(password)
+            self.password_hash = self._password_hasher().hash(password)
 
     def check_password(self, password):
-        from werkzeug.security import check_password_hash
         if not self.password_hash:
             return False
-        return check_password_hash(self.password_hash, password)
+        hasher = self._password_hasher()
+        try:
+            valid = hasher.verify(self.password_hash, password)
+        except Exception:
+            from werkzeug.security import check_password_hash
+            try:
+                valid = check_password_hash(self.password_hash, password)
+            except Exception:
+                return False
+            if valid:
+                self.password_hash = hasher.hash(password)
+        else:
+            if valid and hasher.check_needs_rehash(self.password_hash):
+                self.password_hash = hasher.hash(password)
+        return bool(valid)
 
     def validate_email(self, email):
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
@@ -857,7 +905,8 @@ class User(db.Model, UserMixin):
     def get_totp_uri(self):
         if not self.totp_secret:
             raise ValidationError('TOTP secret not set')
-        return f"otpauth://totp/MaterialHub:{self.company_email}?secret={self.totp_secret}&issuer=MaterialHub"
+        secret = self.decrypt_totp_secret()
+        return f"otpauth://totp/MaterialHub:{self.company_email}?secret={secret}&issuer=MaterialHub"
 
     def to_dict(self):
         return {
