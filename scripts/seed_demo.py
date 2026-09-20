@@ -60,7 +60,7 @@ from models import (
     WorkflowStatus,
 )
 
-DEMO_PASSWORD = "Demo@MaterialHub2026!"
+DEMO_PASSWORD = "Demo@MaterialHub2026!"  # nosec B105  # Deliberate non-production demo credential; seed is opt-in and docs require rotation.
 
 
 def create_user(**kwargs) -> User:
