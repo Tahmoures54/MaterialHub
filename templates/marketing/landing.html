@@ -1,18 +1,295 @@
 {% extends "base.html" %}
 {% block title %} — Material Operations for Construction & EPC{% endblock %}
+{% block head %}
+<style>
+  .lp { max-width: 1120px; margin: 0 auto; }
+
+  /* Hero */
+  .lp-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid #CBD5E1;
+    background:
+      radial-gradient(ellipse 80% 60% at 85% 10%, rgba(8, 145, 178, 0.14), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 10% 90%, rgba(14, 116, 144, 0.08), transparent 50%),
+      linear-gradient(160deg, #F0FDFF 0%, #F8FAFC 45%, #FFFFFF 100%);
+    padding: clamp(2.25rem, 5vw, 3.75rem) clamp(1.5rem, 4vw, 3rem);
+    margin-bottom: 1.75rem;
+  }
+  .lp-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: #ECFEFF;
+    border: 1px solid #A5F3FC;
+    color: #0E7490;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 1.15rem;
+  }
+  .lp-hero h1 {
+    margin: 0 0 1rem;
+    font-size: clamp(1.85rem, 4.2vw, 3.1rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.12;
+    color: #0F172A;
+  }
+  .lp-hero h1 span {
+    color: #0E7490;
+  }
+  .lp-hero-lead {
+    margin: 0;
+    max-width: 560px;
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: #64748B;
+  }
+  .lp-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.85rem;
+  }
+  .lp-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #E2E8F0;
+  }
+  .lp-hero-meta div strong {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -0.02em;
+  }
+  .lp-hero-meta div span {
+    font-size: 0.8rem;
+    color: #64748B;
+    font-weight: 500;
+  }
+
+  /* Section head */
+  .lp-section {
+    margin-bottom: 1.75rem;
+  }
+  .lp-section-head {
+    margin-bottom: 1.15rem;
+  }
+  .lp-section-head h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #0F172A;
+  }
+  .lp-section-head p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #64748B;
+    max-width: 520px;
+  }
+
+  /* Feature cards */
+  .lp-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 1rem;
+  }
+  .lp-feature {
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 1.4rem 1.35rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  }
+  .lp-feature:hover {
+    border-color: #A5F3FC;
+    box-shadow: 0 8px 24px rgba(14, 116, 144, 0.08);
+    transform: translateY(-2px);
+  }
+  .lp-feature-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #ECFEFF, #CFFAFE);
+    color: #0E7490;
+    display: grid;
+    place-items: center;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+  .lp-feature h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0F172A;
+  }
+  .lp-feature p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: #64748B;
+  }
+
+  /* Flow */
+  .lp-flow {
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 1.5rem 1.35rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  }
+  .lp-flow-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+    gap: 0.75rem;
+    margin-top: 1.15rem;
+  }
+  .lp-step {
+    text-align: center;
+    padding: 1rem 0.75rem;
+    border-radius: 10px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+  }
+  .lp-step-num {
+    width: 28px;
+    height: 28px;
+    margin: 0 auto 0.55rem;
+    border-radius: 50%;
+    background: #0E7490;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+  }
+  .lp-step strong {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 0.2rem;
+  }
+  .lp-step span {
+    font-size: 0.75rem;
+    color: #64748B;
+  }
+
+  /* Roles */
+  .lp-roles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+    gap: 0.85rem;
+  }
+  .lp-role {
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 1.15rem 1.2rem;
+    border-left: 3px solid #0E7490;
+    transition: box-shadow 0.15s;
+  }
+  .lp-role:hover {
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  }
+  .lp-role strong {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 0.3rem;
+  }
+  .lp-role p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #64748B;
+    line-height: 1.45;
+  }
+
+  /* CTA */
+  .lp-cta {
+    border-radius: 16px;
+    padding: clamp(2rem, 4vw, 2.75rem);
+    text-align: center;
+    background: linear-gradient(145deg, #0B1622 0%, #122033 55%, #0E7490 160%);
+    border: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .lp-cta::before {
+    content: "";
+    position: absolute;
+    top: -30%;
+    right: -10%;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(8, 145, 178, 0.25), transparent 70%);
+    pointer-events: none;
+  }
+  .lp-cta h2 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.25rem, 3vw, 1.6rem);
+    font-weight: 800;
+    color: #F8FAFC;
+    letter-spacing: -0.02em;
+    position: relative;
+  }
+  .lp-cta p {
+    margin: 0 0 1.5rem;
+    color: #94A3B8;
+    font-size: 0.95rem;
+    position: relative;
+  }
+  .lp-cta .btn {
+    position: relative;
+    background: #0891B2;
+    border-color: #0891B2;
+  }
+  .lp-cta .btn:hover {
+    background: #0E7490;
+    border-color: #0E7490;
+  }
+  .lp-cta-secondary {
+    margin-left: 0.5rem;
+    background: transparent !important;
+    border: 1px solid rgba(148, 163, 184, 0.45) !important;
+    color: #E2E8F0 !important;
+  }
+  .lp-cta-secondary:hover {
+    background: rgba(255,255,255,0.06) !important;
+    border-color: #94A3B8 !important;
+  }
+</style>
+{% endblock %}
 {% block content %}
-<div class="mh-page">
+<div class="lp">
 
   <!-- Hero -->
-  <section class="mh-workspace-hero" style="padding: 3rem 2.25rem;">
-    <span class="mh-badge mh-badge-primary" style="margin-bottom: 0.75rem;">Construction & EPC</span>
-    <h1 style="font-size: clamp(1.9rem, 4.5vw, 3.25rem); margin: 0.4rem 0 0.75rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;">
-      Know what you need.<br>Know where it is.<br>Know when it will arrive.
+  <section class="lp-hero">
+    <div class="lp-hero-badge">
+      <i class="fas fa-industry"></i> Construction & EPC
+    </div>
+    <h1>
+      Know what you need.<br>
+      Know <span>where it is</span>.<br>
+      Know when it will arrive.
     </h1>
-    <p class="mh-muted" style="font-size: 1.1rem; max-width: 640px; line-height: 1.65; margin: 0;">
-      MaterialHub connects demand, procurement, supplier performance, delivery, quality, warehouse traceability and operational intelligence in one serious workspace built for industrial projects.
+    <p class="lp-hero-lead">
+      MaterialHub connects demand, procurement, suppliers, delivery, quality, warehouse traceability and operational intelligence — one serious workspace for industrial projects.
     </p>
-    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.75rem;">
+    <div class="lp-hero-actions">
       <a class="btn btn-primary btn-lg" href="{{ url_for('growth.demo') }}">
         <i class="fas fa-play-circle"></i> Explore Demo
       </a>
@@ -20,63 +297,125 @@
         Start Free
       </a>
     </div>
-  </section>
-
-  <!-- Core capabilities — auto-fit -->
-  <section class="mh-grid-auto" style="margin-top: 1.25rem;">
-    <div class="mh-card">
-      <div style="width: 40px; height: 40px; border-radius: 10px; background: #ECFEFF; color: #0E7490; display: grid; place-items: center; margin-bottom: 1rem; font-size: 1.1rem;">
-        <i class="fas fa-file-invoice-dollar"></i>
-      </div>
-      <h3 style="margin: 0 0 0.5rem; font-size: 1.05rem; font-weight: 700;">Procurement Control</h3>
-      <p class="mh-muted" style="margin: 0; font-size: 0.925rem; line-height: 1.55;">RFQ, quote comparison, purchase orders and supplier performance in one controlled flow.</p>
-    </div>
-    <div class="mh-card">
-      <div style="width: 40px; height: 40px; border-radius: 10px; background: #ECFEFF; color: #0E7490; display: grid; place-items: center; margin-bottom: 1rem; font-size: 1.1rem;">
-        <i class="fas fa-qrcode"></i>
-      </div>
-      <h3 style="margin: 0 0 0.5rem; font-size: 1.05rem; font-weight: 700;">Full Traceability</h3>
-      <p class="mh-muted" style="margin: 0; font-size: 0.925rem; line-height: 1.55;">QR, heat, lot, serial and material documentation from receipt through issue.</p>
-    </div>
-    <div class="mh-card">
-      <div style="width: 40px; height: 40px; border-radius: 10px; background: #ECFEFF; color: #0E7490; display: grid; place-items: center; margin-bottom: 1rem; font-size: 1.1rem;">
-        <i class="fas fa-brain"></i>
-      </div>
-      <h3 style="margin: 0 0 0.5rem; font-size: 1.05rem; font-weight: 700;">Material Intelligence</h3>
-      <p class="mh-muted" style="margin: 0; font-size: 0.925rem; line-height: 1.55;">Readiness, lead-time and schedule-risk signals with recommended operational actions.</p>
+    <div class="lp-hero-meta">
+      <div><strong>End-to-end</strong><span>Requisition → Issue</span></div>
+      <div><strong>Traceable</strong><span>QR · Heat · Lot · Serial</span></div>
+      <div><strong>Role-ready</strong><span>PM · Procurement · WH · QC</span></div>
     </div>
   </section>
 
-  <!-- Built for roles — auto-fit sm -->
-  <section class="mh-card" style="margin-top: 1.25rem;">
-    <h2 class="mh-section-title">Built for the people who move projects</h2>
-    <p class="mh-section-desc">Role-based workspaces keep every function focused on what matters.</p>
-    <div class="mh-grid-auto-sm">
-      <div style="padding: 0.75rem 0;">
-        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">Project Manager</strong>
-        <p class="mh-muted" style="margin: 0; font-size: 0.85rem;">Schedule exposure & readiness</p>
+  <!-- Capabilities -->
+  <section class="lp-section">
+    <div class="lp-section-head">
+      <h2>What you control</h2>
+      <p>From first demand signal to material on site — visibility and accountability at every step.</p>
+    </div>
+    <div class="lp-features">
+      <article class="lp-feature">
+        <div class="lp-feature-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+        <h3>Procurement Control</h3>
+        <p>RFQ, quote comparison, purchase orders and supplier performance in one controlled flow.</p>
+      </article>
+      <article class="lp-feature">
+        <div class="lp-feature-icon"><i class="fas fa-truck"></i></div>
+        <h3>Delivery & Logistics</h3>
+        <p>Track shipments, ETAs and exceptions so schedule exposure is visible before it becomes delay.</p>
+      </article>
+      <article class="lp-feature">
+        <div class="lp-feature-icon"><i class="fas fa-warehouse"></i></div>
+        <h3>Warehouse Operations</h3>
+        <p>Receive, locate, hold and issue materials with clear stock positions and audit history.</p>
+      </article>
+      <article class="lp-feature">
+        <div class="lp-feature-icon"><i class="fas fa-qrcode"></i></div>
+        <h3>Full Traceability</h3>
+        <p>QR, heat, lot, serial and documentation from receipt through issue — audit-ready.</p>
+      </article>
+      <article class="lp-feature">
+        <div class="lp-feature-icon"><i class="fas fa-shield-alt"></i></div>
+        <h3>Quality Control</h3>
+        <p>Inspection, release and non-conformance handling tied to the same material record.</p>
+      </article>
+      <article class="lp-feature">
+        <div class="lp-feature-icon"><i class="fas fa-brain"></i></div>
+        <h3>Material Intelligence</h3>
+        <p>Readiness, lead-time and schedule-risk signals with recommended operational actions.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- Operating flow -->
+  <section class="lp-section">
+    <div class="lp-flow">
+      <div class="lp-section-head" style="margin-bottom: 0;">
+        <h2>How materials move</h2>
+        <p>A single operational chain — no disconnected spreadsheets.</p>
       </div>
-      <div style="padding: 0.75rem 0;">
-        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">Procurement</strong>
-        <p class="mh-muted" style="margin: 0; font-size: 0.85rem;">RFQ → Quote → PO → Recovery</p>
+      <div class="lp-flow-steps">
+        <div class="lp-step">
+          <div class="lp-step-num">1</div>
+          <strong>Demand</strong>
+          <span>Requisition</span>
+        </div>
+        <div class="lp-step">
+          <div class="lp-step-num">2</div>
+          <strong>Source</strong>
+          <span>RFQ → PO</span>
+        </div>
+        <div class="lp-step">
+          <div class="lp-step-num">3</div>
+          <strong>Deliver</strong>
+          <span>Inbound logistics</span>
+        </div>
+        <div class="lp-step">
+          <div class="lp-step-num">4</div>
+          <strong>Receive</strong>
+          <span>QC & stock</span>
+        </div>
+        <div class="lp-step">
+          <div class="lp-step-num">5</div>
+          <strong>Issue</strong>
+          <span>To site / job</span>
+        </div>
       </div>
-      <div style="padding: 0.75rem 0;">
-        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">Warehouse</strong>
-        <p class="mh-muted" style="margin: 0; font-size: 0.85rem;">Receive → Trace → Issue</p>
+    </div>
+  </section>
+
+  <!-- Roles -->
+  <section class="lp-section">
+    <div class="lp-section-head">
+      <h2>Built for the people who move projects</h2>
+      <p>Role-based workspaces keep every function focused on what matters.</p>
+    </div>
+    <div class="lp-roles">
+      <div class="lp-role">
+        <strong>Project Manager</strong>
+        <p>Schedule exposure, readiness and recovery actions in one view.</p>
       </div>
-      <div style="padding: 0.75rem 0;">
-        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">Quality</strong>
-        <p class="mh-muted" style="margin: 0; font-size: 0.85rem;">Inspect → Document → Release</p>
+      <div class="lp-role">
+        <strong>Procurement</strong>
+        <p>RFQ → Quote → PO → supplier recovery without losing context.</p>
+      </div>
+      <div class="lp-role">
+        <strong>Warehouse</strong>
+        <p>Receive → locate → issue with full material identity.</p>
+      </div>
+      <div class="lp-role">
+        <strong>Quality</strong>
+        <p>Inspect → document → release against the same record.</p>
       </div>
     </div>
   </section>
 
   <!-- CTA -->
-  <section class="mh-card" style="margin-top: 1.25rem; text-align: center; padding: 2.5rem 2rem; background: linear-gradient(135deg, #0B1622 0%, #122033 100%); border: none;">
-    <h2 style="margin: 0 0 0.5rem; color: #F8FAFC; font-size: 1.45rem; font-weight: 800;">Ready to run materials with control?</h2>
-    <p style="margin: 0 0 1.5rem; color: #94A3B8; font-size: 0.95rem;">Start free. Scale when your projects demand it.</p>
-    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}" style="background: #0891B2; border-color: #0891B2;">
+  <section class="lp-cta">
+    <h2>Ready to run materials with control?</h2>
+    <p>Start free. Scale when your projects demand it.</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}">
       Create account
+    </a>
+    <a class="btn btn-lg lp-cta-secondary" href="{{ url_for('growth.demo') }}">
+      View demo
     </a>
   </section>
 
