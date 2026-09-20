@@ -92,6 +92,14 @@
     max-width: 520px;
   }
 
+  /* First section — banner opens the page */
+  .lp-section-first {
+    margin-bottom: 1.5rem;
+  }
+  .lp-section-first .lp-section-head {
+    margin-bottom: 0.85rem;
+  }
+
   /* Capability banner carousel */
   .lp-banner {
     position: relative;
@@ -373,36 +381,8 @@
 {% block content %}
 <div class="lp">
 
-  <!-- Hero -->
-  <section class="lp-hero">
-    <div class="lp-hero-badge">
-      <i class="fas fa-industry"></i> Construction & EPC
-    </div>
-    <h1>
-      Know what you need.<br>
-      Know <span>where it is</span>.<br>
-      Know when it will arrive.
-    </h1>
-    <p class="lp-hero-lead">
-      MaterialHub connects demand, procurement, suppliers, delivery, quality, warehouse traceability and operational intelligence — one serious workspace for industrial projects.
-    </p>
-    <div class="lp-hero-actions">
-      <a class="btn btn-primary btn-lg" href="{{ url_for('growth.demo') }}">
-        <i class="fas fa-play-circle"></i> Explore Demo
-      </a>
-      <a class="btn btn-secondary btn-lg" href="{{ url_for('auth.register') }}">
-        Start Free
-      </a>
-    </div>
-    <div class="lp-hero-meta">
-      <div><strong>End-to-end</strong><span>Requisition → Issue</span></div>
-      <div><strong>Traceable</strong><span>QR · Heat · Lot · Serial</span></div>
-      <div><strong>Role-ready</strong><span>PM · Procurement · WH · QC</span></div>
-    </div>
-  </section>
-
-  <!-- Capabilities — rotating banner -->
-  <section class="lp-section">
+  <!-- 1. Capability banner — first thing users see -->
+  <section class="lp-section lp-section-first">
     <div class="lp-section-head">
       <h2>What you control</h2>
       <p>From first demand signal to material on site — visibility and accountability at every step.</p>
@@ -475,7 +455,35 @@
     </div>
   </section>
 
-  <!-- Operating flow -->
+  <!-- 2. Hero -->
+  <section class="lp-hero">
+    <div class="lp-hero-badge">
+      <i class="fas fa-industry"></i> Construction & EPC
+    </div>
+    <h1>
+      Know what you need.<br>
+      Know <span>where it is</span>.<br>
+      Know when it will arrive.
+    </h1>
+    <p class="lp-hero-lead">
+      MaterialHub connects demand, procurement, suppliers, delivery, quality, warehouse traceability and operational intelligence — one serious workspace for industrial projects.
+    </p>
+    <div class="lp-hero-actions">
+      <a class="btn btn-primary btn-lg" href="{{ url_for('growth.demo') }}">
+        <i class="fas fa-play-circle"></i> Explore Demo
+      </a>
+      <a class="btn btn-secondary btn-lg" href="{{ url_for('auth.register') }}">
+        Start Free
+      </a>
+    </div>
+    <div class="lp-hero-meta">
+      <div><strong>End-to-end</strong><span>Requisition → Issue</span></div>
+      <div><strong>Traceable</strong><span>QR · Heat · Lot · Serial</span></div>
+      <div><strong>Role-ready</strong><span>PM · Procurement · WH · QC</span></div>
+    </div>
+  </section>
+
+  <!-- 3. Operating flow -->
   <section class="lp-section">
     <div class="lp-flow">
       <div class="lp-section-head" style="margin-bottom: 0;">
@@ -512,7 +520,7 @@
     </div>
   </section>
 
-  <!-- Roles -->
+  <!-- 4. Roles -->
   <section class="lp-section">
     <div class="lp-section-head">
       <h2>Built for the people who move projects</h2>
@@ -538,7 +546,7 @@
     </div>
   </section>
 
-  <!-- CTA -->
+  <!-- 5. CTA -->
   <section class="lp-cta">
     <h2>Ready to run materials with control?</h2>
     <p>Start free. Scale when your projects demand it.</p>
@@ -552,7 +560,7 @@
 {% block scripts %}
 <script>
 (function () {
-  var INTERVAL = 2400; // ms per slide — snappy, not sluggish
+  var INTERVAL = 2400;
   var root = document.getElementById('lp-banner');
   if (!root) return;
 
@@ -627,7 +635,6 @@
     if (!root.contains(e.relatedTarget)) resume();
   });
 
-  // Respect reduced motion
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     INTERVAL = 6000;
   }
