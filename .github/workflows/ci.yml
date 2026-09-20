@@ -45,6 +45,13 @@ jobs:
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: materialhub:ci
-          format: table
+          format: json
+          output: trivy-report.json
           severity: HIGH,CRITICAL
           exit-code: '1'
+      - name: Upload Trivy report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.json
