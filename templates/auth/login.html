@@ -8,12 +8,14 @@
         background: linear-gradient(135deg, #e2e8f0 0%, #edf2f7 100%);
         color: #2d3748;
         margin: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        position: relative;
         overflow-x: hidden;
+    }
+
+    /* Keep the login card below the global sticky navigation.
+       The card can be taller than a phone viewport, so center it only
+       when there is enough vertical space and otherwise allow scrolling. */
+    .mh-content:has(.auth-container) {
+        min-height: 0;
     }
 
     /* Wave Background */
@@ -32,10 +34,17 @@
     .auth-container {
         display: flex;
         justify-content: center;
-        align-items: center;
-        padding: 20px;
+        align-items: flex-start;
+        padding: clamp(28px, 5vh, 56px) 20px 56px;
         width: 100%;
+        min-height: calc(100dvh - var(--mh-topbar-h));
+        position: relative;
         z-index: 1;
+    }
+
+    .auth-box {
+        position: relative;
+        z-index: 2;
     }
 
     .auth-box {
@@ -198,6 +207,10 @@
             max-width: 350px;
         }
 
+        .auth-container {
+            padding-top: 24px;
+        }
+
         .auth-title {
             font-size: 1.6em;
         }
@@ -215,6 +228,10 @@
         .auth-box {
             padding: 15px;
             max-width: 300px;
+        }
+
+        .auth-container {
+            padding: 20px 12px 40px;
         }
 
         .auth-title {
