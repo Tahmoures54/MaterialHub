@@ -86,8 +86,13 @@ def workspace_kpis(role):
         QualityControl.status == InspectionStatus.failed).count())
     open_tenders = _safe_count(lambda: _company_query(Tender).count())
     materials = _safe_count(lambda: _company_query(SupplierMaterial).count())
-    suppliers = _safe_count(lambda: User.query.filter_by(access_level=AccessLevel.supplier).count())
-    users = _safe_count(lambda: User.query.count())
+    supplier_query = User.query.filter_by(access_level=AccessLevel.supplier)
+    user_query = User.query
+    if not getattr(current_user, "is_admin", False):
+        supplier_query = supplier_query.filter(User.company_name == current_user.company_name)
+        user_query = user_query.filter(User.company_name == current_user.company_name)
+    suppliers = _safe_count(lambda: supplier_query.count())
+    users = _safe_count(lambda: user_query.count())
     pending_warehouse = _safe_count(lambda: _company_query(WarehouseInventory).filter(
         WarehouseInventory.workflow_status == WorkflowStatus.warehouse).count())
 
