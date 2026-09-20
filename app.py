@@ -11,6 +11,9 @@ from extensions import db, migrate, login_manager, csrf, limiter
 from config.config import config_by_name
 from data.country_codes import COUNTRY_NAMES_BY_CODE
 
+_OTEL_PROVIDER_CONFIGURED = False
+_OTEL_SQLALCHEMY_INSTRUMENTED = False
+
 
 def _request_id():
     candidate = request.headers.get('X-Request-ID', '').strip()
