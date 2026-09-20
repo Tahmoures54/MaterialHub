@@ -5,7 +5,7 @@ import importlib.util
 import json
 import time
 import uuid
-from flask import Flask, render_template, redirect, url_for, flash, request
+from flask import Flask, render_template, redirect, url_for, flash, request, Response, g
 from flask_login import login_required, current_user
 from extensions import db, migrate, login_manager, csrf, limiter
 from config.config import config_by_name
@@ -61,7 +61,8 @@ def _configure_observability(app):
             provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
         trace.set_tracer_provider(provider)
         FlaskInstrumentor().instrument_app(app)
-        SQLAlchemyInstrumentor().instrument(engine=db.engine)
+        with app.app_context():
+            SQLAlchemyInstrumentor().instrument(engine=db.engine)
     except Exception as exc:
         app.logger.warning('OpenTelemetry initialization skipped: %s', exc)
 
@@ -107,6 +108,21 @@ def create_app(config_name=None):
 
     _configure_observability(app)
 
+
+    try:
+        from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+        request_counter = Counter('materialhub_http_requests_total', 'HTTP requests', ['method', 'route', 'status'])
+        request_duration = Histogram('materialhub_http_request_duration_seconds', 'HTTP request duration', ['method', 'route'])
+    except Exception:
+        request_counter = request_duration = None
+        generate_latest = CONTENT_TYPE_LATEST = None
+
+    @app.get('/metrics')
+    def metrics():
+        if generate_latest is None:
+            return {'status': 'metrics_unavailable'}, 503
+        return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
     @app.before_request
     def _start_request_observability():
         request.environ['materialhub.request_started'] = time.perf_counter()
@@ -118,6 +134,10 @@ def create_app(config_name=None):
         from flask import g
         duration_ms = round((time.perf_counter() - request.environ.get('materialhub.request_started', time.perf_counter())) * 1000, 2)
         response.headers['X-Request-ID'] = getattr(g, 'request_id', _request_id())
+        if request_counter is not None:
+            route = request.url_rule.rule if request.url_rule else 'unmatched'
+            request_counter.labels(request.method, route, str(response.status_code)).inc()
+            request_duration.labels(request.method, route).observe(duration_ms / 1000)
         app.logger.info(
             'request completed',
             extra={
