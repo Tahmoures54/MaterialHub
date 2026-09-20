@@ -260,6 +260,105 @@ def test_public_robots_and_sitemap(client):
         assert path.encode() in sitemap.data
 
 
+def test_end_to_end_procurement_delivery_qc_warehouse_tenant_boundary(client, app):
+    """Exercise the core operational chain and verify tenant-scoped reads."""
+    project = Project(project_no="E2E-001", project_name="E2E Project", company_name="E2E EPC")
+    engineer = _persist_user(app, "e2e-engineer@example.com", AccessLevel.engineering, "E2E EPC")
+    purchase = _persist_user(app, "e2e-purchase@example.com", AccessLevel.purchase, "E2E EPC")
+    delivery_user = _persist_user(app, "e2e-delivery@example.com", AccessLevel.delivery, "E2E EPC")
+    quality = _persist_user(app, "e2e-quality@example.com", AccessLevel.quality, "E2E EPC")
+    warehouse = _persist_user(app, "e2e-warehouse@example.com", AccessLevel.warehouse, "E2E EPC")
+    other = _persist_user(app, "e2e-other@example.com", AccessLevel.warehouse, "Other E2E")
+
+    with app.app_context():
+        db.session.add(project)
+        db.session.flush()
+        mr = MaterialRequisition.from_dict({
+            "mr_no": "MR-E2E-0001",
+            "item_code": "E2E-PIPE",
+            "material_description": "E2E Pipe",
+            "quantity": 10,
+            "project_no": "E2E-001",
+            "discipline": "Piping",
+        }, "E2E EPC", engineer.id)
+        db.session.add(mr)
+        db.session.flush()
+        po = PurchaseOrder(
+            order_no="PO-E2E-0001",
+            project_id=project.id,
+            user_id=purchase.id,
+            total_price=1000,
+            status=PurchaseOrderStatus.issued,
+            company_name="E2E EPC",
+        )
+        db.session.add(po)
+        db.session.flush()
+        delivery = Delivery(
+            order_id=po.id,
+            user_id=delivery_user.id,
+            delivery_id="DLV-E2E-0001",
+            status=DeliveryStatus.delivered,
+            company_name="E2E EPC",
+        )
+        qc = QualityControl(
+            order_id=po.id,
+            user_id=quality.id,
+            status=InspectionStatus.passed,
+            company_name="E2E EPC",
+        )
+        inventory = WarehouseInventory(
+            warehouse_id="WH-E2E-0001",
+            delivery_id=delivery.delivery_id,
+            item_code="E2E-PIPE",
+            material_description="E2E Pipe",
+            received_qty=10,
+            unit="EA",
+            receipt_date=date.today(),
+            project_no="E2E-001",
+            company_name="E2E EPC",
+            user_id=warehouse.id,
+        )
+        db.session.add_all([delivery, qc, inventory])
+        db.session.commit()
+
+    _authenticate_session(client, engineer)
+    assert client.get("/purchase_order/get_purchase_orders").status_code == 200
+    assert client.get("/delivery/get_deliveries").status_code == 200
+    assert client.get("/quality_control/get_quality_controls").status_code == 200
+    assert client.get("/warehouse/api/inventory").status_code == 200
+
+    _authenticate_session(client, other)
+    assert client.get("/purchase_order/get_purchase_orders").status_code == 200
+    assert b"PO-E2E-0001" not in client.get("/purchase_order/get_purchase_orders").data
+    assert b"DLV-E2E-0001" not in client.get("/delivery/get_deliveries").data
+    assert b"E2E-PIPE" not in client.get("/warehouse/api/inventory").data
+
+
+def test_xlsx_material_intelligence_import(client, app):
+    """Exercise the real XLSX parser, not only the CSV path."""
+    from openpyxl import Workbook
+
+    user = _persist_user(app, "xlsx@example.com", AccessLevel.engineering, "XLSX EPC")
+    _authenticate_session(client, user)
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.append(["item_code", "material_description", "quantity", "required_date"])
+    sheet.append(["VALVE-XLSX", "Gate Valve", 4, "2026-10-15"])
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+
+    response = client.post(
+        "/excel-import",
+        data={"file": (buffer, "materials.xlsx")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 200
+    assert b"VALVE-XLSX" in response.data
+    assert b"Gate Valve" in response.data
+
+
 def test_contact_form_accepts_database_aligned_max_lengths(client, app):
     email = ("a" * 242) + "@example.com"  # 254 characters
     response = client.post("/contact", data={
