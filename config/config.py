@@ -186,10 +186,24 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     SESSION_COOKIE_SECURE = True
-    if not Config.SECRET_KEY:
-        raise ValueError("SECRET_KEY must be provided by the environment.")
-    if len(Config.SECRET_KEY.encode("utf-8")) < 32:
-        raise ValueError("SECRET_KEY must contain at least 32 bytes.")
+
+    @classmethod
+    def validate(cls):
+        """Fail closed when the production configuration is explicitly selected."""
+        secret_key = os.getenv('SECRET_KEY')
+        if not secret_key:
+            raise ValueError("SECRET_KEY must be provided by the environment.")
+        if len(secret_key.encode("utf-8")) < 32:
+            raise ValueError("SECRET_KEY must contain at least 32 bytes.")
+
+        database_url = cls.SQLALCHEMY_DATABASE_URI or ''
+        if not database_url.startswith(("postgresql://", "postgresql+psycopg2://")):
+            raise ValueError("Production database must be PostgreSQL.")
+
+        if cls.RATELIMIT_STORAGE_URI.startswith('memory://'):
+            raise ValueError(
+                "Production rate limiting requires shared storage; configure RATELIMIT_STORAGE_URI."
+            )
 
 
 class TestingConfig(Config):
