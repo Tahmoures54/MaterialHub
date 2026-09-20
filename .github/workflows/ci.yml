@@ -1,0 +1,47 @@
+name: MaterialHub CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Ruff
+        run: ruff check .
+      - name: Mypy
+        run: mypy --ignore-missing-imports app.py extensions.py config blueprints models.py models_intelligence.py role_workspace.py utils.py
+      - name: Pytest with coverage
+        run: pytest --cov=. --cov-report=term-missing --cov-fail-under=80
+      - name: Bandit
+        run: bandit -r . -x ./tests,./migrations
+      - name: pip-audit
+        run: pip-audit -r requirements.txt
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -f Dockerfile.production -t materialhub:ci .
+      - name: Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: materialhub:ci
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: '1'
