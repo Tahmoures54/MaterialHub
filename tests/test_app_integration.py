@@ -323,7 +323,7 @@ def test_end_to_end_procurement_delivery_qc_warehouse_tenant_boundary(client, ap
         db.session.add(mr)
         db.session.flush()
         po = PurchaseOrder(
-            order_no="PO-E2E-0001",
+            order_no="PO-0001",
             project_id=project.id,
             user_id=purchase.id,
             total_price=1000,
@@ -368,7 +368,7 @@ def test_end_to_end_procurement_delivery_qc_warehouse_tenant_boundary(client, ap
 
     _authenticate_session(client, other)
     assert client.get("/purchase_order/get_purchase_orders").status_code == 200
-    assert b"PO-E2E-0001" not in client.get("/purchase_order/get_purchase_orders").data
+    assert b"PO-0001" not in client.get("/purchase_order/get_purchase_orders").data
     assert b"DLV-E2E-0001" not in client.get("/delivery/get_deliveries").data
     assert b"E2E-PIPE" not in client.get("/warehouse/api/inventory").data
 
