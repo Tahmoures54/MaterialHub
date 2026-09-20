@@ -114,7 +114,7 @@ def compare_rfq(rfq_id):
 @intelligence_bp.route('/three-way-match/<int:po_id>',methods=['GET','POST'])
 @login_required
 def three_way_match(po_id):
-    po=company_filter(PurchaseOrder.query,PurchaseOrder).filter_by(id=po_id).first_or_404(); receipt=Receipt.query.filter_by(po_id=po.id, company_name=current_user.company_name).order_by(Receipt.id.desc()).first(); invoice=SupplierInvoice.query.filter_by(po_id=po.id, company_name=current_user.company_name).order_by(SupplierInvoice.id.desc()).first()
+    po=company_filter(PurchaseOrder.query,PurchaseOrder).filter_by(id=po_id).first_or_404(); receipt=company_filter(Receipt.query,Receipt).filter_by(po_id=po.id).order_by(Receipt.id.desc()).first(); invoice=company_filter(SupplierInvoice.query,SupplierInvoice).filter_by(po_id=po.id).order_by(SupplierInvoice.id.desc()).first()
     if request.method=='POST':
         receipt=Receipt(receipt_no=request.form['receipt_no'],po_id=po.id,received_qty=float(request.form.get('received_qty') or 0),accepted_qty=float(request.form.get('accepted_qty') or 0),receipt_date=date.today(),company_name=current_user.company_name) if not receipt else receipt
         if not receipt.id: db.session.add(receipt); db.session.flush()
