@@ -23,7 +23,11 @@ def _load_sidecar(module_name, filename):
 def create_app(config_name=None):
     """Application factory."""
     if config_name is None:
-        config_name = os.getenv('FLASK_ENV', 'development')
+        config_name = os.getenv('FLASK_ENV')
+        if not config_name:
+            config_name = 'production' if os.getenv('VERCEL_ENV') == 'production' else 'development'
+        elif os.getenv('VERCEL_ENV') == 'production':
+            config_name = 'production'
 
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_by_name.get(config_name, config_by_name['default']))
