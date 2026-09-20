@@ -41,6 +41,7 @@ def home():
     return render_template('dashboard/home.html', current_year=datetime.now().year)
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@limiter.limit('5 per hour')
 def register():
     """Handle user registration with dynamic CAPTCHA and TOTP setup."""
     if current_user.is_authenticated:
@@ -91,7 +92,7 @@ def register():
                 access_level=AccessLevel[form.access_level.data],
                 store_name=form.store_name.data if form.access_level.data == 'supplier' else None,
                 is_admin=(form.company_email.data == os.environ.get('ADMIN_EMAIL', '')),
-                totp_secret=totp_secret,
+                totp_secret=User.encrypt_totp_secret(totp_secret),
                 qr_code_base64=None,
                 totp_confirmed=False,
                 project_id=None
@@ -148,6 +149,7 @@ def register():
                          captcha_question=session.get('captcha_question', 'Please reload the page.'))
 
 @auth_bp.route('/confirm_totp', methods=['POST'])
+@limiter.limit('5 per minute')
 def confirm_totp():
     """Confirm TOTP code and mark user as confirmed."""
     form = ConfirmTOTPForm()
@@ -163,7 +165,7 @@ def confirm_totp():
         return redirect(url_for('auth.register'))
 
     if form.validate_on_submit():
-        totp = pyotp.TOTP(user.totp_secret)
+        totp = pyotp.TOTP(user.decrypt_totp_secret())
         if totp.verify(form.totp_code.data) and form.totp_confirmed.data:
             user.totp_confirmed = True
             db.session.commit()
@@ -183,7 +185,7 @@ def confirm_totp():
         form=RegisterForm(),
         totp_form=form,
         qr_code=user.qr_code_base64,
-        totp_secret=user.totp_secret,
+        totp_secret=user.decrypt_totp_secret(),
         registered=True,
         countries=sorted(COUNTRY_CODES.keys()),
         current_year=datetime.now().year,
@@ -191,6 +193,7 @@ def confirm_totp():
     )
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit('5 per minute')
 def login():
     """Handle user login with email and TOTP verification."""
     if current_user.is_authenticated:
@@ -205,7 +208,7 @@ def login():
                 logger.warning(f"Login attempt without TOTP setup: {form.email.data} (IP: {request.remote_addr})")
                 flash('Please complete two-factor authentication setup before logging in.', 'danger')
                 return redirect(url_for('auth.register'))
-            totp = pyotp.TOTP(user.totp_secret)
+            totp = pyotp.TOTP(user.decrypt_totp_secret())
             if totp.verify(form.totp_code.data):
                 login_user(user)
                 logger.info(f"User logged in: {user.company_email} (ID: {user.id}, IP: {request.remote_addr})")
@@ -240,6 +243,7 @@ def logout():
     return redirect(url_for('auth.home'))
 
 @auth_bp.route('/reset_password_request', methods=['GET', 'POST'])
+@limiter.limit('3 per 15 minutes')
 def reset_password_request():
     """Handle TOTP reset request (email-based, placeholder)."""
     if current_user.is_authenticated:
@@ -264,6 +268,7 @@ def reset_password_request():
     return render_template('auth/reset_password_request.html', form=form, current_year=datetime.now().year)
 
 @auth_bp.route('/change_password', methods=['GET', 'POST'])
+@limiter.limit('5 per 15 minutes')
 @login_required
 def change_password():
     """Handle TOTP reset (no password, as TOTP is primary authentication)."""
@@ -271,8 +276,9 @@ def change_password():
     if form.validate_on_submit():
         try:
             user = current_user
-            user.totp_secret = pyotp.random_base32()
-            totp_uri = pyotp.totp.TOTP(user.totp_secret).provisioning_uri(
+            new_totp_secret = pyotp.random_base32()
+            user.totp_secret = User.encrypt_totp_secret(new_totp_secret)
+            totp_uri = pyotp.totp.TOTP(new_totp_secret).provisioning_uri(
                 name=user.company_email,
                 issuer_name="MaterialHub"
             )
@@ -282,7 +288,7 @@ def change_password():
             logger.info(f"TOTP reset for user: {user.company_email} (ID: {user.id}, IP: {request.remote_addr})")
             flash('TOTP reset successfully! Please scan the new QR code with Microsoft Authenticator.', 'success')
             return render_template('auth/change_password.html', form=form, qr_code=user.qr_code_base64,
-                                 totp_secret=user.totp_secret, current_year=datetime.now().year)
+                                 totp_secret=new_totp_secret, current_year=datetime.now().year)
         except Exception as e:
             db.session.rollback()
             logger.error(f"TOTP reset error for {current_user.company_email}: {str(e)} (IP: {request.remote_addr})")
