@@ -1007,8 +1007,9 @@ class ContactInquiry(db.Model):
     __tablename__ = 'contact_inquiry'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(120), nullable=False, index=True)
-    company = db.Column(db.String(120), nullable=True)
+    # Keep these limits aligned with the public contact form and practical email limits.
+    email = db.Column(db.String(254), nullable=False, index=True)
+    company = db.Column(db.String(160), nullable=True)
     message = db.Column(db.Text, nullable=True)
     source = db.Column(db.String(50), nullable=False, default='website')
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
