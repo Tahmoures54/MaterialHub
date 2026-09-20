@@ -103,7 +103,7 @@ def register():
                 name=form.company_email.data,
                 issuer_name="MaterialHub"
             )
-            user.qr_code_base64 = generate_qr_code(totp_uri)
+            qr_code = generate_qr_code(totp_uri)
             db.session.add(user)
             db.session.commit()
             session['pending_user_id'] = user.id
@@ -116,7 +116,7 @@ def register():
                 'auth/register.html',
                 form=form,
                 totp_form=totp_form,
-                qr_code=user.qr_code_base64,
+                qr_code=qr_code,
                 totp_secret=totp_secret,
                 registered=True,
                 countries=sorted(COUNTRY_CODES.keys()),
@@ -185,7 +185,7 @@ def confirm_totp():
         'auth/register.html',
         form=RegisterForm(),
         totp_form=form,
-        qr_code=user.qr_code_base64,
+        qr_code=generate_qr_code(user.get_totp_uri()),
         totp_secret=user.decrypt_totp_secret(),
         registered=True,
         countries=sorted(COUNTRY_CODES.keys()),
@@ -283,12 +283,13 @@ def change_password():
                 name=user.company_email,
                 issuer_name="MaterialHub"
             )
-            user.qr_code_base64 = generate_qr_code(totp_uri)
+            qr_code = generate_qr_code(totp_uri)
+            user.qr_code_base64 = None
             user.totp_confirmed = False
             db.session.commit()
             logger.info(f"TOTP reset for user: {user.company_email} (ID: {user.id}, IP: {request.remote_addr})")
             flash('TOTP reset successfully! Please scan the new QR code with Microsoft Authenticator.', 'success')
-            return render_template('auth/change_password.html', form=form, qr_code=user.qr_code_base64,
+            return render_template('auth/change_password.html', form=form, qr_code=qr_code,
                                  totp_secret=new_totp_secret, current_year=datetime.now().year)
         except Exception as e:
             db.session.rollback()
