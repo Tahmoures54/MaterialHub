@@ -55,14 +55,29 @@ def _configure_observability(app):
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
         endpoint = os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT')
-        provider = TracerProvider(resource=Resource.create({'service.name': os.getenv('OTEL_SERVICE_NAME', 'materialhub')}))
-        if endpoint:
-            from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-            provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
-        trace.set_tracer_provider(provider)
-        FlaskInstrumentor().instrument_app(app)
-        with app.app_context():
-            SQLAlchemyInstrumentor().instrument(engine=db.engine)
+        global _OTEL_PROVIDER_CONFIGURED, _OTEL_SQLALCHEMY_INSTRUMENTED
+        if not _OTEL_PROVIDER_CONFIGURED:
+            provider = TracerProvider(
+                resource=Resource.create(
+                    {'service.name': os.getenv('OTEL_SERVICE_NAME', 'materialhub')}
+                )
+            )
+            if endpoint:
+                from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+                provider.add_span_processor(
+                    BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint))
+                )
+            trace.set_tracer_provider(provider)
+            _OTEL_PROVIDER_CONFIGURED = True
+
+        if not app.extensions.get('materialhub_otel_flask'):
+            FlaskInstrumentor().instrument_app(app)
+            app.extensions['materialhub_otel_flask'] = True
+
+        if not _OTEL_SQLALCHEMY_INSTRUMENTED:
+            with app.app_context():
+                SQLAlchemyInstrumentor().instrument(engine=db.engine)
+            _OTEL_SQLALCHEMY_INSTRUMENTED = True
     except Exception as exc:
         app.logger.warning('OpenTelemetry initialization skipped: %s', exc)
 
