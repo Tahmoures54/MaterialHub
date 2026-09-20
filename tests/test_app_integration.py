@@ -1,5 +1,6 @@
 """Flask integration tests for MaterialHub."""
 import pytest
+import io
 
 flask = pytest.importorskip("flask")
 
@@ -134,3 +135,129 @@ def test_observability_endpoints(client):
     assert client.get("/metrics").status_code == 200
     assert client.get("/health/live").headers.get("X-Request-ID")
     assert client.get("/health/ready").headers.get("X-Request-ID")
+
+
+def _authenticate_session(client, user):
+    with client.session_transaction() as session:
+        session["_user_id"] = str(user.id)
+        session["_fresh"] = True
+
+
+def _persist_user(app, email, role=AccessLevel.engineering, company="Auth EPC", admin=False):
+    with app.app_context():
+        user = User(
+            company_name=company,
+            company_email=email,
+            company_phone="+989129999999",
+            full_name="Auth Test User",
+            company_address="Test Address",
+            country="IR",
+            access_level=role,
+            is_admin=admin,
+            totp_secret=User.encrypt_totp_secret("JBSWY3DPEHPK3PXP"),
+            totp_confirmed=True,
+        )
+        db.session.add(user)
+        db.session.commit()
+        return user
+
+
+def test_authenticated_home_and_logout(client, app):
+    user = _persist_user(app, "logout@example.com")
+    _authenticate_session(client, user)
+    assert client.get("/").status_code in (200, 302)
+    response = client.get("/logout", follow_redirects=False)
+    assert response.status_code == 302
+
+
+def test_auth_invalid_totp_and_unknown_user(client, app):
+    user = _persist_user(app, "totp@example.com")
+    response = client.post("/login", data={
+        "email": user.company_email,
+        "totp_code": "000000",
+        "submit": "Login",
+    })
+    assert response.status_code in (200, 302)
+    response = client.post("/login", data={
+        "email": "missing@example.com",
+        "totp_code": "000000",
+        "submit": "Login",
+    })
+    assert response.status_code in (200, 302)
+
+
+def test_auth_reset_and_change_password_pages(client, app):
+    assert client.get("/reset_password_request").status_code == 200
+    assert client.get("/change_password", follow_redirects=False).status_code in (302, 401)
+    user = _persist_user(app, "change@example.com")
+    _authenticate_session(client, user)
+    assert client.get("/change_password").status_code == 200
+
+
+def test_material_requisition_api_workflow_and_tenant_boundary(client, app):
+    user = _persist_user(app, "engineer@example.com", AccessLevel.engineering, "Acme EPC")
+    other = _persist_user(app, "other@example.com", AccessLevel.engineering, "Other EPC")
+    _authenticate_session(client, user)
+    payload = {
+        "item_code": "PIPE-API",
+        "material_description": "API Pipe",
+        "quantity": 5,
+        "project_no": "PRJ-API",
+        "discipline": "Piping",
+    }
+    created = client.post("/api/material_requisitions", json=payload)
+    assert created.status_code == 201
+    mr_no = created.get_json()["mr_nos"][0]
+    assert client.get("/api/material_requisitions").status_code == 200
+    assert client.get(f"/api/material_requisitions/{mr_no}").status_code == 200
+    updated = client.put(f"/api/material_requisitions/{mr_no}", json={"quantity": 7})
+    assert updated.status_code == 200
+    assert client.get("/api/generate_mr_no").status_code == 200
+    assert client.post("/api/approve", json={"mr_no": mr_no, "approval_status": "approved"}).status_code == 403
+
+    _authenticate_session(client, other)
+    assert client.get(f"/api/material_requisitions/{mr_no}").status_code == 404
+
+
+def test_material_requisition_csv_export_and_import(client, app):
+    user = _persist_user(app, "csv@example.com", AccessLevel.engineering, "CSV EPC")
+    _authenticate_session(client, user)
+    csv_body = (
+        "mr_no,subject,item_code,material_description,discipline,required_date,"
+        "unit_of_measure,quantity,priority,project_no\n"
+        ",Pipe,PIPE-CSV,CSV Pipe,Piping,2026-10-01,EA,3,Normal,PRJ-CSV\n"
+    )
+    imported = client.post(
+        "/api/upload_csv",
+        data={"file": (io.BytesIO(csv_body.encode("utf-8")), "mrs.csv")},
+        content_type="multipart/form-data",
+    )
+    assert imported.status_code == 201
+    exported = client.get("/api/export_csv")
+    assert exported.status_code == 200
+    assert b"MR-" in exported.data
+
+
+def test_material_requisition_delete_and_access_control(client, app):
+    user = _persist_user(app, "delete@example.com", AccessLevel.engineering, "Delete EPC")
+    _authenticate_session(client, user)
+    created = client.post("/api/material_requisitions", json={
+        "item_code": "DEL-1",
+        "material_description": "Delete Me",
+        "quantity": 1,
+        "project_no": "PRJ-DEL",
+        "discipline": "Piping",
+    })
+    mr_no = created.get_json()["mr_nos"][0]
+    assert client.delete(f"/api/material_requisitions/{mr_no}").status_code == 200
+    assert client.delete("/api/material_requisitions/MR-9999").status_code == 404
+
+    supplier = _persist_user(app, "supplier-access@example.com", AccessLevel.supplier, "Delete EPC")
+    _authenticate_session(client, supplier)
+    assert client.post("/api/material_requisitions", json={
+        "item_code": "NOPE",
+        "material_description": "Nope",
+        "quantity": 1,
+        "project_no": "PRJ-DEL",
+        "discipline": "Piping",
+    }).status_code == 403
