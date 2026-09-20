@@ -1,5 +1,4 @@
 import os
-import secrets
 import urllib.parse as _up
 
 from dotenv import load_dotenv
@@ -104,13 +103,11 @@ class Config:
 
     # Secret key
     SECRET_KEY = os.getenv('SECRET_KEY')
-    if IS_PRODUCTION:
+    if FLASK_ENV.lower() != 'testing':
         if not SECRET_KEY:
-            raise ValueError("SECRET_KEY must be provided by the production environment.")
+            raise ValueError("SECRET_KEY must be provided by the environment.")
         if len(SECRET_KEY.encode("utf-8")) < 32:
-            raise ValueError("SECRET_KEY must contain at least 32 bytes in production.")
-    elif not SECRET_KEY:
-        SECRET_KEY = secrets.token_urlsafe(48)
+            raise ValueError("SECRET_KEY must contain at least 32 bytes.")
 
     # Paths
     BASE_DIR = BASE_DIR
