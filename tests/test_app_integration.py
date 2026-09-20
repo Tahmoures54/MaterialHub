@@ -1,17 +1,29 @@
 """Flask integration tests for MaterialHub."""
-import pytest
 import io
+from datetime import date, timedelta
+
+import pytest
 
 flask = pytest.importorskip("flask")
 
 from app import create_app
 from extensions import db
 from models import (
-    User, AccessLevel, Project, MaterialRequisition, ApprovalStatus,
+    AccessLevel,
+    ApprovalStatus,
     ContactInquiry,
+    Delivery,
+    DeliveryStatus,
+    InspectionStatus,
+    MaterialRequisition,
+    Project,
+    PurchaseOrder,
+    PurchaseOrderStatus,
+    QualityControl,
+    User,
+    WarehouseInventory,
 )
 from utils import generate_next_mr_no, generate_next_po_no
-from datetime import date, timedelta
 
 
 def test_health_endpoint(client):
@@ -195,13 +207,21 @@ def test_material_requisition_api_workflow_and_tenant_boundary(client, app):
     mr_no = created.get_json()["mr_nos"][0]
     assert client.get("/material_requisitions/api/material_requisitions").status_code == 200
     assert client.get(f"/material_requisitions/api/material_requisitions/{mr_no}").status_code == 200
-    updated = client.put(f"/material_requisitions/api/material_requisitions/{mr_no}", json={"quantity": 7})
+    updated = client.put(
+        f"/material_requisitions/api/material_requisitions/{mr_no}",
+        json={"quantity": 7},
+    )
     assert updated.status_code == 200
     assert client.get("/material_requisitions/api/generate_mr_no").status_code == 200
-    assert client.post("/material_requisitions/api/approve", json={"mr_no": mr_no, "approval_status": "approved"}).status_code == 403
+    assert client.post(
+        "/material_requisitions/api/approve",
+        json={"mr_no": mr_no, "approval_status": "approved"},
+    ).status_code == 403
 
     _authenticate_session(client, other)
-    assert client.get(f"/material_requisitions/api/material_requisitions/{mr_no}").status_code == 404
+    assert client.get(
+        f"/material_requisitions/api/material_requisitions/{mr_no}"
+    ).status_code == 404
 
 
 def test_material_requisition_csv_export_and_import(client, app):
@@ -234,10 +254,16 @@ def test_material_requisition_delete_and_access_control(client, app):
         "discipline": "Piping",
     })
     mr_no = created.get_json()["mr_nos"][0]
-    assert client.delete(f"/material_requisitions/api/material_requisitions/{mr_no}").status_code == 200
-    assert client.delete("/material_requisitions/api/material_requisitions/MR-9999").status_code == 404
+    assert client.delete(
+        f"/material_requisitions/api/material_requisitions/{mr_no}"
+    ).status_code == 200
+    assert client.delete(
+        "/material_requisitions/api/material_requisitions/MR-9999"
+    ).status_code == 404
 
-    supplier = _persist_user(app, "supplier-access@example.com", AccessLevel.supplier, "Delete EPC")
+    supplier = _persist_user(
+        app, "supplier-access@example.com", AccessLevel.supplier, "Delete EPC"
+    )
     _authenticate_session(client, supplier)
     assert client.post("/material_requisitions/api/material_requisitions", json={
         "item_code": "NOPE",
@@ -246,6 +272,7 @@ def test_material_requisition_delete_and_access_control(client, app):
         "project_no": "PRJ-DEL",
         "discipline": "Piping",
     }).status_code == 403
+
 
 def test_public_robots_and_sitemap(client):
     robots = client.get("/robots.txt")
@@ -263,12 +290,24 @@ def test_public_robots_and_sitemap(client):
 def test_end_to_end_procurement_delivery_qc_warehouse_tenant_boundary(client, app):
     """Exercise the core operational chain and verify tenant-scoped reads."""
     project = Project(project_no="E2E-001", project_name="E2E Project", company_name="E2E EPC")
-    engineer = _persist_user(app, "e2e-engineer@example.com", AccessLevel.engineering, "E2E EPC")
-    purchase = _persist_user(app, "e2e-purchase@example.com", AccessLevel.purchase, "E2E EPC")
-    delivery_user = _persist_user(app, "e2e-delivery@example.com", AccessLevel.delivery, "E2E EPC")
-    quality = _persist_user(app, "e2e-quality@example.com", AccessLevel.quality, "E2E EPC")
-    warehouse = _persist_user(app, "e2e-warehouse@example.com", AccessLevel.warehouse, "E2E EPC")
-    other = _persist_user(app, "e2e-other@example.com", AccessLevel.warehouse, "Other E2E")
+    engineer = _persist_user(
+        app, "e2e-engineer@example.com", AccessLevel.engineering, "E2E EPC"
+    )
+    purchase = _persist_user(
+        app, "e2e-purchase@example.com", AccessLevel.purchase, "E2E EPC"
+    )
+    delivery_user = _persist_user(
+        app, "e2e-delivery@example.com", AccessLevel.delivery, "E2E EPC"
+    )
+    quality = _persist_user(
+        app, "e2e-quality@example.com", AccessLevel.quality, "E2E EPC"
+    )
+    warehouse = _persist_user(
+        app, "e2e-warehouse@example.com", AccessLevel.warehouse, "E2E EPC"
+    )
+    other = _persist_user(
+        app, "e2e-other@example.com", AccessLevel.warehouse, "Other E2E"
+    )
 
     with app.app_context():
         db.session.add(project)
@@ -360,7 +399,7 @@ def test_xlsx_material_intelligence_import(client, app):
 
 
 def test_contact_form_accepts_database_aligned_max_lengths(client, app):
-    email = ("a" * 242) + "@example.com"  # 254 characters
+    email = ("a" * 242) + "@example.com"
     response = client.post("/contact", data={
         "name": "N" * 120,
         "email": email,
