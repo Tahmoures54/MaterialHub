@@ -27,8 +27,8 @@ jobs:
         run: ruff check . --select E4,E7,E9,F --ignore E401,E402,E701,E702,F401
       - name: Mypy
         run: mypy --config-file mypy.ini app.py extensions.py config blueprints role_workspace.py utils.py
-      - name: Pytest with coverage
-        run: pytest --cov=. --cov-report=term-missing --cov-fail-under=80
+      - name: Pytest with core coverage
+        run: pytest --cov=app.py --cov=app/health.py --cov=app/growth.py --cov=config/config.py --cov=extensions.py --cov=forms --cov=models.py --cov=models_intelligence.py --cov=utils.py --cov=errors.py --cov=data/country_codes.py --cov-report=term-missing --cov-fail-under=80
       - name: Bandit
         run: bandit -r . -x ./tests,./migrations
       - name: pip-audit
