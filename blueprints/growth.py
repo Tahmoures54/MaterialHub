@@ -25,6 +25,9 @@ def contact():
         if not name or not email:
             flash("Please provide your name and work email.", "danger")
             return render_template("marketing/contact.html")
+        if len(name) > 120 or len(email) > 254 or len(company) > 160 or len(message) > 4000:
+            flash("Please keep the form fields within the allowed limits.", "danger")
+            return render_template("marketing/contact.html")
         inquiry = ContactInquiry(
             name=name,
             email=email,
