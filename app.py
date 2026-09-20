@@ -5,7 +5,7 @@ import importlib.util
 import json
 import time
 import uuid
-from flask import Flask, render_template, redirect, url_for, flash, request, Response, g
+from flask import Flask, render_template, redirect, url_for, flash, request, Response
 from flask_login import login_required, current_user
 from extensions import db, migrate, login_manager, csrf, limiter
 from config.config import config_by_name
@@ -67,7 +67,6 @@ def _configure_observability(app):
         app.logger.warning('OpenTelemetry initialization skipped: %s', exc)
 
 
-
 def _load_sidecar(module_name, filename):
     """Load modules from the app/ directory without colliding with this app.py module."""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', filename)
@@ -107,7 +106,6 @@ def create_app(config_name=None):
     limiter.init_app(app)
 
     _configure_observability(app)
-
 
     try:
         from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
