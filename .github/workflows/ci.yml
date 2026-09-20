@@ -34,9 +34,67 @@ jobs:
       - name: pip-audit
         run: pip-audit -r requirements.txt
 
-  docker:
+  integration:
     runs-on: ubuntu-latest
     needs: quality
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: materialhub
+          POSTGRES_USER: materialhub
+          POSTGRES_PASSWORD: materialhub
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U materialhub -d materialhub"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      FLASK_ENV: production
+      SECRET_KEY: ci-only-materialhub-secret-key-0123456789
+      DATABASE_URL: postgresql://materialhub:materialhub@127.0.0.1:5432/materialhub
+      RATELIMIT_STORAGE_URI: redis://127.0.0.1:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Run production migrations on empty PostgreSQL
+        run: flask --app wsgi:app db upgrade
+      - name: Smoke test production app, readiness and public funnel
+        run: |
+          python - <<'PY'
+          from wsgi import app
+          client = app.test_client()
+          assert client.get("/health/live").status_code == 200
+          ready = client.get("/health/ready")
+          assert ready.status_code == 200, ready.get_data(as_text=True)
+          assert client.get("/").status_code == 200
+          assert client.get("/demo").status_code == 200
+          assert client.get("/pricing").status_code == 200
+          assert client.get("/contact").status_code == 200
+          assert client.get("/robots.txt").status_code == 200
+          assert client.get("/sitemap.xml").status_code == 200
+          print("Production PostgreSQL/Redis smoke test passed.")
+          PY
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: integration
     steps:
       - uses: actions/checkout@v4
       - name: Build production image
