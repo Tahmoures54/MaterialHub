@@ -103,11 +103,6 @@ class Config:
 
     # Secret key
     SECRET_KEY = os.getenv('SECRET_KEY')
-    if FLASK_ENV.lower() != 'testing':
-        if not SECRET_KEY:
-            raise ValueError("SECRET_KEY must be provided by the environment.")
-        if len(SECRET_KEY.encode("utf-8")) < 32:
-            raise ValueError("SECRET_KEY must contain at least 32 bytes.")
 
     # Paths
     BASE_DIR = BASE_DIR
@@ -191,6 +186,10 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     SESSION_COOKIE_SECURE = True
+    if not Config.SECRET_KEY:
+        raise ValueError("SECRET_KEY must be provided by the environment.")
+    if len(Config.SECRET_KEY.encode("utf-8")) < 32:
+        raise ValueError("SECRET_KEY must contain at least 32 bytes.")
 
 
 class TestingConfig(Config):
