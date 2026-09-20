@@ -14,13 +14,19 @@ def company_filter(q, model):
     return q if current_user.is_admin else q.filter(model.company_name==current_user.company_name)
 
 def score_supplier(supplier_id):
-    orders=PurchaseOrder.query.filter_by(supplier_id=supplier_id, company_name=current_user.company_name).all()
+    order_query=PurchaseOrder.query.filter_by(supplier_id=supplier_id)
+    if not current_user.is_admin:
+        order_query=order_query.filter_by(company_name=current_user.company_name)
+    orders=order_query.all()
     if not orders: return 0
     delivered=sum(1 for o in orders if o.delivered_date and o.issued_date and o.delivered_date<=o.issued_date+timedelta(days=30))
     quality=100
     try:
         from models import QualityControl, InspectionStatus
-        qcs=QualityControl.query.filter_by(user_id=supplier_id, company_name=current_user.company_name).all()
+        qc_query=QualityControl.query.filter_by(user_id=supplier_id)
+        if not current_user.is_admin:
+            qc_query=qc_query.filter_by(company_name=current_user.company_name)
+        qcs=qc_query.all()
         if qcs: quality=100*sum(1 for q in qcs if q.status==InspectionStatus.passed)/len(qcs)
     except Exception: pass
     otif=100*delivered/len(orders)
