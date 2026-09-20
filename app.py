@@ -2,12 +2,69 @@ import logging
 import os
 import sys
 import importlib.util
-import logging
+import json
+import time
+import uuid
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from extensions import db, migrate, login_manager, csrf, limiter
 from config.config import config_by_name
 from data.country_codes import COUNTRY_NAMES_BY_CODE
+
+
+def _request_id():
+    candidate = request.headers.get('X-Request-ID', '').strip()
+    if candidate and len(candidate) <= 128 and all(c.isalnum() or c in '-_.' for c in candidate):
+        return candidate
+    return uuid.uuid4().hex
+
+
+class JsonFormatter(logging.Formatter):
+    """Emit one structured JSON object per application log record."""
+    def format(self, record):
+        payload = {
+            'timestamp': self.formatTime(record, '%Y-%m-%dT%H:%M:%S%z'),
+            'level': record.levelname,
+            'logger': record.name,
+            'message': record.getMessage(),
+        }
+        for key in ('request_id', 'user_id', 'duration_ms', 'status_code', 'method', 'path'):
+            value = getattr(record, key, None)
+            if value is not None:
+                payload[key] = value
+        if record.exc_info:
+            payload['exception'] = self.formatException(record.exc_info)
+        return json.dumps(payload, ensure_ascii=False, separators=(',', ':'))
+
+
+def _configure_observability(app):
+    """Configure JSON logging and optional OpenTelemetry instrumentation."""
+    level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'), logging.INFO)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(level)
+    handler.setFormatter(JsonFormatter())
+    app.logger.handlers = [handler]
+    app.logger.setLevel(level)
+    app.logger.propagate = False
+
+    try:
+        from opentelemetry import trace
+        from opentelemetry.instrumentation.flask import FlaskInstrumentor
+        from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+        endpoint = os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT')
+        provider = TracerProvider(resource=Resource.create({'service.name': os.getenv('OTEL_SERVICE_NAME', 'materialhub')}))
+        if endpoint:
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+            provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
+        trace.set_tracer_provider(provider)
+        FlaskInstrumentor().instrument_app(app)
+        SQLAlchemyInstrumentor().instrument(engine=db.engine)
+    except Exception as exc:
+        app.logger.warning('OpenTelemetry initialization skipped: %s', exc)
+
 
 
 def _load_sidecar(module_name, filename):
@@ -48,16 +105,31 @@ def create_app(config_name=None):
     csrf.init_app(app)
     limiter.init_app(app)
 
-    log_level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'), logging.INFO)
+    _configure_observability(app)
 
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(logging.Formatter(
-        '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-    ))
-    console_handler.setLevel(log_level)
-    app.logger.handlers = [console_handler]
+    @app.before_request
+    def _start_request_observability():
+        request.environ['materialhub.request_started'] = time.perf_counter()
+        from flask import g
+        g.request_id = _request_id()
 
-    app.logger.setLevel(log_level)
+    @app.after_request
+    def _finish_request_observability(response):
+        from flask import g
+        duration_ms = round((time.perf_counter() - request.environ.get('materialhub.request_started', time.perf_counter())) * 1000, 2)
+        response.headers['X-Request-ID'] = getattr(g, 'request_id', _request_id())
+        app.logger.info(
+            'request completed',
+            extra={
+                'request_id': response.headers['X-Request-ID'],
+                'user_id': getattr(current_user, 'id', None) if current_user.is_authenticated else None,
+                'duration_ms': duration_ms,
+                'status_code': response.status_code,
+                'method': request.method,
+                'path': request.path,
+            },
+        )
+        return response
 
     @app.after_request
     def add_security_headers(response):
@@ -145,10 +217,6 @@ def create_app(config_name=None):
     @login_required
     def dashboard():
         return redirect(url_for('control_center.dashboard'))
-
-    @app.route('/health')
-    def health():
-        return {'status': 'ok', 'service': 'MaterialHub'}, 200
 
     @app.route('/getting-started')
     def getting_started_alias():
