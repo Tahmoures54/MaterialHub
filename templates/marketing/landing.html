@@ -2,28 +2,83 @@
 {% block title %} — Material Operations for Construction & EPC{% endblock %}
 {% block content %}
 <div class="mh-page">
-<section class="mh-workspace-hero" style="padding:3rem 2rem">
-  <span class="mh-muted">Material Operations Intelligence for Construction &amp; EPC</span>
-  <h1 style="font-size:clamp(2rem,5vw,4rem);margin:.5rem 0">Know what you need. Know where it is. Know when it will arrive.</h1>
-  <p class="mh-muted" style="font-size:1.15rem;max-width:760px">MaterialHub connects demand, procurement, supplier performance, delivery, quality, warehouse traceability and AI-driven risk actions in one operational workspace.</p>
-  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem">
-    <a class="btn btn-primary" href="{{ url_for('growth.demo') }}">Explore Interactive Demo</a>
-    <a class="btn btn-secondary" href="{{ url_for('auth.register') }}">Start Free</a>
-  </div>
-</section>
-<section class="mh-grid mh-grid-3" style="margin-top:1rem">
-  <div class="mh-card"><h3>Procurement Control</h3><p>RFQ, quote comparison, PO and supplier performance in one flow.</p></div>
-  <div class="mh-card"><h3>Traceability</h3><p>QR, heat, lot, serial and material documentation from receipt to issue.</p></div>
-  <div class="mh-card"><h3>Material Intelligence</h3><p>Readiness, lead-time and schedule-risk signals with recommended actions.</p></div>
-</section>
-<section class="mh-card" style="margin-top:1rem">
-  <h2>Built for the people who move projects</h2>
-  <div class="mh-grid mh-grid-4">
-    <div><strong>Project Manager</strong><p class="mh-muted">Schedule exposure &amp; readiness</p></div>
-    <div><strong>Procurement</strong><p class="mh-muted">RFQ → Quote → PO → Recovery</p></div>
-    <div><strong>Warehouse</strong><p class="mh-muted">Receive → Trace → Issue</p></div>
-    <div><strong>Quality</strong><p class="mh-muted">Inspect → Document → Release</p></div>
-  </div>
-</section>
+
+  <!-- Hero -->
+  <section class="mh-workspace-hero" style="padding: 3rem 2.25rem;">
+    <span class="mh-badge mh-badge-primary" style="margin-bottom: 0.75rem;">Construction & EPC</span>
+    <h1 style="font-size: clamp(1.9rem, 4.5vw, 3.25rem); margin: 0.4rem 0 0.75rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;">
+      Know what you need.<br>Know where it is.<br>Know when it will arrive.
+    </h1>
+    <p class="mh-muted" style="font-size: 1.1rem; max-width: 640px; line-height: 1.65; margin: 0;">
+      MaterialHub connects demand, procurement, supplier performance, delivery, quality, warehouse traceability and operational intelligence in one serious workspace built for industrial projects.
+    </p>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.75rem;">
+      <a class="btn btn-primary btn-lg" href="{{ url_for('growth.demo') }}">
+        <i class="fas fa-play-circle"></i> Explore Demo
+      </a>
+      <a class="btn btn-secondary btn-lg" href="{{ url_for('auth.register') }}">
+        Start Free
+      </a>
+    </div>
+  </section>
+
+  <!-- Core capabilities -->
+  <section class="mh-grid mh-grid-3" style="margin-top: 1.25rem;">
+    <div class="mh-card">
+      <div style="width: 40px; height: 40px; border-radius: 10px; background: #ECFEFF; color: #0E7490; display: grid; place-items: center; margin-bottom: 1rem; font-size: 1.1rem;">
+        <i class="fas fa-file-invoice-dollar"></i>
+      </div>
+      <h3 style="margin: 0 0 0.5rem; font-size: 1.05rem; font-weight: 700;">Procurement Control</h3>
+      <p class="mh-muted" style="margin: 0; font-size: 0.925rem; line-height: 1.55;">RFQ, quote comparison, purchase orders and supplier performance in one controlled flow.</p>
+    </div>
+    <div class="mh-card">
+      <div style="width: 40px; height: 40px; border-radius: 10px; background: #ECFEFF; color: #0E7490; display: grid; place-items: center; margin-bottom: 1rem; font-size: 1.1rem;">
+        <i class="fas fa-qrcode"></i>
+      </div>
+      <h3 style="margin: 0 0 0.5rem; font-size: 1.05rem; font-weight: 700;">Full Traceability</h3>
+      <p class="mh-muted" style="margin: 0; font-size: 0.925rem; line-height: 1.55;">QR, heat, lot, serial and material documentation from receipt through issue.</p>
+    </div>
+    <div class="mh-card">
+      <div style="width: 40px; height: 40px; border-radius: 10px; background: #ECFEFF; color: #0E7490; display: grid; place-items: center; margin-bottom: 1rem; font-size: 1.1rem;">
+        <i class="fas fa-brain"></i>
+      </div>
+      <h3 style="margin: 0 0 0.5rem; font-size: 1.05rem; font-weight: 700;">Material Intelligence</h3>
+      <p class="mh-muted" style="margin: 0; font-size: 0.925rem; line-height: 1.55;">Readiness, lead-time and schedule-risk signals with recommended operational actions.</p>
+    </div>
+  </section>
+
+  <!-- Built for roles -->
+  <section class="mh-card" style="margin-top: 1.25rem;">
+    <h2 class="mh-section-title">Built for the people who move projects</h2>
+    <p class="mh-section-desc">Role-based workspaces keep every function focused on what matters.</p>
+    <div class="mh-grid mh-grid-4">
+      <div style="padding: 0.75rem 0;">
+        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">Project Manager</strong>
+        <p class="mh-muted" style="margin: 0; font-size: 0.85rem;">Schedule exposure & readiness</p>
+      </div>
+      <div style="padding: 0.75rem 0;">
+        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">Procurement</strong>
+        <p class="mh-muted" style="margin: 0; font-size: 0.85rem;">RFQ → Quote → PO → Recovery</p>
+      </div>
+      <div style="padding: 0.75rem 0;">
+        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">Warehouse</strong>
+        <p class="mh-muted" style="margin: 0; font-size: 0.85rem;">Receive → Trace → Issue</p>
+      </div>
+      <div style="padding: 0.75rem 0;">
+        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">Quality</strong>
+        <p class="mh-muted" style="margin: 0; font-size: 0.85rem;">Inspect → Document → Release</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="mh-card" style="margin-top: 1.25rem; text-align: center; padding: 2.5rem 2rem; background: linear-gradient(135deg, #0B1622 0%, #122033 100%); border: none;">
+    <h2 style="margin: 0 0 0.5rem; color: #F8FAFC; font-size: 1.45rem; font-weight: 800;">Ready to run materials with control?</h2>
+    <p style="margin: 0 0 1.5rem; color: #94A3B8; font-size: 0.95rem;">Start free. Scale when your projects demand it.</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}" style="background: #0891B2; border-color: #0891B2;">
+      Create account
+    </a>
+  </section>
+
 </div>
 {% endblock %}
