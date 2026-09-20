@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %} — Material Operations for Construction & EPC{% endblock %}
+{% block meta_description %}Control the full material lifecycle for construction and EPC projects: requisitions, procurement, suppliers, delivery, QC, warehouse and traceability in one workspace.{% endblock %}
 {% block head %}
 <style>
   .lp { max-width: 1120px; margin: 0 auto; }
@@ -381,7 +382,37 @@
 {% block content %}
 <div class="lp">
 
-  <!-- 1. Capability banner — first thing users see -->
+  <!-- 2. Hero -->
+  <section class="lp-hero">
+    <div class="lp-hero-badge">
+      <i class="fas fa-industry"></i> Construction & EPC
+    </div>
+    <h1>
+      Know what you need.<br>
+      Know <span>where it is</span>.<br>
+      Know when it will arrive.
+    </h1>
+    <p class="lp-hero-lead">
+      MaterialHub connects demand, procurement, suppliers, delivery, quality, warehouse traceability and operational intelligence — one serious workspace for industrial projects.
+    </p>
+    <div class="lp-hero-actions">
+      <a class="btn btn-primary btn-lg" href="{{ url_for('growth.demo') }}">
+        <i class="fas fa-play-circle"></i> Explore Demo
+      </a>
+      <a class="btn btn-secondary btn-lg" href="{{ url_for('growth.contact') }}">
+        Request a Demo
+      </a>
+    </div>
+    <div class="lp-hero-meta">
+      <div><strong>End-to-end</strong><span>Requisition → Issue</span></div>
+      <div><strong>Traceable</strong><span>QR · Heat · Lot · Serial</span></div>
+      <div><strong>Role-ready</strong><span>PM · Procurement · WH · QC</span></div>
+    </div>
+  </section>
+
+
+
+  <!-- 2. Capability banner -->
   <section class="lp-section lp-section-first">
     <div class="lp-section-head">
       <h2>What you control</h2>
@@ -452,34 +483,6 @@
           </button>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- 2. Hero -->
-  <section class="lp-hero">
-    <div class="lp-hero-badge">
-      <i class="fas fa-industry"></i> Construction & EPC
-    </div>
-    <h1>
-      Know what you need.<br>
-      Know <span>where it is</span>.<br>
-      Know when it will arrive.
-    </h1>
-    <p class="lp-hero-lead">
-      MaterialHub connects demand, procurement, suppliers, delivery, quality, warehouse traceability and operational intelligence — one serious workspace for industrial projects.
-    </p>
-    <div class="lp-hero-actions">
-      <a class="btn btn-primary btn-lg" href="{{ url_for('growth.demo') }}">
-        <i class="fas fa-play-circle"></i> Explore Demo
-      </a>
-      <a class="btn btn-secondary btn-lg" href="{{ url_for('auth.register') }}">
-        Start Free
-      </a>
-    </div>
-    <div class="lp-hero-meta">
-      <div><strong>End-to-end</strong><span>Requisition → Issue</span></div>
-      <div><strong>Traceable</strong><span>QR · Heat · Lot · Serial</span></div>
-      <div><strong>Role-ready</strong><span>PM · Procurement · WH · QC</span></div>
     </div>
   </section>
 
