@@ -142,6 +142,8 @@ def _persist_user(app, email, role=AccessLevel.engineering, company="Auth EPC", 
         )
         db.session.add(user)
         db.session.commit()
+        db.session.refresh(user)
+        db.session.expunge(user)
         return user
 
 
