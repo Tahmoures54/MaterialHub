@@ -55,7 +55,7 @@ The most recent observed run before the latest workflow adjustment failed in the
 The Ruff gate was narrowed to actionable correctness/security-oriented classes while excluding the identified legacy E402, E702 and F401 noise. A post-adjustment green run must be observed before claiming the pipeline is green.
 
 ## Database migration note
-The repository currently contains one migration: migrations/versions/20260920_0001_harden_auth_secrets.py. It uses down_revision = None. This is valid only if it is intentionally the repository migration baseline.
+The repository contains an explicit Alembic baseline followed by incremental hardening migrations: `20260901_0000` (initial schema), `20260920_0001` (auth secret hardening), `20260921_0002` (tenant-scoped document numbers), and `20260922_0003` (public contact schema limits). The baseline intentionally has `down_revision = None`; subsequent migrations form a linear chain. Do not modify an already-applied migration in production.
 
 Before first production deployment, compare the production schema with this migration history. If the database was created outside Alembic, establish the correct baseline before running flask db upgrade. Do not blindly downgrade production migrations.
 
