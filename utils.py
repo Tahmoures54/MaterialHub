@@ -50,12 +50,13 @@ def generate_document_number(prefix: str, last_number: int = 0) -> str:
     return f"{prefix}-{next_num:04d}"
 
 
-def _next_from_last_value(prefix, raw):
+def _last_number_of(raw):
+    """Extract the trailing integer part of a document number (e.g. MR-0007 -> 7)."""
     if raw:
         match = re.search(r"(\d+)$", str(raw))
         if match:
-            return generate_document_number(prefix, int(match.group(1)))
-    return generate_document_number(prefix, 0)
+            return int(match.group(1))
+    return 0
 
 
 def _query_last_document(model, field_name, company_name=None):
@@ -69,47 +70,88 @@ def _query_last_document(model, field_name, company_name=None):
     return query.order_by(model.id.desc()).first()
 
 
+# Document type -> (model, number column). The model lookup is deferred so
+# this module stays importable without a database.
+_DOCUMENT_TYPES = {
+    "MR": ("MaterialRequisition", "mr_no"),
+    "PO": ("PurchaseOrder", "order_no"),
+    "DLV": ("Delivery", "delivery_id"),
+    "WH": ("WarehouseInventory", "warehouse_id"),
+}
+
+
+def _allocate_document_number(key, company_name):
+    """Atomically allocate the next document number for a tenant.
+
+    Uses the ``document_sequence`` counter so concurrent requests from the
+    same company cannot be handed the same number. The counter is seeded
+    from existing documents on first use, so pre-existing data keeps its
+    numbering.
+    """
+    from sqlalchemy.exc import IntegrityError
+    from flask import current_app
+    db = current_app.extensions.get("sqlalchemy")
+    if db is None:
+        raise RuntimeError("no application context")
+
+    from models import DocumentSequence
+    seq = db.session.get(DocumentSequence, (key, company_name))
+    if seq is None:
+        model_name, field_name = _DOCUMENT_TYPES[key]
+        from models import MaterialRequisition, PurchaseOrder, Delivery, WarehouseInventory
+        model = {
+            "MaterialRequisition": MaterialRequisition,
+            "PurchaseOrder": PurchaseOrder,
+            "Delivery": Delivery,
+            "WarehouseInventory": WarehouseInventory,
+        }[model_name]
+        last = _query_last_document(model, field_name, company_name)
+        seed = _last_number_of(getattr(last, field_name, None) if last else None)
+        try:
+            with db.session.begin_nested():
+                db.session.add(DocumentSequence(key=key, company_name=company_name, last_value=seed))
+        except IntegrityError:
+            # A concurrent request seeded the row first; the UPDATE below
+            # will wait for it and continue from the committed value.
+            pass
+    seq = db.session.get(DocumentSequence, (key, company_name))
+    if seq is None:
+        raise RuntimeError(f"document sequence {key}/{company_name} unavailable")
+    # next_value() returns the number being claimed (not the previous one),
+    # so format it directly instead of calling generate_document_number(),
+    # which would increment once more.
+    return f"{key}-{seq.next_value():04d}"
+
+
 def generate_next_mr_no(company_name=None):
     """Return the next Material Requisition number.
 
-    Accepts an optional company_name so callers can scope sequences per tenant.
-    Falls back to MR-0001 when no application/database context is available.
+    Sequences are scoped per tenant. Falls back to MR-0001 when no
+    application/database context is available.
     """
     try:
-        from models import MaterialRequisition
-        last = _query_last_document(MaterialRequisition, "mr_no", company_name)
-        raw = getattr(last, "mr_no", None) if last else None
-        return _next_from_last_value("MR", raw)
+        return _allocate_document_number("MR", company_name or "")
     except Exception:
         return "MR-0001"
 
 
 def generate_next_po_no(company_name=None):
     try:
-        from models import PurchaseOrder
-        last = _query_last_document(PurchaseOrder, "order_no", company_name)
-        raw = getattr(last, "order_no", None) if last else None
-        return _next_from_last_value("PO", raw)
+        return _allocate_document_number("PO", company_name or "")
     except Exception:
         return "PO-0001"
 
 
 def generate_next_delivery_id(company_name=None):
     try:
-        from models import Delivery
-        last = _query_last_document(Delivery, "delivery_id", company_name)
-        raw = getattr(last, "delivery_id", None) if last else None
-        return _next_from_last_value("DLV", raw)
+        return _allocate_document_number("DLV", company_name or "")
     except Exception:
         return "DLV-0001"
 
 
 def generate_next_warehouse_id(company_name=None):
     try:
-        from models import WarehouseInventory
-        last = _query_last_document(WarehouseInventory, "warehouse_id", company_name)
-        raw = getattr(last, "warehouse_id", None) if last else None
-        return _next_from_last_value("WH", raw)
+        return _allocate_document_number("WH", company_name or "")
     except Exception:
         return "WH-0001"
 

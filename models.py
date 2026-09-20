@@ -130,8 +130,12 @@ def ensure_project(project_no, company_name, project_name=None):
 
 class Project(db.Model):
     __tablename__ = 'project'
+    __table_args__ = (
+        db.UniqueConstraint('project_no', 'company_name', name='uq_project_no_company'),
+        {"extend_existing": True},
+    )
     id = db.Column(db.Integer, primary_key=True)
-    project_no = db.Column(db.String(50), nullable=False, unique=True, index=True)
+    project_no = db.Column(db.String(50), nullable=False, index=True)
     project_name = db.Column(db.String(100), nullable=False)
     company_name = db.Column(db.String(100), nullable=False, index=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
@@ -162,10 +166,46 @@ class Project(db.Model):
     def __repr__(self):
         return f"<Project {self.project_no}: {self.project_name}>"
 
+
+class DocumentSequence(db.Model):
+    """Per-tenant monotonic counters for sequential document numbers.
+
+    Rows are keyed by (document type, company) so that each tenant owns an
+    independent MR/PO/DLV/WH sequence. The counter is incremented with a
+    single UPDATE statement, which makes allocation safe under concurrent
+    requests (unlike reading the last document number first).
+    """
+    __tablename__ = 'document_sequence'
+    key = db.Column(db.String(10), primary_key=True)
+    company_name = db.Column(db.String(100), primary_key=True)
+    last_value = db.Column(db.Integer, nullable=False, default=0)
+
+    def next_value(self):
+        """Atomically claim and return the next sequence value for this tenant."""
+        from sqlalchemy import select, update
+        db.session.execute(
+            update(DocumentSequence)
+            .where(DocumentSequence.key == self.key,
+                   DocumentSequence.company_name == self.company_name)
+            .values(last_value=DocumentSequence.last_value + 1)
+        )
+        # Read back through Core so we always see the committed increment
+        # even if an ORM instance with a stale attribute is in the identity map.
+        return db.session.execute(
+            select(DocumentSequence.last_value)
+            .where(DocumentSequence.key == self.key,
+                   DocumentSequence.company_name == self.company_name)
+        ).scalar_one()
+
+
 class MaterialRequisition(db.Model):
     __tablename__ = 'material_requisition'
+    __table_args__ = (
+        db.UniqueConstraint('mr_no', 'company_name', name='uq_mr_no_company'),
+        {"extend_existing": True},
+    )
     id = db.Column(db.Integer, primary_key=True)
-    mr_no = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    mr_no = db.Column(db.String(50), nullable=False, index=True)
     subject = db.Column(db.String(200), nullable=False)
     drawing_no = db.Column(db.String(50))
     drawing_revision = db.Column(db.String(10))
@@ -406,8 +446,12 @@ class SupplierMaterial(db.Model):
 
 class PurchaseOrder(db.Model):
     __tablename__ = 'purchase_order'
+    __table_args__ = (
+        db.UniqueConstraint('order_no', 'company_name', name='uq_po_order_no_company'),
+        {"extend_existing": True},
+    )
     id = db.Column(db.Integer, primary_key=True)
-    order_no = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    order_no = db.Column(db.String(50), nullable=False, index=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     supplier_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
@@ -518,10 +562,14 @@ class QualityControl(db.Model):
 
 class Delivery(db.Model):
     __tablename__ = 'delivery'
+    __table_args__ = (
+        db.UniqueConstraint('delivery_id', 'company_name', name='uq_delivery_id_company'),
+        {"extend_existing": True},
+    )
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('purchase_order.id'), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
-    delivery_id = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    delivery_id = db.Column(db.String(50), nullable=False, index=True)
     status = db.Column(Enum(DeliveryStatus), nullable=False, default=DeliveryStatus.pending)
     delivered_date = db.Column(db.Date, nullable=True)
     remarks = db.Column(db.Text, nullable=True)
@@ -558,9 +606,15 @@ class Delivery(db.Model):
 
 class WarehouseInventory(db.Model):
     __tablename__ = 'warehouse_inventory'
+    __table_args__ = (
+        db.UniqueConstraint('warehouse_id', 'company_name', name='uq_wh_warehouse_id_company'),
+        {"extend_existing": True},
+    )
     id = db.Column(db.Integer, primary_key=True)
-    warehouse_id = db.Column(db.String(50), unique=True, nullable=False, index=True)
-    delivery_id = db.Column(db.String(50), db.ForeignKey('delivery.delivery_id'), nullable=False, index=True)
+    warehouse_id = db.Column(db.String(50), nullable=False, index=True)
+    # Application-level reference to Delivery.delivery_id (tenant-scoped code).
+    # Kept as a plain indexed string so delivery numbers stay unique per tenant.
+    delivery_id = db.Column(db.String(50), nullable=False, index=True)
     item_code = db.Column(db.String(50), nullable=False, index=True)
     material_description = db.Column(db.Text, nullable=False)
     material_category = db.Column(db.String(50))
@@ -576,7 +630,6 @@ class WarehouseInventory(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
-    delivery = db.relationship('Delivery', backref=db.backref('warehouse_entries', lazy=True))
     user = db.relationship('User', backref=db.backref('warehouse_entries', lazy=True))
 
     def __init__(self, **kwargs):
@@ -721,8 +774,12 @@ class Approval(db.Model):
 
 class Tender(db.Model):
     __tablename__ = 'tender'
+    __table_args__ = (
+        db.UniqueConstraint('tender_no', 'company_name', name='uq_tender_no_company'),
+        {"extend_existing": True},
+    )
     id = db.Column(db.Integer, primary_key=True)
-    tender_no = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    tender_no = db.Column(db.String(50), nullable=False, index=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False, index=True)
     material_requisition_id = db.Column(db.Integer, db.ForeignKey('material_requisition.id'), nullable=False, index=True)
     status = db.Column(Enum(TenderStatus), nullable=False, default=TenderStatus.open)

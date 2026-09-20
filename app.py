@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-import importlib.util
 import json
 import time
 import uuid
@@ -41,7 +40,16 @@ class JsonFormatter(logging.Formatter):
 
 
 def _configure_observability(app):
-    """Configure JSON logging and optional OpenTelemetry instrumentation."""
+    """Configure JSON logging and optional OpenTelemetry instrumentation.
+
+    Note: this must run after all module imports have completed.
+    ``Resource.create()`` spins up a short-lived ThreadPoolExecutor and
+    joins it; doing that while the interpreter import lock is still held
+    (i.e. during ``import app``) can deadlock against background threads
+    that need the import lock (observed under coverage tracing, where
+    every traced import performs an importlib lookup). See
+    ``_ensure_observability`` in ``create_app`` for the deferred call.
+    """
     level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'), logging.INFO)
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(level)
@@ -85,17 +93,6 @@ def _configure_observability(app):
         app.logger.warning('OpenTelemetry initialization skipped: %s', exc)
 
 
-def _load_sidecar(module_name, filename):
-    """Load modules from the app/ directory without colliding with this app.py module."""
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', filename)
-    spec = importlib.util.spec_from_file_location(module_name, path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-
 def create_app(config_name=None):
     """Application factory."""
     if config_name is None:
@@ -116,6 +113,15 @@ def create_app(config_name=None):
     login_manager.init_app(app)
 
     @app.before_request
+    def _ensure_observability():
+        # Deferred to the first request (after all imports finished) to
+        # avoid the import-lock/ThreadPoolExecutor deadlock described on
+        # _configure_observability.
+        if not app.extensions.get('materialhub_observability'):
+            _configure_observability(app)
+            app.extensions['materialhub_observability'] = True
+
+    @app.before_request
     def _csrf_token_from_json():
         if request.method in ('POST', 'PUT', 'PATCH', 'DELETE') and request.is_json:
             payload = request.get_json(silent=True) or {}
@@ -125,8 +131,6 @@ def create_app(config_name=None):
 
     csrf.init_app(app)
     limiter.init_app(app)
-
-    _configure_observability(app)
 
     try:
         from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Histogram, generate_latest
@@ -222,10 +226,10 @@ def create_app(config_name=None):
     from blueprints.report import report_bp
     from blueprints.admin import admin_bp
     from blueprints.control_center import control_center_bp
+    from blueprints.growth import growth_bp
+    from blueprints.health import health_bp
     from blueprints.intelligence import intelligence_bp
     from role_workspace import role_workspace_bp
-    growth_bp = _load_sidecar('materialhub_growth', 'growth.py').growth_bp
-    health_bp = _load_sidecar('materialhub_health', 'health.py').health_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(supplier_bp, url_prefix='/supplier')
@@ -405,9 +409,13 @@ def create_app(config_name=None):
     return app
 
 
-app = create_app()
+# NOTE: the WSGI app object is created in `wsgi.py` (Gunicorn entry point).
+# It is intentionally NOT created at import time here, so that `import app`
+# stays side-effect free (safe under coverage, multiprocessing, re-imports).
+# The Flask CLI still works because it auto-detects the `create_app` factory.
 
 if __name__ == '__main__':
-    if app.config.get('IS_PRODUCTION'):
+    _app = create_app()
+    if _app.config.get('IS_PRODUCTION'):
         raise RuntimeError('Do not run MaterialHub with Flask development server in production. Use Gunicorn.')
-    app.run(host='0.0.0.0', port=5000, debug=app.config.get('DEBUG', False))
+    _app.run(host='0.0.0.0', port=5000, debug=_app.config.get('DEBUG', False))  # nosec B104  # Dev-only entry point; production uses Gunicorn (wsgi.py)

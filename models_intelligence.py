@@ -20,8 +20,9 @@ class RFQStatus(enum.Enum):
 
 class MaterialTrace(db.Model):
     __tablename__='material_trace'
+    __table_args__=(db.UniqueConstraint('trace_code','company_name',name='uq_trace_code_company'), {"extend_existing": True})
     id=db.Column(db.Integer,primary_key=True)
-    trace_code=db.Column(db.String(80),unique=True,nullable=False,index=True)
+    trace_code=db.Column(db.String(80),nullable=False,index=True)
     item_code=db.Column(db.String(80),nullable=False,index=True)
     material_description=db.Column(db.Text,nullable=False)
     heat_no=db.Column(db.String(80),index=True)
@@ -75,8 +76,9 @@ class SupplierScore(db.Model):
 
 class RFQ(db.Model):
     __tablename__='rfq'
+    __table_args__=(db.UniqueConstraint('rfq_no','company_name',name='uq_rfq_no_company'), {"extend_existing": True})
     id=db.Column(db.Integer,primary_key=True)
-    rfq_no=db.Column(db.String(50),unique=True,nullable=False,index=True)
+    rfq_no=db.Column(db.String(50),nullable=False,index=True)
     mr_id=db.Column(db.Integer,db.ForeignKey('material_requisition.id'),nullable=False,index=True)
     status=db.Column(db.Enum(RFQStatus),default=RFQStatus.draft,nullable=False)
     due_date=db.Column(db.Date)
@@ -108,8 +110,9 @@ class RFQSupplier(db.Model):
 
 class Receipt(db.Model):
     __tablename__='material_receipt'
+    __table_args__=(db.UniqueConstraint('receipt_no','company_name',name='uq_receipt_no_company'), {"extend_existing": True})
     id=db.Column(db.Integer,primary_key=True)
-    receipt_no=db.Column(db.String(50),unique=True,nullable=False,index=True)
+    receipt_no=db.Column(db.String(50),nullable=False,index=True)
     po_id=db.Column(db.Integer,db.ForeignKey('purchase_order.id'),nullable=False,index=True)
     received_qty=db.Column(db.Float,default=0)
     receipt_date=db.Column(db.Date)
@@ -120,8 +123,9 @@ class Receipt(db.Model):
 
 class SupplierInvoice(db.Model):
     __tablename__='supplier_invoice'
+    __table_args__=(db.UniqueConstraint('invoice_no','company_name',name='uq_invoice_no_company'), {"extend_existing": True})
     id=db.Column(db.Integer,primary_key=True)
-    invoice_no=db.Column(db.String(80),unique=True,nullable=False,index=True)
+    invoice_no=db.Column(db.String(80),nullable=False,index=True)
     po_id=db.Column(db.Integer,db.ForeignKey('purchase_order.id'),nullable=False,index=True)
     invoice_amount=db.Column(db.Float,default=0)
     invoice_date=db.Column(db.Date)

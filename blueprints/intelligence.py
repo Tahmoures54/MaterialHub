@@ -32,7 +32,10 @@ def score_supplier(supplier_id):
             qc_query=qc_query.filter_by(company_name=current_user.company_name)
         qcs=qc_query.all()
         if qcs: quality=100*sum(1 for q in qcs if q.status==InspectionStatus.passed)/len(qcs)
-    except Exception: pass
+    except Exception:
+        # Scoring degrades gracefully: keep the default quality score when
+        # QC data is unavailable for this supplier.
+        quality = 100
     otif=100*delivered/len(orders)
     score=round(0.45*otif+0.35*quality+0.20*100,1)
     s=SupplierScore.query.filter_by(supplier_id=supplier_id,period=date.today().strftime('%Y-%m'),company_name=target_company).first()

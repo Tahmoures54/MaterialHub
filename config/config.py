@@ -33,7 +33,7 @@ def _get_instance_dir():
         return os.path.abspath(custom_dir)
 
     if _is_serverless():
-        return '/tmp/instance'
+        return '/tmp/instance'  # nosec B108  # On Vercel/Lambda /tmp is the only writable location
 
     return os.path.join(BASE_DIR, 'instance')
 
@@ -210,7 +210,7 @@ class TestingConfig(Config):
     TESTING = True
     DEBUG = True
     WTF_CSRF_ENABLED = False
-    SECRET_KEY = 'materialhub-test-secret'
+    SECRET_KEY = 'materialhub-test-secret'  # nosec B105  # Test-only configuration
     SQLALCHEMY_DATABASE_URI = (
         'sqlite:///' + os.path.join(Config.INSTANCE_DIR, 'test.db')
     )

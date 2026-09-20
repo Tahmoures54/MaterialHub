@@ -13,10 +13,14 @@ from extensions import db
 def app():
     application = create_app("testing")
     application.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
+    # Do NOT keep an app context pushed across the test: client requests must
+    # push their own context so that per-request state (flask.g, including
+    # flask-login's cached user) cannot leak between requests.
     with application.app_context():
         db.drop_all()
         db.create_all()
-        yield application
+    yield application
+    with application.app_context():
         db.session.remove()
         db.drop_all()
 

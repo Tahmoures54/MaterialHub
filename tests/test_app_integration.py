@@ -239,7 +239,7 @@ def test_material_requisition_delete_and_access_control(client, app):
 
     supplier = _persist_user(app, "supplier-access@example.com", AccessLevel.supplier, "Delete EPC")
     _authenticate_session(client, supplier)
-    assert client.post("/api/material_requisitions", json={
+    assert client.post("/material_requisitions/api/material_requisitions", json={
         "item_code": "NOPE",
         "material_description": "Nope",
         "quantity": 1,

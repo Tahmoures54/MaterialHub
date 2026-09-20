@@ -118,6 +118,7 @@ MaterialHub/
 ├── config/              # App configuration
 ├── data/                # Static data (country codes)
 ├── forms/               # WTForms
+├── migrations/          # Alembic schema history
 ├── static/              # CSS, JS, images
 ├── templates/           # Jinja2 templates
 ├── ai_analysis.py       # Rule-based analysis helpers
@@ -134,9 +135,27 @@ MaterialHub/
 
 ## Database Migrations
 
+The repository ships a complete Alembic chain
+(`20260901_0000` baseline → `20260920_0001` auth-secret hardening →
+`20260921_0002` tenant-scoped document numbers). A fresh database is ready
+with:
+
 ```bash
-flask db init
-flask db migrate -m "Initial migration"
+flask db upgrade
+```
+
+Existing databases created before this history was introduced can be stamped
+at the state they match and then upgraded:
+
+```bash
+flask db stamp 20260920_0001   # schema already matches the post-hardening state
+flask db upgrade
+```
+
+New schema changes:
+
+```bash
+flask db migrate -m "describe the change"
 flask db upgrade
 ```
 

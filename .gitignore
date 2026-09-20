@@ -13,3 +13,6 @@ instance/
 logs/
 coverage.xml
 htmlcov/
+
+# coverage.py raw data file
+.coverage
