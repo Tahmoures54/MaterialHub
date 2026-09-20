@@ -104,12 +104,12 @@ class Config:
 
     # Secret key
     SECRET_KEY = os.getenv('SECRET_KEY')
-    if not SECRET_KEY:
-        if IS_PRODUCTION:
-            raise ValueError(
-                "SECRET_KEY environment variable is not set. "
-                "Please set it in Vercel Environment Variables or .env file."
-            )
+    if IS_PRODUCTION:
+        if not SECRET_KEY:
+            raise ValueError("SECRET_KEY must be provided by the production environment.")
+        if len(SECRET_KEY.encode("utf-8")) < 32:
+            raise ValueError("SECRET_KEY must contain at least 32 bytes in production.")
+    elif not SECRET_KEY:
         SECRET_KEY = secrets.token_urlsafe(48)
 
     # Paths
@@ -119,11 +119,15 @@ class Config:
 
     # Database
     DATABASE_URL = _normalize_database_url(_get_database_url())
-    if DATABASE_URL:
+    if IS_PRODUCTION:
+        if not DATABASE_URL:
+            raise ValueError("DATABASE_URL must be configured in production; SQLite is not permitted.")
+        if not DATABASE_URL.startswith(("postgresql://", "postgresql+psycopg2://")):
+            raise ValueError("Production database must be PostgreSQL.")
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    elif DATABASE_URL:
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
     else:
-        # فقط برای توسعه محلی یا fallback موقت.
-        # روی Vercel داده‌ها در /tmp موقتی هستند.
         SQLALCHEMY_DATABASE_URI = (
             f'sqlite:///{os.path.join(INSTANCE_DIR, "materialhub.db")}'
         )
@@ -131,7 +135,10 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
-        'pool_recycle': 300,
+        'pool_recycle': int(os.getenv('DB_POOL_RECYCLE', '300')),
+        'pool_size': int(os.getenv('DB_POOL_SIZE', '5')),
+        'max_overflow': int(os.getenv('DB_MAX_OVERFLOW', '10')),
+        'pool_timeout': int(os.getenv('DB_POOL_TIMEOUT', '30')),
     }
 
     # Misc
@@ -148,14 +155,27 @@ class Config:
     WTF_CSRF_CHECK_DEFAULT = True
 
     # Session / cookies
-    SESSION_COOKIE_SECURE = _get_bool_env(
-        'SESSION_COOKIE_SECURE',
-        IS_PRODUCTION
-    )
+    SESSION_COOKIE_SECURE = _get_bool_env('SESSION_COOKIE_SECURE', IS_PRODUCTION)
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = os.getenv('SESSION_COOKIE_SAMESITE', 'Lax')
     REMEMBER_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_SECURE = SESSION_COOKIE_SECURE
+    REMEMBER_COOKIE_SAMESITE = SESSION_COOKIE_SAMESITE
+
+    # Rate limiting
+    RATELIMIT_ENABLED = True
+    RATELIMIT_STORAGE_URI = os.getenv(
+        'RATELIMIT_STORAGE_URI',
+        'memory://'
+    )
+    RATELIMIT_DEFAULT = os.getenv('RATELIMIT_DEFAULT', '300 per minute')
+    RATELIMIT_HEADERS_ENABLED = True
+    if IS_PRODUCTION and RATELIMIT_STORAGE_URI.startswith('memory://'):
+        raise ValueError("Production rate limiting requires shared storage; configure RATELIMIT_STORAGE_URI.")
+
+    # Security
+    WTF_CSRF_SSL_STRICT = IS_PRODUCTION
+    SESSION_COOKIE_NAME = os.getenv('SESSION_COOKIE_NAME', 'materialhub_session')
 
     # Logging
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
