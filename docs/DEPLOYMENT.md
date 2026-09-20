@@ -11,17 +11,17 @@ Create these Docker secret files outside Git:
 - secrets/tls_key
 
 ## Start
-docker compose -f docker-compose.prod.yml build
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.production.yml build
+docker compose -f docker-compose.production.yml up -d
 
 Then inspect:
-docker compose -f docker-compose.prod.yml ps
-docker compose -f docker-compose.prod.yml logs --tail=200 web
-docker compose -f docker-compose.prod.yml logs --tail=200 nginx
+docker compose -f docker-compose.production.yml ps
+docker compose -f docker-compose.production.yml logs --tail=200 web
+docker compose -f docker-compose.production.yml logs --tail=200 nginx
 
 ## Migration
 Review the current Alembic history before the first production upgrade. If the existing database was created outside Alembic, establish the correct baseline first. After the baseline is confirmed:
-docker compose -f docker-compose.prod.yml exec web flask db upgrade
+docker compose -f docker-compose.production.yml exec web flask db upgrade
 
 ## Health checks
 /health/live must return HTTP 200 when the process is alive.

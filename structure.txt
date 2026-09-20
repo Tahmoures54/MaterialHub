@@ -1,176 +1,128 @@
 MaterialHub
 |   .dockerignore
 |   .env.example
-|   .env.local.example
-|   .gitignore
-|   ai_analysis.py
-|   app.py
+|   .env.prod.example
 |   CHANGELOG.md
-|   docker-compose.production.yml
-|   docker-compose.yml
 |   Dockerfile
 |   Dockerfile.production
+|   LICENSE
+|   PRODUCTION_READINESS_REPORT.md
+|   README.md
+|   SECURITY.md
+|   TESTING.md
+|   ai_analysis.py
+|   app.py
+|   docker-compose.production.yml
+|   docker-compose.yml
 |   errors.py
 |   extensions.py
-|   LICENSE
 |   models.py
 |   models_intelligence.py
-|   README.md
+|   mypy.ini
 |   requirements-dev.txt
 |   requirements.txt
 |   role_workspace.py
 |   run.py
 |   structure.txt
-|   TESTING.md
 |   utils.py
 |   wsgi.py
-|   __init__.py
-|   
-+---app
-|       growth.py
-|       health.py
-|       role_workspace.py
-|       workspaces.py
-|       
+|
 +---blueprints
-|       admin.py
-|       auth.py
-|       contact_support.py
-|       control_center.py
-|       delivery.py
-|       help.py
-|       intelligence.py
-|       material_requisition.py
-|       project_dashboard.py
-|       purchase_order.py
-|       quality_control.py
-|       report.py
-|       supplier.py
-|       warehouse.py
-|       __init__.py
-|       
+|   __init__.py
+|   admin.py
+|   auth.py
+|   contact_support.py
+|   control_center.py
+|   delivery.py
+|   growth.py
+|   health.py
+|   help.py
+|   intelligence.py
+|   material_requisition.py
+|   project_dashboard.py
+|   purchase_order.py
+|   quality_control.py
+|   report.py
+|   supplier.py
+|   warehouse.py
+|
 +---config
-|       config.py
-|       production.py
-|       __init__.py
-|       
+|   __init__.py
+|   config.py
+|   production.py
+|
 +---data
-|       country_codes.py
-|       __init__.py
-|       
+|   __init__.py
+|   country_codes.py
+|
++---docker
+|   entrypoint.sh
+|
++---docs
+|   DEPLOYMENT.md
+|
 +---forms
-|       auth_forms.py
-|       material_forms.py
-|       user_forms.py
-|       __init__.py
-|       
+|   __init__.py
+|   auth_forms.py
+|   material_forms.py
+|   user_forms.py
+|
++---migrations
+|   README
+|   alembic.ini
+|   env.py
+|   script.py.mako
+|   \---versions
+|       20260901_0000_baseline_initial_materialhub_schema.py
+|       20260920_0001_harden_auth_secrets.py
+|       20260921_0002_tenant_scoped_document_numbers.py
+|
++---nginx
+|   nginx.conf
+|
 +---static
-|   |   favicon.ico
-|   |   grok-logo.png
-|   |   manifest.json
-|   |   robots.txt
-|   |   service-worker.js
-|   |   sitemap.xml
-|   |   
-|   +---css
-|   |       design-system.css
-|   |       documentation.css
-|   |       style.css
-|   |       
-|   +---images
-|   |       favicon.ico
-|   |       pic_1.png
-|   |       
+|   favicon.ico
+|   grok-logo.png
+|   manifest.json
+|   robots.txt
+|   service-worker.js
+|   sitemap.xml
+|   \---css
+|       design-system.css
+|       documentation.css
+|       style.css
+|   \---images
+|       favicon.ico
+|       pic_1.png
 |   \---js
-|           charts.js
-|           notifications.js
-|           workspace.js
-|           
+|       charts.js
+|       notifications.js
+|       workspace.js
+|
 +---templates
-|   |   base.html
-|   |   
-|   +---admin
-|   |       admin.html
-|   |       
-|   +---auth
-|   |       change_password.html
-|   |       login.html
-|   |       register.html
-|   |       reset_password.html
-|   |       reset_password_request.html
-|   |       reset_request.html
-|   |       
-|   +---dashboard
-|   |       control_center.html
-|   |       dashboard.html
-|   |       home.html
-|   |       project_dashboard.html
-|   |       supplier_dashboard.html
-|   |       
-|   +---errors
-|   |       403.html
-|   |       404.html
-|   |       500.html
-|   |       
-|   +---help
-|   |       about.html
-|   |       getting_started.html
-|   |       help.html
-|   |       user_guide.html
-|   |       
-|   +---intelligence
-|   |       excel_import.html
-|   |       material_intelligence.html
-|   |       traceability.html
-|   |       
-|   +---legal
-|   |       privacy_policy.html
-|   |       terms_of_service.html
-|   |       
-|   +---marketing
-|   |       contact.html
-|   |       demo.html
-|   |       landing.html
-|   |       pricing.html
-|   |       
-|   +---procurement
-|   |       add_material.html
-|   |       edit_material.html
-|   |       materials.html
-|   |       material_marketplace.html
-|   |       material_requisition.html
-|   |       purchase_order.html
-|   |       tender.html
-|   |       
-|   +---quality
-|   |       quality_control.html
-|   |       
-|   +---reports
-|   |       report.html
-|   |       reports.html
-|   |       
-|   +---support
-|   |       contact_support.html
-|   |       
-|   +---warehouse
-|   |       delivery_order.html
-|   |       inventory.html
-|   |       warehouse_operations.html
-|   |       warehouse_report.html
-|   |       
+|   base.html
+|   \---admin
+|   \---auth
+|   \---dashboard
+|   \---errors
+|   \---help
+|   \---intelligence
+|   \---legal
+|   \---marketing
+|   \---procurement
+|   \---quality
+|   \---reports
+|   \---support
+|   \---warehouse
 |   \---workspaces
-|           admin.html
-|           engineering.html
-|           procurement.html
-|           project_manager.html
-|           quality.html
-|           supplier.html
-|           warehouse.html
-|           
-\---tests
-        run_tests.py
-        test_app_integration.py
-        test_growth_assets.py
-        test_role_workspace_unit.py
-        test_startup_regression.py
-        
+|
++---tests
+|   conftest.py
+|   run_tests.py
+|   test_app_integration.py
+|   test_core_models.py
+|   test_growth_assets.py
+|   test_role_workspace_unit.py
+|   test_security_hardening.py
+|   test_startup_regression.py
+|   test_tenant_isolation.py
