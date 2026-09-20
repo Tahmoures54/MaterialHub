@@ -165,74 +165,152 @@
       width: 100%; max-width: 1500px; margin: 0 auto; padding: 26px; flex: 1 1 auto;
     }
 
-    /* Footer with public navigation */
+    /* ── Footer — industrial dark ── */
     .mh-footer {
       width: 100%;
-      border-top: 1px solid var(--mh-border);
-      background: #fff;
       flex-shrink: 0;
-      padding: 0;
+      background: linear-gradient(180deg, #0B1622 0%, #0A1220 100%);
+      color: #94A3B8;
+      position: relative;
+      overflow: hidden;
+    }
+    .mh-footer::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #0E7490 0%, #22D3EE 40%, #0891B2 70%, transparent 100%);
     }
     .mh-footer-inner {
       max-width: 1500px;
       margin: 0 auto;
-      padding: 28px 26px 18px;
+      padding: 40px 26px 28px;
       display: grid;
-      grid-template-columns: 1.4fr repeat(3, 1fr);
-      gap: 28px 32px;
+      grid-template-columns: 1.55fr repeat(3, 1fr);
+      gap: 36px 40px;
+      position: relative;
     }
-    .mh-footer-brand strong {
+    .mh-footer-brand {
+      padding-right: 12px;
+    }
+    .mh-footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      text-decoration: none;
+    }
+    .mh-footer-logo-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #0E7490, #0891B2);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 1rem;
+      box-shadow: 0 4px 14px rgba(14, 116, 144, 0.35);
+      flex-shrink: 0;
+    }
+    .mh-footer-logo strong {
       display: block;
-      color: #0F172A;
-      font-size: 0.95rem;
+      color: #F1F5F9;
+      font-size: 1.05rem;
       font-weight: 800;
-      margin-bottom: 6px;
+      letter-spacing: -0.02em;
     }
-    .mh-footer-brand p {
-      margin: 0;
+    .mh-footer-logo span {
+      display: block;
+      font-size: 0.7rem;
       color: #64748B;
-      font-size: 0.8rem;
-      line-height: 1.55;
-      max-width: 280px;
+      font-weight: 500;
+      margin-top: 1px;
     }
+    .mh-footer-brand > p {
+      margin: 0 0 18px;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: #94A3B8;
+      max-width: 300px;
+    }
+    .mh-footer-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 8px;
+      background: #0E7490;
+      color: #fff !important;
+      font-size: 0.84rem;
+      font-weight: 650;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .mh-footer-cta:hover { background: #0891B2; }
+
     .mh-footer-col h4 {
-      margin: 0 0 12px;
-      font-size: 0.72rem;
+      margin: 0 0 16px;
+      font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #94A3B8;
+      letter-spacing: 0.1em;
+      color: #64748B;
     }
     .mh-footer-col a {
-      display: block;
-      padding: 4px 0;
-      font-size: 0.85rem;
-      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 0.875rem;
+      color: #CBD5E1;
       text-decoration: none;
-      transition: color 0.15s;
+      transition: color 0.15s, transform 0.15s;
     }
-    .mh-footer-col a:hover { color: #0E7490; }
+    .mh-footer-col a:hover {
+      color: #22D3EE;
+      transform: translateX(3px);
+    }
+    .mh-footer-col a i {
+      width: 16px;
+      font-size: 0.75rem;
+      color: #475569;
+      text-align: center;
+    }
+    .mh-footer-col a:hover i { color: #22D3EE; }
+
     .mh-footer-bottom {
-      border-top: 1px solid #E2E8F0;
-      padding: 14px 26px;
+      border-top: 1px solid rgba(148, 163, 184, 0.12);
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 16px 26px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
       flex-wrap: wrap;
-      font-size: 0.75rem;
-      color: #94A3B8;
-      max-width: 1500px;
-      margin: 0 auto;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .mh-footer-bottom a {
+      font-size: 0.78rem;
       color: #64748B;
-      text-decoration: none;
-      margin-left: 14px;
+      position: relative;
     }
-    .mh-footer-bottom a:hover { color: #0E7490; }
+    .mh-footer-bottom-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 18px;
+    }
+    .mh-footer-bottom-links a {
+      color: #94A3B8;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .mh-footer-bottom-links a:hover { color: #22D3EE; }
+    .mh-footer-tagline {
+      font-size: 0.72rem;
+      color: #475569;
+      letter-spacing: 0.02em;
+    }
 
     .mh-sidebar-backdrop {
       display: none; position: fixed; inset: 0;
@@ -256,10 +334,11 @@
       .mh-flashes { padding: 0 18px; }
       .mh-footer-inner {
         grid-template-columns: 1fr 1fr;
-        padding: 22px 18px 14px;
-        gap: 20px;
+        padding: 32px 18px 22px;
+        gap: 28px 24px;
       }
-      .mh-footer-bottom { padding: 12px 18px; }
+      .mh-footer-brand { grid-column: 1 / -1; }
+      .mh-footer-bottom { padding: 14px 18px 18px; }
     }
     @media (max-width: 600px) {
       :root { --mh-topbar-h: 58px; }
@@ -269,15 +348,14 @@
       .mh-top-actions .mh-pill:not(.primary) { display: none; }
       .mh-footer-inner {
         grid-template-columns: 1fr;
-        padding: 20px 14px 12px;
-        gap: 18px;
+        padding: 28px 16px 18px;
+        gap: 24px;
       }
       .mh-footer-bottom {
-        padding: 12px 14px;
+        padding: 14px 16px 18px;
         flex-direction: column;
         align-items: flex-start;
       }
-      .mh-footer-bottom a { margin-left: 0; margin-right: 12px; }
     }
   </style>
 </head>
@@ -396,44 +474,60 @@
   <footer class="mh-footer">
     <div class="mh-footer-inner">
       <div class="mh-footer-brand">
-        <strong>MaterialHub</strong>
-        <p>Integrated material operations for construction and EPC — procurement, delivery, warehouse, quality and intelligence.</p>
+        <a class="mh-footer-logo" href="{{ url_for('index') }}">
+          <div class="mh-footer-logo-mark">M</div>
+          <div>
+            <strong>MaterialHub</strong>
+            <span>Material Operations Platform</span>
+          </div>
+        </a>
+        <p>Integrated material operations for construction and EPC — procurement, delivery, warehouse, quality and intelligence in one controlled workspace.</p>
+        {% if not current_user.is_authenticated %}
+          <a class="mh-footer-cta" href="{{ url_for('auth.register') }}">
+            <i class="fas fa-rocket"></i> Get started free
+          </a>
+        {% else %}
+          <a class="mh-footer-cta" href="{{ url_for('role_workspace.my_workspace') }}">
+            <i class="fas fa-layer-group"></i> Open workspace
+          </a>
+        {% endif %}
       </div>
 
       <div class="mh-footer-col">
         <h4>Product</h4>
-        <a href="{{ url_for('product_overview') }}">Overview</a>
-        <a href="{{ url_for('growth.demo') }}">Demo</a>
-        <a href="{{ url_for('growth.pricing') }}">Pricing</a>
-        <a href="{{ url_for('material_marketplace') }}">Marketplace</a>
+        <a href="{{ url_for('product_overview') }}"><i class="fas fa-cube"></i> Overview</a>
+        <a href="{{ url_for('growth.demo') }}"><i class="fas fa-play-circle"></i> Demo</a>
+        <a href="{{ url_for('growth.pricing') }}"><i class="fas fa-tags"></i> Pricing</a>
+        <a href="{{ url_for('material_marketplace') }}"><i class="fas fa-store"></i> Marketplace</a>
       </div>
 
       <div class="mh-footer-col">
         <h4>Help & Guides</h4>
-        <a href="{{ url_for('help.help') }}">Help Center</a>
-        <a href="{{ url_for('help.getting_started') }}">Getting Started</a>
-        <a href="{{ url_for('help.user_guide') }}">User Guide</a>
-        <a href="{{ url_for('help.about') }}">About</a>
+        <a href="{{ url_for('help.help') }}"><i class="fas fa-question-circle"></i> Help Center</a>
+        <a href="{{ url_for('help.getting_started') }}"><i class="fas fa-flag"></i> Getting Started</a>
+        <a href="{{ url_for('help.user_guide') }}"><i class="fas fa-book"></i> User Guide</a>
+        <a href="{{ url_for('help.about') }}"><i class="fas fa-info-circle"></i> About</a>
       </div>
 
       <div class="mh-footer-col">
         <h4>Legal & Support</h4>
-        <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>
-        <a href="{{ url_for('terms_of_service') }}">Terms of Service</a>
-        <a href="{{ url_for('contact_support') }}">Contact Support</a>
+        <a href="{{ url_for('privacy_policy') }}"><i class="fas fa-user-shield"></i> Privacy Policy</a>
+        <a href="{{ url_for('terms_of_service') }}"><i class="fas fa-file-contract"></i> Terms of Service</a>
+        <a href="{{ url_for('contact_support') }}"><i class="fas fa-headset"></i> Contact Support</a>
         {% if not current_user.is_authenticated %}
-          <a href="{{ url_for('auth.register') }}">Create account</a>
+          <a href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> Sign in</a>
         {% endif %}
       </div>
     </div>
 
     <div class="mh-footer-bottom">
       <span>© {{ current_year|default(2026) }} MaterialHub. All rights reserved.</span>
-      <span>
+      <div class="mh-footer-bottom-links">
         <a href="{{ url_for('privacy_policy') }}">Privacy</a>
         <a href="{{ url_for('terms_of_service') }}">Terms</a>
         <a href="{{ url_for('contact_support') }}">Support</a>
-      </span>
+      </div>
+      <span class="mh-footer-tagline">Built for industrial material control</span>
     </div>
   </footer>
 
