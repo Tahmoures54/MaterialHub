@@ -48,7 +48,6 @@
       flex-direction: column;
     }
 
-    /* Top bar */
     .mh-topbar {
       height: 64px;
       background: #FFFFFF;
@@ -146,7 +145,6 @@
       flex-shrink: 0;
     }
 
-    /* Layout */
     .mh-layout {
       display: grid;
       grid-template-columns: 248px minmax(0, 1fr);
@@ -154,7 +152,6 @@
       min-height: 0;
     }
 
-    /* Sidebar — industrial navy */
     .mh-sidebar {
       background: linear-gradient(180deg, #0B1622 0%, #122033 100%);
       color: #94A3B8;
@@ -200,14 +197,6 @@
       flex: 1;
     }
 
-    /* Public pages (no sidebar) */
-    .mh-content-public {
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-    }
-
     .mh-main {
       max-width: 1500px;
       width: 100%;
@@ -233,7 +222,6 @@
       padding: 0 26px;
     }
 
-    /* Public nav */
     .mh-public-nav {
       display: flex;
       gap: 4px;
@@ -250,7 +238,6 @@
     }
     .mh-public-nav a:hover { background: #F1F5F9; color: #0F172A; }
 
-    /* Overlay for mobile sidebar */
     .mh-sidebar-backdrop {
       display: none;
       position: fixed;
@@ -290,7 +277,6 @@
 <body>
 <div class="mh-shell">
 
-  {# ── Topbar ── #}
   <header class="mh-topbar">
     {% if current_user.is_authenticated %}
       <button class="mh-menu" type="button" onclick="document.body.classList.toggle('mh-sidebar-open')" aria-label="Toggle navigation">
@@ -330,7 +316,6 @@
     {% endif %}
   </header>
 
-  {# ── Body ── #}
   {% if current_user.is_authenticated %}
     <div class="mh-sidebar-backdrop" onclick="document.body.classList.remove('mh-sidebar-open')"></div>
     <div class="mh-layout">
@@ -379,6 +364,10 @@
       </aside>
 
       <div class="mh-content">
+  {% else %}
+      <div class="mh-content">
+  {% endif %}
+
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             <div class="mh-flashes">
@@ -397,31 +386,10 @@
           <strong>MaterialHub</strong> · Integrated material operations, procurement, delivery, warehouse and intelligence.
           <span style="float:right">© {{ current_year|default(2026) }}</span>
         </footer>
-      </div>
-    </div>
+      </div>{# /.mh-content #}
 
-  {% else %}
-    {# Public / unauthenticated layout #}
-    <div class="mh-content-public">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="mh-flashes">
-            {% for category, message in messages %}
-              <div class="mh-alert mh-alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% endwith %}
-
-      <main class="mh-main">
-        {% block content %}{% endblock %}
-      </main>
-
-      <footer class="mh-footer">
-        <strong>MaterialHub</strong> · Integrated material operations, procurement, delivery, warehouse and intelligence.
-        <span style="float:right">© {{ current_year|default(2026) }}</span>
-      </footer>
-    </div>
+  {% if current_user.is_authenticated %}
+    </div>{# /.mh-layout #}
   {% endif %}
 
 </div>{# /.mh-shell #}
