@@ -14,13 +14,13 @@ def company_filter(q, model):
     return q if current_user.is_admin else q.filter(model.company_name==current_user.company_name)
 
 def score_supplier(supplier_id):
-    orders=PurchaseOrder.query.filter_by(supplier_id=supplier_id).all()
+    orders=PurchaseOrder.query.filter_by(supplier_id=supplier_id, company_name=current_user.company_name).all()
     if not orders: return 0
     delivered=sum(1 for o in orders if o.delivered_date and o.issued_date and o.delivered_date<=o.issued_date+timedelta(days=30))
     quality=100
     try:
         from models import QualityControl, InspectionStatus
-        qcs=QualityControl.query.filter_by(user_id=supplier_id).all()
+        qcs=QualityControl.query.filter_by(user_id=supplier_id, company_name=current_user.company_name).all()
         if qcs: quality=100*sum(1 for q in qcs if q.status==InspectionStatus.passed)/len(qcs)
     except Exception: pass
     otif=100*delivered/len(orders)
@@ -33,9 +33,9 @@ def score_supplier(supplier_id):
     db.session.commit(); return score
 
 def readiness(item_code, required_qty=0, required_date=None):
-    stock=sum((x.received_qty or 0) for x in WarehouseInventory.query.filter_by(item_code=item_code).all())
+    stock=sum((x.received_qty or 0) for x in company_filter(WarehouseInventory.query,WarehouseInventory).filter_by(item_code=item_code).all())
     open_po=0
-    for po in PurchaseOrder.query.filter(PurchaseOrder.status.in_([PurchaseOrderStatus.pending,PurchaseOrderStatus.issued])).all():
+    for po in company_filter(PurchaseOrder.query,PurchaseOrder).filter(PurchaseOrder.status.in_([PurchaseOrderStatus.pending,PurchaseOrderStatus.issued])).all():
         for it in po.items:
             if it.material_requisition and it.material_requisition.item_code==item_code: open_po+=it.quantity or 0
     coverage=stock+open_po
@@ -95,21 +95,20 @@ def auto_rfq(mr_id):
     rfq=RFQ(rfq_no='RFQ-'+date.today().strftime('%Y%m%d')+'-'+secrets.token_hex(2).upper(),mr_id=mr.id,status=RFQStatus.sent,due_date=date.today()+timedelta(days=5),target_quantity=mr.quantity,unit=mr.unit_of_measure,specification=f'{mr.material_description} | {mr.standard_specification or "Open specification"}',company_name=current_user.company_name,created_by=current_user.id)
     db.session.add(rfq); db.session.flush()
     suppliers=User.query.filter(User.access_level==AccessLevel.supplier,User.company_name==current_user.company_name).limit(20).all()
-    if not suppliers: suppliers=User.query.filter(User.access_level==AccessLevel.supplier).limit(20).all()
     for s in suppliers: db.session.add(RFQSupplier(rfq_id=rfq.id,supplier_id=s.id))
     db.session.commit(); return jsonify({'rfq_no':rfq.rfq_no,'invited_suppliers':len(suppliers),'status':rfq.status.value})
 
 @intelligence_bp.route('/rfq/compare/<int:rfq_id>')
 @login_required
 def compare_rfq(rfq_id):
-    rfq=RFQ.query.get_or_404(rfq_id)
+    rfq=company_filter(RFQ.query,RFQ).filter_by(id=rfq_id).first_or_404()
     quotes=RFQSupplier.query.filter_by(rfq_id=rfq.id).order_by(RFQSupplier.total_score.desc(),RFQSupplier.quoted_price.asc()).all()
     return jsonify({'rfq_no':rfq.rfq_no,'comparison':[{'supplier':q.supplier.company_name,'price':q.quoted_price,'lead_time_days':q.lead_time_days,'quality_score':q.quality_score,'total_score':q.total_score,'status':q.status} for q in quotes]})
 
 @intelligence_bp.route('/three-way-match/<int:po_id>',methods=['GET','POST'])
 @login_required
 def three_way_match(po_id):
-    po=PurchaseOrder.query.get_or_404(po_id); receipt=Receipt.query.filter_by(po_id=po.id).order_by(Receipt.id.desc()).first(); invoice=SupplierInvoice.query.filter_by(po_id=po.id).order_by(SupplierInvoice.id.desc()).first()
+    po=company_filter(PurchaseOrder.query,PurchaseOrder).filter_by(id=po_id).first_or_404(); receipt=Receipt.query.filter_by(po_id=po.id, company_name=current_user.company_name).order_by(Receipt.id.desc()).first(); invoice=SupplierInvoice.query.filter_by(po_id=po.id, company_name=current_user.company_name).order_by(SupplierInvoice.id.desc()).first()
     if request.method=='POST':
         receipt=Receipt(receipt_no=request.form['receipt_no'],po_id=po.id,received_qty=float(request.form.get('received_qty') or 0),accepted_qty=float(request.form.get('accepted_qty') or 0),receipt_date=date.today(),company_name=current_user.company_name) if not receipt else receipt
         if not receipt.id: db.session.add(receipt); db.session.flush()
