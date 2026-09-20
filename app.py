@@ -111,18 +111,32 @@ def create_app(config_name=None):
     _configure_observability(app)
 
     try:
-        from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-        request_counter = Counter('materialhub_http_requests_total', 'HTTP requests', ['method', 'route', 'status'])
-        request_duration = Histogram('materialhub_http_request_duration_seconds', 'HTTP request duration', ['method', 'route'])
+        from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Histogram, generate_latest
+        metrics_registry = CollectorRegistry()
+        request_counter = Counter(
+            'materialhub_http_requests_total',
+            'HTTP requests',
+            ['method', 'route', 'status'],
+            registry=metrics_registry,
+        )
+        request_duration = Histogram(
+            'materialhub_http_request_duration_seconds',
+            'HTTP request duration',
+            ['method', 'route'],
+            registry=metrics_registry,
+        )
     except Exception:
-        request_counter = request_duration = None
+        metrics_registry = request_counter = request_duration = None
         generate_latest = CONTENT_TYPE_LATEST = None
 
     @app.get('/metrics')
     def metrics():
-        if generate_latest is None:
+        if generate_latest is None or metrics_registry is None:
             return {'status': 'metrics_unavailable'}, 503
-        return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+        return Response(
+            generate_latest(metrics_registry),
+            mimetype=CONTENT_TYPE_LATEST,
+        )
 
     @app.before_request
     def _start_request_observability():
