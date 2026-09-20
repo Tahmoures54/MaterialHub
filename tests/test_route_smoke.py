@@ -23,12 +23,13 @@ def admin_user(app):
         )
         db.session.add(user)
         db.session.commit()
-        return user
+        return user.id
 
 
 def authenticate(client, user):
+    user_id = getattr(user, "id", user)
     with client.session_transaction() as session:
-        session["_user_id"] = str(user.id)
+        session["_user_id"] = str(user_id)
         session["_fresh"] = True
 
 
