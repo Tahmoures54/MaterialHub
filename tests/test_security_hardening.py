@@ -26,7 +26,7 @@ def test_totp_secret_is_encrypted_and_qr_not_persisted():
     assert "encrypt_totp_secret" in models
     assert "decrypt_totp_secret" in models
     assert "totp_secret = db.Column(db.String(512)" in models
-    assert "qr_code_base64 = None" in auth
+    assert "user.qr_code_base64 = None" in auth
 
 
 def test_tenant_sensitive_intelligence_queries_are_scoped():
