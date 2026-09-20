@@ -4,7 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0E7490">
-  <meta name="description" content="MaterialHub — integrated material procurement, delivery, warehouse and intelligence platform.">
+  <meta name="description" content="{% block meta_description %}MaterialHub — integrated material procurement, delivery, warehouse and intelligence platform for construction and EPC projects.{% endblock %}">
+  <meta property="og:title" content="MaterialHub{% block og_title %}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Control procurement, delivery, quality, warehouse and material traceability in one workspace.{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.base_url }}">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="MaterialHub{% block twitter_title %}{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}Material operations for construction and EPC projects.{% endblock %}">
   <title>MaterialHub{% block title %}{% endblock %}</title>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
