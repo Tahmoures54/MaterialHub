@@ -5,7 +5,8 @@ from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 from sqlalchemy.exc import IntegrityError
-from models import db, User, AccessLevel
+from models import User, AccessLevel
+from extensions import db, limiter
 from forms.auth_forms import RegisterForm, LoginForm, ResetPasswordRequestForm, ChangePasswordForm, ConfirmTOTPForm
 from data.country_codes import COUNTRY_CODES
 import pyotp
