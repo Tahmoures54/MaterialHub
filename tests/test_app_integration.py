@@ -128,3 +128,9 @@ def test_material_requisition_from_dict_and_numbering(app):
         assert mr.quantity == 12
         assert mr.status == ApprovalStatus.approved
         assert generate_next_po_no("Acme EPC").startswith("PO-")
+
+
+def test_observability_endpoints(client):
+    assert client.get("/metrics").status_code == 200
+    assert client.get("/health/live").headers.get("X-Request-ID")
+    assert client.get("/health/ready").headers.get("X-Request-ID")
