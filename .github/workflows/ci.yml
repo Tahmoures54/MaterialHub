@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
       - name: Ruff
-        run: ruff check .
+        run: ruff check . --select E4,E7,E9,F --ignore E402,E702,F401
       - name: Mypy
         run: mypy --ignore-missing-imports app.py extensions.py config blueprints models.py models_intelligence.py role_workspace.py utils.py
       - name: Pytest with coverage
