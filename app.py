@@ -50,6 +50,9 @@ def _configure_observability(app):
     app.logger.setLevel(level)
     app.logger.propagate = False
 
+    if app.config.get('TESTING'):
+        return
+
     try:
         from opentelemetry import trace
         from opentelemetry.instrumentation.flask import FlaskInstrumentor
