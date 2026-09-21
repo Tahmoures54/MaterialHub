@@ -198,9 +198,9 @@ def create_request():
 def request_detail(request_id):
     item = MaterialRequest.query.filter_by(id=request_id, company_name=current_user.company_name).first_or_404()
     obj = _record(item.request_type, item.record_id)
-    target = url_for('reports.request_detail', request_id=item.id, _external=True)
     return render_template('reports/request_detail.html', item=item, obj=obj,
-                           document_number=_number(item.request_type,obj), qr=_qr_data_uri(target), share_target=target)
+                           document_number=_number(item.request_type,obj),
+                           qr=_qr_data_uri(url_for('reports.request_detail', request_id=item.id, _external=True)))
 
 
 @reports_bp.post('/requests/<int:request_id>/status')
