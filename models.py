@@ -637,7 +637,894 @@ class WarehouseInventory(db.Model):
         self.validate(kwargs)
 
     def validate(self, kwargs):
-        if 'warehouse_id' in kwargs and not re.match(r'^WH-[A-Za-z0-9-]{4,}
+        if 'warehouse_id' in kwargs and not re.match(r'^WH-[A-Za-z0-9-]{4,}        if 'received_qty' in kwargs and kwargs['received_qty'] <= 0:
+            raise ValidationError('Received quantity must be positive')
+        if  'item_code' in kwargs and 'item_code' in kwargs and not kwargs['item_code'].strip():
+            raise ValidationError('Item code cannot be empty')
+        if 'material_description' in kwargs and not kwargs['material_description'].strip():
+            raise ValidationError('Material description cannot be empty')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'warehouse_id': self.warehouse_id,
+            'delivery_id': self.delivery_id,
+            'item_code': self.item_code,
+            'material_description': self.material_description,
+            'material_category': self.material_category,
+            'received_qty': self.received_qty,
+            'unit': self.unit,
+            'storage_location_id': self.storage_location_id,
+            'receipt_date': self.receipt_date.isoformat() if self.receipt_date else None,
+            'project_no': self.project_no,
+            'reason': self.reason,
+            'remarks': self.remarks,
+            'workflow_status': self.workflow_status.value,
+            'company_name': self.company_name,
+            'user_id': self.user_id,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+    CSV_FIELDS = (
+        'warehouse_id', 'delivery_id', 'item_code', 'material_description',
+        'material_category', 'received_qty', 'unit', 'storage_location_id',
+        'receipt_date', 'project_no', 'reason', 'remarks', 'workflow_status',
+    )
+
+    @classmethod
+    def csv_fields(cls):
+        return list(cls.CSV_FIELDS)
+
+    @classmethod
+    def csv_headers(cls):
+        return [field.replace('_', ' ').title() for field in cls.CSV_FIELDS]
+
+    @property
+    def received_quantity(self):
+        return self.received_qty
+
+    @received_quantity.setter
+    def received_quantity(self, value):
+        self.received_qty = value
+
+    @classmethod
+    def from_dict(cls, data, company_name, user_id):
+        payload = dict(data or {})
+        qty = _parse_float(payload.get('received_qty', payload.get('received_quantity')), 0)
+        receipt_date = _parse_date(payload.get('receipt_date')) or date.today()
+        return cls(
+            warehouse_id=payload.get('warehouse_id'),
+            delivery_id=str(payload.get('delivery_id') or ''),
+            item_code=(payload.get('item_code') or '').strip(),
+            material_description=(payload.get('material_description') or '').strip(),
+            material_category=payload.get('material_category') or payload.get('category'),
+            received_qty=qty,
+            unit=payload.get('unit') or payload.get('unit_of_measure') or 'EA',
+            storage_location_id=payload.get('storage_location_id'),
+            receipt_date=receipt_date,
+            project_no=payload.get('project_no') or 'UNASSIGNED',
+            reason=payload.get('reason'),
+            remarks=payload.get('remarks'),
+            workflow_status=_parse_enum(WorkflowStatus, payload.get('workflow_status'), WorkflowStatus.warehouse),
+            company_name=company_name,
+            user_id=int(user_id),
+        )
+
+    def update_from_dict(self, data):
+        payload = dict(data or {})
+        if 'received_quantity' in payload and 'received_qty' not in payload:
+            payload['received_qty'] = payload['received_quantity']
+        assignable = {
+            'item_code', 'material_description', 'material_category',
+            'received_qty', 'unit', 'storage_location_id', 'project_no',
+            'reason', 'remarks', 'delivery_id',
+        }
+        for key in assignable:
+            if key not in payload:
+                continue
+            value = payload[key]
+            if key == 'received_qty':
+                value = _parse_float(value, self.received_qty)
+            setattr(self, key, value)
+        if 'receipt_date' in payload:
+            parsed = _parse_date(payload.get('receipt_date'))
+            if parsed:
+                self.receipt_date = parsed
+        if 'workflow_status' in payload:
+            parsed_status = _parse_enum(WorkflowStatus, payload.get('workflow_status'), self.workflow_status)
+            if parsed_status:
+                self.workflow_status = parsed_status
+        return self
+
+    def __repr__(self):
+        return f"<WarehouseInventory {self.warehouse_id}: {self.material_description}>"
+
+class Approval(db.Model):
+    __tablename__ = 'approval'
+    id = db.Column(db.Integer, primary_key=True)
+    requisition_id = db.Column(db.Integer, db.ForeignKey('material_requisition.id'), nullable=False, index=True)
+    approver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    status = db.Column(Enum(ApprovalStatus), nullable=False, default=ApprovalStatus.pending)
+    approved_date = db.Column(db.Date, nullable=True)
+    remarks = db.Column(db.Text, nullable=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    requisition = db.relationship('MaterialRequisition', backref=db.backref('approvals', lazy=True))
+    approver = db.relationship('User', backref=db.backref('approvals', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'requisition_id': self.requisition_id,
+            'approver_id': self.approver_id,
+            'status': self.status.value,
+            'approved_date': self.approved_date.isoformat() if self.approved_date else None,
+            'remarks': self.remarks,
+            'company_name': self.company_name,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+    def __repr__(self):
+        return f"<Approval Req:{self.requisition_id} Approver:{self.approver_id} Status:{self.status.value}>"
+
+class Tender(db.Model):
+    __tablename__ = 'tender'
+    __table_args__ = (
+        db.UniqueConstraint('tender_no', 'company_name', name='uq_tender_no_company'),
+        {"extend_existing": True},
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    tender_no = db.Column(db.String(50), nullable=False, index=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False, index=True)
+    material_requisition_id = db.Column(db.Integer, db.ForeignKey('material_requisition.id'), nullable=False, index=True)
+    status = db.Column(Enum(TenderStatus), nullable=False, default=TenderStatus.open)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    project = db.relationship('Project', backref=db.backref('tenders', lazy=True))
+    material_requisition = db.relationship('MaterialRequisition', backref=db.backref('tenders', lazy=True))
+    creator = db.relationship('User', backref=db.backref('tenders_created', lazy=True))
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.validate(kwargs)
+
+    def validate(self, kwargs):
+        if 'tender_no' in kwargs and not re.match(r'^TND-\d{4,}$', kwargs['tender_no']):
+            raise ValidationError('Tender number must be in format TND-XXXX (numbers)')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tender_no': self.tender_no,
+            'project_id': self.project_id,
+            'material_requisition_id': self.material_requisition_id,
+            'status': self.status.value,
+            'created_by': self.created_by,
+            'company_name': self.company_name,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+    def __repr__(self):
+        return f"<Tender {self.tender_no}: {self.status.value}>"
+
+class Bid(db.Model):
+    __tablename__ = 'bid'
+    id = db.Column(db.Integer, primary_key=True)
+    tender_id = db.Column(db.Integer, db.ForeignKey('tender.id'), nullable=False, index=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    bid_amount = db.Column(db.Float, nullable=False)
+    status = db.Column(Enum(BidStatus), nullable=False, default=BidStatus.pending)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    tender = db.relationship('Tender', backref=db.backref('bids', lazy=True))
+    supplier = db.relationship('User', backref=db.backref('bids', lazy=True))
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.validate(kwargs)
+
+    def validate(self, kwargs):
+        if 'bid_amount' in kwargs and kwargs['bid_amount'] <= 0:
+            raise ValidationError('Bid amount must be positive')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tender_id': self.tender_id,
+            'supplier_id': self.supplier_id,
+            'bid_amount': self.bid_amount,
+            'status': self.status.value,
+            'company_name': self.company_name,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+    def __repr__(self):
+        return f"<Bid Tender:{self.tender_id} Supplier:{self.supplier_id} Status:{self.status.value}>"
+
+class User(db.Model, UserMixin):
+    __tablename__ = 'user'
+    id = db.Column(db.Integer, primary_key=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    company_email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    company_phone = db.Column(db.String(20), nullable=True)
+    full_name = db.Column(db.String(100), nullable=False)
+    company_address = db.Column(db.String(200), nullable=False)
+    country = db.Column(db.String(2), nullable=False)
+    access_level = db.Column(Enum(AccessLevel), nullable=False)
+    store_name = db.Column(db.String(100), nullable=True)
+    is_admin = db.Column(db.Boolean, default=False)
+    password_hash = db.Column(db.String(128), nullable=True)
+    totp_secret = db.Column(db.String(512), nullable=True)
+    qr_code_base64 = db.Column(db.Text, nullable=True)
+    totp_confirmed = db.Column(db.Boolean, default=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    trial_started_at = db.Column(db.DateTime, nullable=True, index=True)
+    trial_ends_at = db.Column(db.DateTime, nullable=True, index=True)
+    subscription_plan = db.Column(db.String(30), nullable=False, default='trial')
+    subscription_status = db.Column(db.String(20), nullable=False, default='trial')
+    project = db.relationship('Project', backref=db.backref('users', lazy=True))
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.validate(kwargs)
+
+    def validate(self, kwargs):
+        if 'company_email' in kwargs:
+            self.validate_email(kwargs['company_email'])
+        if 'company_phone' in kwargs and kwargs['company_phone']:
+            self.validate_phone(kwargs['company_phone'])
+        if 'password' in kwargs:
+            self.set_password(kwargs['password'])
+        if 'full_name' in kwargs and not kwargs['full_name'].strip():
+            raise ValidationError('Full name cannot be empty')
+        if 'company_address' in kwargs and not kwargs['company_address'].strip():
+            raise ValidationError('Company address cannot be empty')
+        if 'country' in kwargs and not kwargs['country'].strip():
+            raise ValidationError('Country cannot be empty')
+
+    @staticmethod
+    def _password_hasher():
+        from argon2 import PasswordHasher
+        return PasswordHasher()
+
+    @staticmethod
+    def _totp_cipher():
+        key_material = Config.SECRET_KEY.encode('utf-8')
+        key = base64.urlsafe_b64encode(hashlib.sha256(key_material).digest())
+        return Fernet(key)
+
+    @classmethod
+    def encrypt_totp_secret(cls, secret):
+        if not secret:
+            return None
+        return 'enc:' + cls._totp_cipher().encrypt(secret.encode('utf-8')).decode('ascii')
+
+    def decrypt_totp_secret(self):
+        if not self.totp_secret:
+            raise ValidationError('TOTP secret not set')
+        if not self.totp_secret.startswith('enc:'):
+            return self.totp_secret
+        try:
+            return self._totp_cipher().decrypt(
+                self.totp_secret[4:].encode('ascii')
+            ).decode('utf-8')
+        except (InvalidToken, ValueError, UnicodeDecodeError) as exc:
+            raise ValidationError('Stored TOTP secret cannot be decrypted') from exc
+
+    def set_totp_secret(self, secret):
+        self.totp_secret = self.encrypt_totp_secret(secret)
+
+    def set_password(self, password):
+        if password:
+            if len(password) < 8:
+                raise ValidationError('Password must be at least 8 characters long')
+            self.password_hash = self._password_hasher().hash(password)
+
+    def check_password(self, password):
+        if not self.password_hash:
+            return False
+        hasher = self._password_hasher()
+        try:
+            valid = hasher.verify(self.password_hash, password)
+        except Exception:
+            from werkzeug.security import check_password_hash
+            try:
+                valid = check_password_hash(self.password_hash, password)
+            except Exception:
+                return False
+            if valid:
+                self.password_hash = hasher.hash(password)
+        else:
+            if valid and hasher.check_needs_rehash(self.password_hash):
+                self.password_hash = hasher.hash(password)
+        return bool(valid)
+
+    def validate_email(self, email):
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(pattern, email):
+            raise ValidationError('Invalid email format')
+        return email
+
+    def validate_phone(self, phone):
+        pattern = r'^\+?[1-9]\d{1,14}$'
+        if not re.match(pattern, phone):
+            raise ValidationError('Invalid phone number format')
+        return phone
+
+    def get_totp_uri(self):
+        if not self.totp_secret:
+            raise ValidationError('TOTP secret not set')
+        secret = self.decrypt_totp_secret()
+        return f"otpauth://totp/MaterialHub:{self.company_email}?secret={secret}&issuer=MaterialHub"
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'company_name': self.company_name,
+            'company_email': self.company_email,
+            'company_phone': self.company_phone,
+            'full_name': self.full_name,
+            'company_address': self.company_address,
+            'country': self.country,
+            'access_level': self.access_level.value,
+            'store_name': self.store_name,
+            'is_admin': self.is_admin,
+            'totp_confirmed': self.totp_confirmed,
+            'project_id': self.project_id,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+    @property
+    def trial_active(self):
+        if self.subscription_status == 'active':
+            return True
+        if self.subscription_status != 'trial' or not self.trial_ends_at:
+            return False
+        end = self.trial_ends_at
+        if end.tzinfo is None:
+            end = pytz.UTC.localize(end)
+        return datetime.now(pytz.UTC) < end
+
+    @property
+    def trial_days_remaining(self):
+        if self.subscription_status == 'active':
+            return None
+        if not self.trial_ends_at:
+            return 0
+        end = self.trial_ends_at
+        if end.tzinfo is None:
+            end = pytz.UTC.localize(end)
+        return max(0, (end - datetime.now(pytz.UTC)).days)
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)
+
+    def __repr__(self):
+        return f"<User {self.company_email}: {self.access_level.value}>"
+
+
+class ContactInquiry(db.Model):
+    """Inbound demo / sales requests from the public growth funnel."""
+    __tablename__ = 'contact_inquiry'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    # Keep these limits aligned with the public contact form and practical email limits.
+    email = db.Column(db.String(254), nullable=False, index=True)
+    company = db.Column(db.String(160), nullable=True)
+    message = db.Column(db.Text, nullable=True)
+    source = db.Column(db.String(50), nullable=False, default='website')
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'company': self.company,
+            'message': self.message,
+            'source': self.source,
+            'created_at': self.created_at.isoformat(),
+        }
+
+    def __repr__(self):
+        return f"<ContactInquiry {self.email}>"
+
+
+
+class ReportShare(db.Model):
+    """Tenant-scoped, revocable share link for a generated report."""
+    __tablename__ = 'report_share'
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(96), unique=True, nullable=False, index=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    report_type = db.Column(db.String(30), nullable=False)
+    record_id = db.Column(db.Integer, nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False, index=True)
+    revoked_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    creator = db.relationship('User', foreign_keys=[created_by])
+
+
+class MaterialRequest(db.Model):
+    """A lightweight, shareable request tied to an MR/PO/RFQ/Delivery/WH record."""
+    __tablename__ = 'material_request'
+    id = db.Column(db.Integer, primary_key=True)
+    request_no = db.Column(db.String(50), nullable=False, index=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    request_type = db.Column(db.String(30), nullable=False)
+    record_id = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='pending', index=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    creator = db.relationship('User', foreign_keys=[created_by])
+    __table_args__ = (db.UniqueConstraint('request_no', 'company_name', name='uq_material_request_no_company'),)
+
+            'delivery_id': self.delivery_id,
+            'item_code': self.item_code,
+            'material_description': self.material_description,
+            'material_category': self.material_category,
+            'received_qty': self.received_qty,
+            'unit': self.unit,
+            'storage_location_id': self.storage_location_id,
+            'receipt_date': self.receipt_date.isoformat() if self.receipt_date else None,
+            'project_no': self.project_no,
+            'reason': self.reason,
+            'remarks': self.remarks,
+            'workflow_status': self.workflow_status.value,
+            'company_name': self.company_name,
+            'user_id': self.user_id,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+    CSV_FIELDS = (
+        'warehouse_id', 'delivery_id', 'item_code', 'material_description',
+        'material_category', 'received_qty', 'unit', 'storage_location_id',
+        'receipt_date', 'project_no', 'reason', 'remarks', 'workflow_status',
+    )
+
+    @classmethod
+    def csv_fields(cls):
+        return list(cls.CSV_FIELDS)
+
+    @classmethod
+    def csv_headers(cls):
+        return [field.replace('_', ' ').title() for field in cls.CSV_FIELDS]
+
+    @property
+    def received_quantity(self):
+        return self.received_qty
+
+    @received_quantity.setter
+    def received_quantity(self, value):
+        self.received_qty = value
+
+    @classmethod
+    def from_dict(cls, data, company_name, user_id):
+        payload = dict(data or {})
+        qty = _parse_float(payload.get('received_qty', payload.get('received_quantity')), 0)
+        receipt_date = _parse_date(payload.get('receipt_date')) or date.today()
+        return cls(
+            warehouse_id=payload.get('warehouse_id'),
+            delivery_id=str(payload.get('delivery_id') or ''),
+            item_code=(payload.get('item_code') or '').strip(),
+            material_description=(payload.get('material_description') or '').strip(),
+            material_category=payload.get('material_category') or payload.get('category'),
+            received_qty=qty,
+            unit=payload.get('unit') or payload.get('unit_of_measure') or 'EA',
+            storage_location_id=payload.get('storage_location_id'),
+            receipt_date=receipt_date,
+            project_no=payload.get('project_no') or 'UNASSIGNED',
+            reason=payload.get('reason'),
+            remarks=payload.get('remarks'),
+            workflow_status=_parse_enum(WorkflowStatus, payload.get('workflow_status'), WorkflowStatus.warehouse),
+            company_name=company_name,
+            user_id=int(user_id),
+        )
+
+    def update_from_dict(self, data):
+        payload = dict(data or {})
+        if 'received_quantity' in payload and 'received_qty' not in payload:
+            payload['received_qty'] = payload['received_quantity']
+        assignable = {
+            'item_code', 'material_description', 'material_category',
+            'received_qty', 'unit', 'storage_location_id', 'project_no',
+            'reason', 'remarks', 'delivery_id',
+        }
+        for key in assignable:
+            if key not in payload:
+                continue
+            value = payload[key]
+            if key == 'received_qty':
+                value = _parse_float(value, self.received_qty)
+            setattr(self, key, value)
+        if 'receipt_date' in payload:
+            parsed = _parse_date(payload.get('receipt_date'))
+            if parsed:
+                self.receipt_date = parsed
+        if 'workflow_status' in payload:
+            parsed_status = _parse_enum(WorkflowStatus, payload.get('workflow_status'), self.workflow_status)
+            if parsed_status:
+                self.workflow_status = parsed_status
+        return self
+
+    def __repr__(self):
+        return f"<WarehouseInventory {self.warehouse_id}: {self.material_description}>"
+
+class Approval(db.Model):
+    __tablename__ = 'approval'
+    id = db.Column(db.Integer, primary_key=True)
+    requisition_id = db.Column(db.Integer, db.ForeignKey('material_requisition.id'), nullable=False, index=True)
+    approver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    status = db.Column(Enum(ApprovalStatus), nullable=False, default=ApprovalStatus.pending)
+    approved_date = db.Column(db.Date, nullable=True)
+    remarks = db.Column(db.Text, nullable=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    requisition = db.relationship('MaterialRequisition', backref=db.backref('approvals', lazy=True))
+    approver = db.relationship('User', backref=db.backref('approvals', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'requisition_id': self.requisition_id,
+            'approver_id': self.approver_id,
+            'status': self.status.value,
+            'approved_date': self.approved_date.isoformat() if self.approved_date else None,
+            'remarks': self.remarks,
+            'company_name': self.company_name,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+    def __repr__(self):
+        return f"<Approval Req:{self.requisition_id} Approver:{self.approver_id} Status:{self.status.value}>"
+
+class Tender(db.Model):
+    __tablename__ = 'tender'
+    __table_args__ = (
+        db.UniqueConstraint('tender_no', 'company_name', name='uq_tender_no_company'),
+        {"extend_existing": True},
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    tender_no = db.Column(db.String(50), nullable=False, index=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False, index=True)
+    material_requisition_id = db.Column(db.Integer, db.ForeignKey('material_requisition.id'), nullable=False, index=True)
+    status = db.Column(Enum(TenderStatus), nullable=False, default=TenderStatus.open)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    project = db.relationship('Project', backref=db.backref('tenders', lazy=True))
+    material_requisition = db.relationship('MaterialRequisition', backref=db.backref('tenders', lazy=True))
+    creator = db.relationship('User', backref=db.backref('tenders_created', lazy=True))
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.validate(kwargs)
+
+    def validate(self, kwargs):
+        if 'tender_no' in kwargs and not re.match(r'^TND-\d{4,}$', kwargs['tender_no']):
+            raise ValidationError('Tender number must be in format TND-XXXX (numbers)')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tender_no': self.tender_no,
+            'project_id': self.project_id,
+            'material_requisition_id': self.material_requisition_id,
+            'status': self.status.value,
+            'created_by': self.created_by,
+            'company_name': self.company_name,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+    def __repr__(self):
+        return f"<Tender {self.tender_no}: {self.status.value}>"
+
+class Bid(db.Model):
+    __tablename__ = 'bid'
+    id = db.Column(db.Integer, primary_key=True)
+    tender_id = db.Column(db.Integer, db.ForeignKey('tender.id'), nullable=False, index=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    bid_amount = db.Column(db.Float, nullable=False)
+    status = db.Column(Enum(BidStatus), nullable=False, default=BidStatus.pending)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    tender = db.relationship('Tender', backref=db.backref('bids', lazy=True))
+    supplier = db.relationship('User', backref=db.backref('bids', lazy=True))
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.validate(kwargs)
+
+    def validate(self, kwargs):
+        if 'bid_amount' in kwargs and kwargs['bid_amount'] <= 0:
+            raise ValidationError('Bid amount must be positive')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tender_id': self.tender_id,
+            'supplier_id': self.supplier_id,
+            'bid_amount': self.bid_amount,
+            'status': self.status.value,
+            'company_name': self.company_name,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+    def __repr__(self):
+        return f"<Bid Tender:{self.tender_id} Supplier:{self.supplier_id} Status:{self.status.value}>"
+
+class User(db.Model, UserMixin):
+    __tablename__ = 'user'
+    id = db.Column(db.Integer, primary_key=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    company_email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    company_phone = db.Column(db.String(20), nullable=True)
+    full_name = db.Column(db.String(100), nullable=False)
+    company_address = db.Column(db.String(200), nullable=False)
+    country = db.Column(db.String(2), nullable=False)
+    access_level = db.Column(Enum(AccessLevel), nullable=False)
+    store_name = db.Column(db.String(100), nullable=True)
+    is_admin = db.Column(db.Boolean, default=False)
+    password_hash = db.Column(db.String(128), nullable=True)
+    totp_secret = db.Column(db.String(512), nullable=True)
+    qr_code_base64 = db.Column(db.Text, nullable=True)
+    totp_confirmed = db.Column(db.Boolean, default=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    trial_started_at = db.Column(db.DateTime, nullable=True, index=True)
+    trial_ends_at = db.Column(db.DateTime, nullable=True, index=True)
+    subscription_plan = db.Column(db.String(30), nullable=False, default='trial')
+    subscription_status = db.Column(db.String(20), nullable=False, default='trial')
+    project = db.relationship('Project', backref=db.backref('users', lazy=True))
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.validate(kwargs)
+
+    def validate(self, kwargs):
+        if 'company_email' in kwargs:
+            self.validate_email(kwargs['company_email'])
+        if 'company_phone' in kwargs and kwargs['company_phone']:
+            self.validate_phone(kwargs['company_phone'])
+        if 'password' in kwargs:
+            self.set_password(kwargs['password'])
+        if 'full_name' in kwargs and not kwargs['full_name'].strip():
+            raise ValidationError('Full name cannot be empty')
+        if 'company_address' in kwargs and not kwargs['company_address'].strip():
+            raise ValidationError('Company address cannot be empty')
+        if 'country' in kwargs and not kwargs['country'].strip():
+            raise ValidationError('Country cannot be empty')
+
+    @staticmethod
+    def _password_hasher():
+        from argon2 import PasswordHasher
+        return PasswordHasher()
+
+    @staticmethod
+    def _totp_cipher():
+        key_material = Config.SECRET_KEY.encode('utf-8')
+        key = base64.urlsafe_b64encode(hashlib.sha256(key_material).digest())
+        return Fernet(key)
+
+    @classmethod
+    def encrypt_totp_secret(cls, secret):
+        if not secret:
+            return None
+        return 'enc:' + cls._totp_cipher().encrypt(secret.encode('utf-8')).decode('ascii')
+
+    def decrypt_totp_secret(self):
+        if not self.totp_secret:
+            raise ValidationError('TOTP secret not set')
+        if not self.totp_secret.startswith('enc:'):
+            return self.totp_secret
+        try:
+            return self._totp_cipher().decrypt(
+                self.totp_secret[4:].encode('ascii')
+            ).decode('utf-8')
+        except (InvalidToken, ValueError, UnicodeDecodeError) as exc:
+            raise ValidationError('Stored TOTP secret cannot be decrypted') from exc
+
+    def set_totp_secret(self, secret):
+        self.totp_secret = self.encrypt_totp_secret(secret)
+
+    def set_password(self, password):
+        if password:
+            if len(password) < 8:
+                raise ValidationError('Password must be at least 8 characters long')
+            self.password_hash = self._password_hasher().hash(password)
+
+    def check_password(self, password):
+        if not self.password_hash:
+            return False
+        hasher = self._password_hasher()
+        try:
+            valid = hasher.verify(self.password_hash, password)
+        except Exception:
+            from werkzeug.security import check_password_hash
+            try:
+                valid = check_password_hash(self.password_hash, password)
+            except Exception:
+                return False
+            if valid:
+                self.password_hash = hasher.hash(password)
+        else:
+            if valid and hasher.check_needs_rehash(self.password_hash):
+                self.password_hash = hasher.hash(password)
+        return bool(valid)
+
+    def validate_email(self, email):
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(pattern, email):
+            raise ValidationError('Invalid email format')
+        return email
+
+    def validate_phone(self, phone):
+        pattern = r'^\+?[1-9]\d{1,14}$'
+        if not re.match(pattern, phone):
+            raise ValidationError('Invalid phone number format')
+        return phone
+
+    def get_totp_uri(self):
+        if not self.totp_secret:
+            raise ValidationError('TOTP secret not set')
+        secret = self.decrypt_totp_secret()
+        return f"otpauth://totp/MaterialHub:{self.company_email}?secret={secret}&issuer=MaterialHub"
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'company_name': self.company_name,
+            'company_email': self.company_email,
+            'company_phone': self.company_phone,
+            'full_name': self.full_name,
+            'company_address': self.company_address,
+            'country': self.country,
+            'access_level': self.access_level.value,
+            'store_name': self.store_name,
+            'is_admin': self.is_admin,
+            'totp_confirmed': self.totp_confirmed,
+            'project_id': self.project_id,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+    @property
+    def trial_active(self):
+        if self.subscription_status == 'active':
+            return True
+        if self.subscription_status != 'trial' or not self.trial_ends_at:
+            return False
+        end = self.trial_ends_at
+        if end.tzinfo is None:
+            end = pytz.UTC.localize(end)
+        return datetime.now(pytz.UTC) < end
+
+    @property
+    def trial_days_remaining(self):
+        if self.subscription_status == 'active':
+            return None
+        if not self.trial_ends_at:
+            return 0
+        end = self.trial_ends_at
+        if end.tzinfo is None:
+            end = pytz.UTC.localize(end)
+        return max(0, (end - datetime.now(pytz.UTC)).days)
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)
+
+    def __repr__(self):
+        return f"<User {self.company_email}: {self.access_level.value}>"
+
+
+class ContactInquiry(db.Model):
+    """Inbound demo / sales requests from the public growth funnel."""
+    __tablename__ = 'contact_inquiry'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    # Keep these limits aligned with the public contact form and practical email limits.
+    email = db.Column(db.String(254), nullable=False, index=True)
+    company = db.Column(db.String(160), nullable=True)
+    message = db.Column(db.Text, nullable=True)
+    source = db.Column(db.String(50), nullable=False, default='website')
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'company': self.company,
+            'message': self.message,
+            'source': self.source,
+            'created_at': self.created_at.isoformat(),
+        }
+
+    def __repr__(self):
+        return f"<ContactInquiry {self.email}>"
+
+
+
+class ReportShare(db.Model):
+    """Tenant-scoped, revocable share link for a generated report."""
+    __tablename__ = 'report_share'
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(96), unique=True, nullable=False, index=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    report_type = db.Column(db.String(30), nullable=False)
+    record_id = db.Column(db.Integer, nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False, index=True)
+    revoked_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    creator = db.relationship('User', foreign_keys=[created_by])
+
+
+class MaterialRequest(db.Model):
+    """A lightweight, shareable request tied to an MR/PO/RFQ/Delivery/WH record."""
+    __tablename__ = 'material_request'
+    id = db.Column(db.Integer, primary_key=True)
+    request_no = db.Column(db.String(50), nullable=False, index=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    request_type = db.Column(db.String(30), nullable=False)
+    record_id = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='pending', index=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    creator = db.relationship('User', foreign_keys=[created_by])
+    __table_args__ = (db.UniqueConstraint('request_no', 'company_name', name='uq_material_request_no_company'),)
+, kwargs['warehouse_id']):
+            raise ValidationError('Warehouse ID must be in format WH-XXXX (letters, numbers, or hyphens)')
         if 'received_qty' in kwargs and kwargs['received_qty'] <= 0:
             raise ValidationError('Received quantity must be positive')
         if  'item_code' in kwargs and 'item_code' in kwargs and not kwargs['item_code'].strip():
