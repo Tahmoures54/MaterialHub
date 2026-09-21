@@ -1,7 +1,7 @@
 import os
 import logging
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 from sqlalchemy.exc import IntegrityError
@@ -96,7 +96,11 @@ def register():
                 totp_secret=User.encrypt_totp_secret(totp_secret),
                 qr_code_base64=None,
                 totp_confirmed=False,
-                project_id=None
+                project_id=None,
+                trial_started_at=datetime.now(),
+                trial_ends_at=datetime.now() + timedelta(days=45),
+                subscription_plan='trial',
+                subscription_status='trial'
             )
             # Generate URI and QR code
             totp_uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(
