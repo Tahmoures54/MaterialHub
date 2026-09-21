@@ -10,6 +10,7 @@ from extensions import db, limiter
 from forms.auth_forms import RegisterForm, LoginForm, ResetPasswordRequestForm, ChangePasswordForm, ConfirmTOTPForm
 from data.country_codes import COUNTRY_CODES
 import pyotp
+import pytz
 import qrcode
 from io import BytesIO
 import base64
@@ -97,8 +98,8 @@ def register():
                 qr_code_base64=None,
                 totp_confirmed=False,
                 project_id=None,
-                trial_started_at=datetime.now(),
-                trial_ends_at=datetime.now() + timedelta(days=45),
+                trial_started_at=datetime.now(pytz.UTC),
+                trial_ends_at=datetime.now(pytz.UTC) + timedelta(days=45),
                 subscription_plan='trial',
                 subscription_status='trial'
             )
