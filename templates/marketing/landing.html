@@ -76,6 +76,24 @@
     font-weight: 500;
   }
 
+  .lp-hero-grid { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr); gap:2rem; align-items:center; }
+  .lp-hero-banner { position:relative; min-height:270px; border-radius:16px; overflow:hidden; background:linear-gradient(145deg,#0B1622,#122033 55%,#0E4A5C); box-shadow:0 12px 30px rgba(15,23,42,.12); }
+  .lp-banner-slide { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:2rem; opacity:0; transform:translateX(24px); pointer-events:none; transition:opacity .35s ease,transform .35s ease; }
+  .lp-banner-slide.is-active { opacity:1; transform:translateX(0); pointer-events:auto; z-index:1; }
+  .lp-banner-icon { width:58px; height:58px; border-radius:14px; background:rgba(8,145,178,.22); border:1px solid rgba(56,189,248,.25); color:#67E8F9; display:grid; place-items:center; font-size:1.4rem; margin-bottom:1rem; }
+  .lp-banner-label { font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#67E8F9; margin-bottom:.4rem; }
+  .lp-banner-slide h3 { margin:0 0 .5rem; font-size:1.35rem; color:#F8FAFC; }
+  .lp-banner-slide p { margin:0; color:#94A3B8; line-height:1.6; font-size:.9rem; }
+  .lp-banner-nav { position:absolute; bottom:14px; left:1.5rem; right:1.5rem; display:flex; justify-content:space-between; align-items:center; z-index:2; }
+  .lp-banner-dots { display:flex; gap:6px; }
+  .lp-banner-dot { width:7px; height:7px; border:0; border-radius:50%; padding:0; background:rgba(148,163,184,.4); cursor:pointer; }
+  .lp-banner-dot.is-active { width:20px; border-radius:4px; background:#22D3EE; }
+  .lp-banner-btns { display:flex; gap:6px; }
+  .lp-banner-btn { width:30px; height:30px; border-radius:8px; border:1px solid rgba(148,163,184,.35); background:rgba(15,23,42,.35); color:#E2E8F0; cursor:pointer; }
+  .lp-banner-progress { position:absolute; bottom:0; left:0; height:3px; width:0; background:#22D3EE; z-index:3; }
+  .lp-banner-progress.is-running { animation:lp-progress 2.8s linear forwards; }
+  @keyframes lp-progress { from{width:0} to{width:100%} }
+
   /* Section */
   .lp-section { margin-bottom: 1.75rem; }
   .lp-section-head { margin-bottom: 1.15rem; }
@@ -240,6 +258,8 @@
     border-color: #22D3EE;
   }
 
+  @media (max-width: 800px) { .lp-hero-grid { grid-template-columns:1fr; } .lp-hero-banner { min-height:235px; } }
+
   @media (max-width: 600px) {
     .lp-banner-slide {
       flex-direction: column;
@@ -384,104 +404,30 @@
 
   <!-- 2. Hero -->
   <section class="lp-hero">
-    <div class="lp-hero-badge">
-      <i class="fas fa-industry"></i> Construction & EPC
-    </div>
-    <h1>
-      Know what you need.<br>
-      Know <span>where it is</span>.<br>
-      Know when it will arrive.
-    </h1>
-    <p class="lp-hero-lead">
-      MaterialHub connects demand, procurement, suppliers, delivery, quality, warehouse traceability and operational intelligence — one serious workspace for industrial projects.
-    </p>
-    <div class="lp-hero-actions">
-      <a class="btn btn-primary btn-lg" href="{{ url_for('growth.demo') }}">
-        <i class="fas fa-play-circle"></i> Explore Demo
-      </a>
-      <a class="btn btn-secondary btn-lg" href="{{ url_for('growth.contact') }}">
-        Request a Demo
-      </a>
-    </div>
-    <div class="lp-hero-meta">
-      <div><strong>End-to-end</strong><span>Requisition → Issue</span></div>
-      <div><strong>Traceable</strong><span>QR · Heat · Lot · Serial</span></div>
-      <div><strong>Role-ready</strong><span>PM · Procurement · WH · QC</span></div>
-    </div>
-  </section>
-
-
-
-  <!-- 2. Capability banner -->
-  <section class="lp-section lp-section-first">
-    <div class="lp-section-head">
-      <h2>What you control</h2>
-      <p>From first demand signal to material on site — visibility and accountability at every step.</p>
-    </div>
-
-    <div class="lp-banner" id="lp-banner" aria-roledescription="carousel" aria-label="Capabilities">
-      <div class="lp-banner-progress" id="lp-banner-progress"></div>
-      <div class="lp-banner-track">
-        <div class="lp-banner-slide is-active" data-index="0">
-          <div class="lp-banner-icon"><i class="fas fa-file-invoice-dollar"></i></div>
-          <div class="lp-banner-body">
-            <span class="lp-banner-label">Capability 01 / 06</span>
-            <h3>Procurement Control</h3>
-            <p>RFQ, quote comparison, purchase orders and supplier performance in one controlled flow.</p>
-          </div>
+    <div class="lp-hero-grid">
+      <div>
+        <div class="lp-hero-badge"><i class="fas fa-industry"></i> Construction & EPC</div>
+        <h1>Know what you need.<br>Know <span>where it is</span>.<br>Know when it will arrive.</h1>
+        <p class="lp-hero-lead">MaterialHub connects demand, procurement, suppliers, delivery, quality, warehouse traceability and operational control — one serious workspace for industrial projects.</p>
+        <div class="lp-hero-actions">
+          <a class="btn btn-primary btn-lg" href="{{ url_for('growth.demo') }}"><i class="fas fa-play-circle"></i> Explore Demo</a>
+          <a class="btn btn-secondary btn-lg" href="{{ url_for('growth.contact') }}">Request a Demo</a>
         </div>
-        <div class="lp-banner-slide" data-index="1">
-          <div class="lp-banner-icon"><i class="fas fa-truck"></i></div>
-          <div class="lp-banner-body">
-            <span class="lp-banner-label">Capability 02 / 06</span>
-            <h3>Delivery & Logistics</h3>
-            <p>Track shipments, ETAs and exceptions so schedule exposure is visible before it becomes delay.</p>
-          </div>
-        </div>
-        <div class="lp-banner-slide" data-index="2">
-          <div class="lp-banner-icon"><i class="fas fa-warehouse"></i></div>
-          <div class="lp-banner-body">
-            <span class="lp-banner-label">Capability 03 / 06</span>
-            <h3>Warehouse Operations</h3>
-            <p>Receive, locate, hold and issue materials with clear stock positions and audit history.</p>
-          </div>
-        </div>
-        <div class="lp-banner-slide" data-index="3">
-          <div class="lp-banner-icon"><i class="fas fa-qrcode"></i></div>
-          <div class="lp-banner-body">
-            <span class="lp-banner-label">Capability 04 / 06</span>
-            <h3>Full Traceability</h3>
-            <p>QR, heat, lot, serial and documentation from receipt through issue — audit-ready.</p>
-          </div>
-        </div>
-        <div class="lp-banner-slide" data-index="4">
-          <div class="lp-banner-icon"><i class="fas fa-shield-alt"></i></div>
-          <div class="lp-banner-body">
-            <span class="lp-banner-label">Capability 05 / 06</span>
-            <h3>Quality Control</h3>
-            <p>Inspection, release and non-conformance handling tied to the same material record.</p>
-          </div>
-        </div>
-        <div class="lp-banner-slide" data-index="5">
-          <div class="lp-banner-icon"><i class="fas fa-brain"></i></div>
-          <div class="lp-banner-body">
-            <span class="lp-banner-label">Capability 06 / 06</span>
-            <h3>Material Intelligence</h3>
-            <p>Readiness, lead-time and schedule-risk signals with recommended operational actions.</p>
-          </div>
+        <div class="lp-hero-meta">
+          <div><strong>End-to-end</strong><span>Requisition → Issue</span></div>
+          <div><strong>Traceable</strong><span>QR · Heat · Lot · Serial</span></div>
+          <div><strong>Role-ready</strong><span>PM · Procurement · WH · QC</span></div>
         </div>
       </div>
-
-      <div class="lp-banner-nav">
-        <div class="lp-banner-dots" id="lp-banner-dots" role="tablist"></div>
-        <div class="lp-banner-btns">
-          <button type="button" class="lp-banner-btn" id="lp-banner-prev" aria-label="Previous">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <button type="button" class="lp-banner-btn" id="lp-banner-next" aria-label="Next">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        </div>
+      <div class="lp-hero-banner" id="lp-banner" aria-roledescription="carousel" aria-label="MaterialHub capabilities">
+        <div class="lp-banner-progress" id="lp-banner-progress"></div>
+        <div class="lp-banner-slide is-active"><div class="lp-banner-icon"><i class="fas fa-balance-scale"></i></div><span class="lp-banner-label">01 / 06 · Material Control</span><h3>Stop asking where the material is.</h3><p>See required, ordered and received quantities together — and surface shortages before they become surprises.</p></div>
+        <div class="lp-banner-slide"><div class="lp-banner-icon"><i class="fas fa-file-invoice-dollar"></i></div><span class="lp-banner-label">02 / 06 · Procurement</span><h3>Keep MR, RFQ and PO connected.</h3><p>Move from engineering demand to purchasing without losing the reason, quantity or deadline behind the order.</p></div>
+        <div class="lp-banner-slide"><div class="lp-banner-icon"><i class="fas fa-truck"></i></div><span class="lp-banner-label">03 / 06 · Delivery</span><h3>Know what was shipped — and what arrived.</h3><p>Keep delivery status separate from the physical warehouse receipt so the numbers tell the same story.</p></div>
+        <div class="lp-banner-slide"><div class="lp-banner-icon"><i class="fas fa-warehouse"></i></div><span class="lp-banner-label">04 / 06 · Warehouse</span><h3>Make physical stock visible.</h3><p>Record actual receipts, locations and material identity instead of relying on messages or someone’s memory.</p></div>
+        <div class="lp-banner-slide"><div class="lp-banner-icon"><i class="fas fa-qrcode"></i></div><span class="lp-banner-label">05 / 06 · Traceability</span><h3>Follow the material through the project.</h3><p>Keep QR, heat, lot, serial and supporting quality information connected to the material record.</p></div>
+        <div class="lp-banner-slide"><div class="lp-banner-icon"><i class="fas fa-users"></i></div><span class="lp-banner-label">06 / 06 · Team Control</span><h3>The status should not live with one person.</h3><p>When someone is on leave, in a meeting or on another site, the project should still have access to the latest material status.</p></div>
+        <div class="lp-banner-nav"><div class="lp-banner-dots" id="lp-banner-dots"></div><div class="lp-banner-btns"><button type="button" class="lp-banner-btn" id="lp-banner-prev" aria-label="Previous"><i class="fas fa-chevron-left"></i></button><button type="button" class="lp-banner-btn" id="lp-banner-next" aria-label="Next"><i class="fas fa-chevron-right"></i></button></div></div>
       </div>
     </div>
   </section>
@@ -562,88 +508,18 @@
 
 {% block scripts %}
 <script>
-(function () {
-  var INTERVAL = 2400;
-  var root = document.getElementById('lp-banner');
-  if (!root) return;
-
-  var slides = Array.prototype.slice.call(root.querySelectorAll('.lp-banner-slide'));
-  var dotsWrap = document.getElementById('lp-banner-dots');
-  var progress = document.getElementById('lp-banner-progress');
-  var prevBtn = document.getElementById('lp-banner-prev');
-  var nextBtn = document.getElementById('lp-banner-next');
-  var i = 0;
-  var timer = null;
-  var paused = false;
-
-  slides.forEach(function (_, idx) {
-    var d = document.createElement('button');
-    d.type = 'button';
-    d.className = 'lp-banner-dot' + (idx === 0 ? ' is-active' : '');
-    d.setAttribute('aria-label', 'Slide ' + (idx + 1));
-    d.addEventListener('click', function () { go(idx); });
-    dotsWrap.appendChild(d);
-  });
-  var dots = Array.prototype.slice.call(dotsWrap.children);
-
-  function restartProgress() {
-    progress.classList.remove('is-running');
-    void progress.offsetWidth;
-    progress.classList.add('is-running');
-  }
-
-  function go(next) {
-    if (next === i) { restartProgress(); return; }
-    slides[i].classList.remove('is-active');
-    slides[i].classList.add('is-exit');
-    dots[i].classList.remove('is-active');
-
-    var prev = i;
-    i = (next + slides.length) % slides.length;
-
-    slides[i].classList.remove('is-exit');
-    slides[i].classList.add('is-active');
-    dots[i].classList.add('is-active');
-
-    setTimeout(function () {
-      slides[prev].classList.remove('is-exit');
-    }, 340);
-
-    restartProgress();
-    if (!paused) schedule();
-  }
-
-  function schedule() {
-    clearTimeout(timer);
-    timer = setTimeout(function () { go(i + 1); }, INTERVAL);
-  }
-
-  function pause() {
-    paused = true;
-    clearTimeout(timer);
-    progress.classList.remove('is-running');
-  }
-  function resume() {
-    paused = false;
-    restartProgress();
-    schedule();
-  }
-
-  prevBtn.addEventListener('click', function () { go(i - 1); });
-  nextBtn.addEventListener('click', function () { go(i + 1); });
-  root.addEventListener('mouseenter', pause);
-  root.addEventListener('mouseleave', resume);
-  root.addEventListener('focusin', pause);
-  root.addEventListener('focusout', function (e) {
-    if (!root.contains(e.relatedTarget)) resume();
-  });
-
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    INTERVAL = 6000;
-  }
-
-  restartProgress();
-  schedule();
+(function(){
+  var INTERVAL=2800,root=document.getElementById('lp-banner');if(!root)return;
+  var slides=[].slice.call(root.querySelectorAll('.lp-banner-slide')),dotsWrap=document.getElementById('lp-banner-dots'),progress=document.getElementById('lp-banner-progress'),prev=document.getElementById('lp-banner-prev'),next=document.getElementById('lp-banner-next'),i=0,timer=null,paused=false;
+  slides.forEach(function(_,idx){var d=document.createElement('button');d.type='button';d.className='lp-banner-dot'+(idx===0?' is-active':'');d.setAttribute('aria-label','Slide '+(idx+1));d.addEventListener('click',function(){go(idx);});dotsWrap.appendChild(d);});
+  var dots=[].slice.call(dotsWrap.children);
+  function progressRun(){progress.classList.remove('is-running');void progress.offsetWidth;progress.classList.add('is-running');}
+  function schedule(){clearTimeout(timer);if(!paused)timer=setTimeout(function(){go(i+1);},INTERVAL);}
+  function go(n){var old=i;slides[old].classList.remove('is-active');i=(n+slides.length)%slides.length;slides[i].classList.add('is-active');dots[old].classList.remove('is-active');dots[i].classList.add('is-active');progressRun();schedule();}
+  function pause(){paused=true;clearTimeout(timer);progress.classList.remove('is-running');}
+  function resume(){paused=false;progressRun();schedule();}
+  prev.addEventListener('click',function(){go(i-1);});next.addEventListener('click',function(){go(i+1);});root.addEventListener('mouseenter',pause);root.addEventListener('mouseleave',resume);root.addEventListener('focusin',pause);root.addEventListener('focusout',function(e){if(!root.contains(e.relatedTarget))resume();});
+  progressRun();schedule();
 })();
 </script>
 {% endblock %}
