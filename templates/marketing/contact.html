@@ -1,19 +1,93 @@
 {% extends "base.html" %}
-{% block title %} — Request a Demo{% endblock %}
-{% block meta_description %}Request a focused MaterialHub demo for your construction or EPC procurement and material-control workflow.{% endblock %}
+{% block title %} — Contact Support{% endblock %}
+{% block meta_description %}Contact MaterialHub support for product questions, implementation guidance, account help and material-control workflows.{% endblock %}
 {% block content %}
-<div class="mh-page">
-  <section class="mh-card">
-    <h1>Request a MaterialHub Demo</h1>
-    <p class="mh-muted">Tell us about your project, material volume and procurement workflow. The team can prepare a focused demo around your use case.</p>
-    <form method="post" class="mh-form" style="margin-top:1.25rem">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label>Name<input name="name" required maxlength="120" autocomplete="name"></label>
-      <label>Work Email<input type="email" name="email" required maxlength="254" autocomplete="email"></label>
-      <label>Company<input name="company" maxlength="160" autocomplete="organization"></label>
-      <label>Project Type<textarea name="message" rows="5" maxlength="4000" placeholder="EPC, construction, fabrication, industrial project…"></textarea></label>
-      <button class="btn btn-primary" type="submit">Request Demo</button>
-    </form>
+<style>
+  .support-page{max-width:1180px;margin:0 auto;padding:2rem 1rem 4rem}
+  .support-hero{position:relative;overflow:hidden;border-radius:28px;padding:clamp(2rem,5vw,4rem);background:linear-gradient(135deg,#0b1f3a 0%,#123d5a 58%,#0b7180 100%);color:#fff;box-shadow:0 20px 55px rgba(11,31,58,.18)}
+  .support-hero:after{content:"";position:absolute;width:280px;height:280px;border:1px solid rgba(255,255,255,.14);border-radius:50%;right:-90px;top:-110px}
+  .support-kicker{display:inline-flex;padding:.4rem .7rem;border:1px solid rgba(255,255,255,.2);border-radius:999px;font-size:.82rem}
+  .support-hero h1{margin:.9rem 0 .75rem;font-size:clamp(2rem,4vw,3.3rem);line-height:1.05}
+  .support-hero p{max-width:720px;margin:0;color:rgba(255,255,255,.84);font-size:1.05rem}
+  .support-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:1.25rem;margin-top:1.25rem}
+  .support-card{background:#fff;border:1px solid rgba(11,31,58,.09);border-radius:22px;padding:1.5rem;box-shadow:0 10px 35px rgba(11,31,58,.07)}
+  .support-card h2{margin-top:0;color:#0b1f3a}
+  .support-form{display:grid;gap:1rem}
+  .support-form label{display:grid;gap:.4rem;font-weight:650;color:#23364a}
+  .support-form input,.support-form textarea{width:100%;box-sizing:border-box;border:1px solid #d5dee7;border-radius:12px;padding:.8rem .9rem;font:inherit;background:#fbfcfe}
+  .support-form input:focus,.support-form textarea:focus{outline:2px solid rgba(12,145,154,.22);border-color:#0c919a}
+  .support-links{display:grid;gap:.75rem}
+  .support-link{display:block;padding:1rem;border:1px solid #e2e9ef;border-radius:15px;text-decoration:none;color:#19334a;background:#f8fafc}
+  .support-link strong{display:block;margin-bottom:.2rem}
+  .support-link span{font-size:.9rem;color:#657789}
+  .support-note{margin-top:1rem;padding:1rem;border-radius:15px;background:#eef8f8;color:#24515a;font-size:.92rem}
+  .support-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-top:1.25rem}
+  .support-step{padding:1rem;border-radius:16px;background:#f7f9fb;border:1px solid #e5ebf0}
+  .support-step b{display:block;color:#0b7180;margin-bottom:.35rem}
+  @media(max-width:800px){.support-grid{grid-template-columns:1fr}.support-steps{grid-template-columns:1fr}}
+</style>
+
+<div class="support-page">
+  <section class="support-hero">
+    <span class="support-kicker">MaterialHub Support</span>
+    <h1>When material control matters, getting help should be simple.</h1>
+    <p>Ask about your workspace, workflows, reports, reconciliation, trial, or implementation. Tell us what you are trying to control and we will help you find the clearest next step.</p>
+  </section>
+
+  <div class="support-grid">
+    <section class="support-card">
+      <h2>Contact the team</h2>
+      <p class="mh-muted">For product questions, implementation guidance, account help or a focused demo.</p>
+      <form method="post" class="support-form" style="margin-top:1.25rem">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>Name
+          <input name="name" required maxlength="120" autocomplete="name" placeholder="Your name">
+        </label>
+        <label>Work Email
+          <input type="email" name="email" required maxlength="254" autocomplete="email" placeholder="you@company.com">
+        </label>
+        <label>Company
+          <input name="company" maxlength="160" autocomplete="organization" placeholder="Company or project team">
+        </label>
+        <label>How can we help?
+          <textarea name="message" rows="6" maxlength="4000" placeholder="For example: We want to compare engineering MR quantities with workshop receipts and identify shortages."></textarea>
+        </label>
+        <button class="btn btn-primary" type="submit">Send to MaterialHub</button>
+      </form>
+    </section>
+
+    <aside class="support-card">
+      <h2>Find your answer first</h2>
+      <div class="support-links">
+        <a class="support-link" href="{{ url_for('help.help_center') }}">
+          <strong>Help Center</strong><span>Workflows, common questions and product guidance.</span>
+        </a>
+        <a class="support-link" href="{{ url_for('help.user_guide_fa') }}">
+          <strong>راهنمای فارسی</strong><span>راهنمای عملی MaterialHub به زبان فارسی.</span>
+        </a>
+        <a class="support-link" href="{{ url_for('help.user_guide') }}">
+          <strong>User Guide</strong><span>A practical guide from MR through warehouse reconciliation.</span>
+        </a>
+        <a class="support-link" href="{{ url_for('growth.demo') }}">
+          <strong>Interactive Demo</strong><span>Walk through a realistic material-control scenario.</span>
+        </a>
+        <a class="support-link" href="{{ url_for('growth.pricing') }}">
+          <strong>Plans & Trial</strong><span>Review the 45-day trial and current plans.</span>
+        </a>
+      </div>
+      <div class="support-note">
+        <strong>What to include:</strong> project type, workflow, the screen or document involved, and what you expected to happen. Avoid sending passwords, API keys or other sensitive credentials.
+      </div>
+    </aside>
+  </div>
+
+  <section class="support-card" style="margin-top:1.25rem">
+    <h2>A simple support path</h2>
+    <div class="support-steps">
+      <div class="support-step"><b>1 · Tell us</b>Describe the operational problem in plain language.</div>
+      <div class="support-step"><b>2 · Give context</b>Share the project/workflow and the result you need.</div>
+      <div class="support-step"><b>3 · Move forward</b>We can point you to the right workflow, guide or demo.</div>
+    </div>
   </section>
 </div>
 {% endblock %}
