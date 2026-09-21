@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}RFQ Quote Comparison{% endblock %}
+{% block content %}
+<div style="max-width:1100px;margin:auto"><h1>{{ rfq.rfq_no }} — Quote Comparison</h1><p>{{ rfq.specification }}</p>
+<table class="table"><tr><th>Supplier</th><th>Quoted Price</th><th>Qty</th><th>Lead Time</th><th>Quality</th><th>Total Score</th><th>Status</th></tr>
+{% for q in quotes %}<tr><td>{{ q.supplier.company_name }}</td><td>{{ q.quoted_price if q.quoted_price is not none else "—" }}</td><td>{{ q.quoted_qty or "—" }}</td><td>{{ q.lead_time_days or "—" }}</td><td>{{ q.quality_score or 0 }}</td><td><b>{{ q.total_score or 0 }}</b></td><td>{{ q.status }}</td></tr>{% else %}<tr><td colspan="7">No supplier quotes yet.</td></tr>{% endfor %}</table>
+<a href="{{ url_for('operations_copilot.dashboard') }}">Back to Operations Copilot</a></div>
+{% endblock %}
