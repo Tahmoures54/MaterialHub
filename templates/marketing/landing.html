@@ -4,72 +4,61 @@
 {% block head %}
 <style>
   .lp { max-width: 1120px; margin: 0 auto; }
-
-  .lp-hero {
-    position: relative; overflow: hidden; border-radius: 16px; border: 1px solid #CBD5E1;
-    background: radial-gradient(ellipse 80% 60% at 85% 10%, rgba(8,145,178,.14), transparent 55%),
-      radial-gradient(ellipse 50% 40% at 10% 90%, rgba(14,116,144,.08), transparent 50%),
-      linear-gradient(160deg,#F0FDFF 0%,#F8FAFC 45%,#FFFFFF 100%);
-    padding: clamp(2.25rem,5vw,3.75rem) clamp(1.5rem,4vw,3rem); margin-bottom:1.75rem;
-  }
-  .lp-hero-badge { display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .75rem; border-radius:999px; background:#ECFEFF; border:1px solid #A5F3FC; color:#0E7490; font-size:.75rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-bottom:1.15rem; }
-  .lp-hero h1 { margin:0 0 1rem; font-size:clamp(1.85rem,4.2vw,3.1rem); font-weight:800; letter-spacing:-.03em; line-height:1.12; color:#0F172A; }
+  .lp-hero { position:relative; overflow:hidden; border-radius:16px; border:1px solid #CBD5E1; background:radial-gradient(ellipse 80% 60% at 85% 10%,rgba(8,145,178,.14),transparent 55%),radial-gradient(ellipse 50% 40% at 10% 90%,rgba(14,116,144,.08),transparent 50%),linear-gradient(160deg,#F0FDFF 0%,#F8FAFC 45%,#FFFFFF 100%); padding:clamp(2.25rem,5vw,3.75rem) clamp(1.5rem,4vw,3rem); margin-bottom:1.75rem; }
+  .lp-hero-badge { display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .75rem;border-radius:999px;background:#ECFEFF;border:1px solid #A5F3FC;color:#0E7490;font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:1.15rem; }
+  .lp-hero h1 { margin:0 0 1rem;font-size:clamp(1.85rem,4.2vw,3.1rem);font-weight:800;letter-spacing:-.03em;line-height:1.12;color:#0F172A; }
   .lp-hero h1 span { color:#0E7490; }
-  .lp-hero-lead { margin:0; max-width:560px; font-size:1.05rem; line-height:1.65; color:#64748B; }
-  .lp-hero-actions { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:1.85rem; }
-  .lp-hero-meta { display:flex; flex-wrap:wrap; gap:1.5rem; margin-top:2rem; padding-top:1.5rem; border-top:1px solid #E2E8F0; }
-  .lp-hero-meta div strong { display:block; font-size:1.35rem; font-weight:800; color:#0F172A; letter-spacing:-.02em; }
-  .lp-hero-meta div span { font-size:.8rem; color:#64748B; font-weight:500; }
-
-  .lp-hero-grid { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr); gap:2rem; align-items:center; }
-  .lp-hero-visual { position:relative; min-height:420px; border-radius:16px; overflow:hidden; background:#0B1622; box-shadow:0 14px 34px rgba(15,23,42,.16); isolation:isolate; }
-  .lp-hero-visual img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; z-index:-3; }
-  .lp-hero-visual::after { content:""; position:absolute; inset:0; z-index:-2; background:linear-gradient(180deg,rgba(11,22,34,.05) 0%,rgba(11,22,34,.18) 42%,rgba(11,22,34,.68) 100%); }
-  .lp-visual-caption { position:absolute; left:1.25rem; right:1.25rem; bottom:1.15rem; color:#F8FAFC; z-index:2; }
-  .lp-visual-kicker { display:inline-block; padding:.3rem .6rem; border-radius:999px; background:rgba(8,145,178,.82); border:1px solid rgba(103,232,249,.35); font-size:.68rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; margin-bottom:.55rem; }
-  .lp-visual-caption h3 { margin:0 0 .3rem; font-size:1.25rem; font-weight:800; }
-  .lp-visual-caption p { margin:0; max-width:430px; color:#D6E4EC; font-size:.84rem; line-height:1.5; }
-  .lp-visual-cards { position:absolute; inset:1rem; z-index:1; pointer-events:none; }
-  .lp-visual-card { position:absolute; top:50%; left:50%; width:min(78%,285px); padding:1rem 1.1rem; border-radius:13px; background:rgba(255,255,255,.95); border:1px solid rgba(226,232,240,.9); box-shadow:0 12px 28px rgba(15,23,42,.24); color:#0F172A; backdrop-filter:blur(8px); opacity:0; transform:translate(-50%,-42%) scale(.94); transition:opacity .55s ease, transform .55s ease; }
-  .lp-visual-card.active { opacity:1; transform:translate(-50%,-50%) scale(1); }
-  .lp-visual-card-label { display:flex; align-items:center; gap:.45rem; font-size:.7rem; color:#64748B; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
-  .lp-visual-card-label i { color:#0E7490; }
-  .lp-visual-card strong { display:block; margin-top:.3rem; font-size:1.05rem; font-weight:800; }
-  .lp-visual-card span { display:block; margin-top:.2rem; font-size:.78rem; color:#64748B; }
-  .lp-visual-card .ok { color:#0E7490; font-weight:700; }
-  .lp-visual-dots { position:absolute; left:50%; bottom:1rem; transform:translateX(-50%); z-index:3; display:flex; gap:.4rem; }
-  .lp-visual-dot { width:8px; height:8px; border:0; border-radius:50%; padding:0; background:rgba(255,255,255,.5); cursor:pointer; }
-  .lp-visual-dot.active { background:#67E8F9; box-shadow:0 0 0 3px rgba(8,145,178,.28); }
-
+  .lp-hero-lead { margin:0;max-width:560px;font-size:1.05rem;line-height:1.65;color:#64748B; }
+  .lp-hero-actions { display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.85rem; }
+  .lp-hero-meta { display:flex;flex-wrap:wrap;gap:1.5rem;margin-top:2rem;padding-top:1.5rem;border-top:1px solid #E2E8F0; }
+  .lp-hero-meta div strong { display:block;font-size:1.35rem;font-weight:800;color:#0F172A;letter-spacing:-.02em; }
+  .lp-hero-meta div span { font-size:.8rem;color:#64748B;font-weight:500; }
+  .lp-hero-grid { display:grid;grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);gap:2rem;align-items:center; }
+  .lp-hero-visual { position:relative;min-height:420px;border-radius:16px;overflow:hidden;background:#0B1622;box-shadow:0 14px 34px rgba(15,23,42,.16);isolation:isolate; }
+  .lp-hero-visual img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-3; }
+  .lp-hero-visual::after { content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(11,22,34,.05) 0%,rgba(11,22,34,.18) 42%,rgba(11,22,34,.68) 100%); }
+  .lp-visual-caption { position:absolute;left:1.25rem;right:1.25rem;bottom:1.15rem;color:#F8FAFC;z-index:2; }
+  .lp-visual-kicker { display:inline-block;padding:.3rem .6rem;border-radius:999px;background:rgba(8,145,178,.82);border:1px solid rgba(103,232,249,.35);font-size:.68rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin-bottom:.55rem; }
+  .lp-visual-caption h3 { margin:0 0 .3rem;font-size:1.25rem;font-weight:800; }
+  .lp-visual-caption p { margin:0;max-width:430px;color:#D6E4EC;font-size:.84rem;line-height:1.5; }
+  .lp-visual-cards { position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none; }
+  .lp-visual-card { position:absolute;top:50%;left:50%;width:min(78%,285px);padding:.9rem 1rem;color:#F8FAFC;text-shadow:0 2px 12px rgba(0,0,0,.55);opacity:0;transform:translate(150%,-50%);transition:transform .85s cubic-bezier(.22,.61,.36,1),opacity .65s ease; }
+  .lp-visual-card.active { opacity:1;transform:translate(-50%,-50%); }
+  .lp-visual-card.exit { opacity:0;transform:translate(-170%,-50%); }
+  .lp-visual-card-label { display:flex;align-items:center;gap:.45rem;font-size:.72rem;color:#E2E8F0;font-weight:800;text-transform:uppercase;letter-spacing:.06em; }
+  .lp-visual-card-label i { color:#67E8F9; }
+  .lp-visual-card strong { display:block;margin-top:.3rem;font-size:1.35rem;font-weight:800; }
+  .lp-visual-card span { display:block;margin-top:.2rem;font-size:.82rem;color:#F1F5F9; }
+  .lp-visual-card .ok { color:#A5F3FC;font-weight:800; }
+  .lp-visual-dots { position:absolute;left:50%;bottom:1rem;transform:translateX(-50%);z-index:3;display:flex;gap:.4rem; }
+  .lp-visual-dot { width:8px;height:8px;border:0;border-radius:50%;padding:0;background:rgba(255,255,255,.5);cursor:pointer; }
+  .lp-visual-dot.active { background:#67E8F9;box-shadow:0 0 0 3px rgba(8,145,178,.28); }
   .lp-section { margin-bottom:1.75rem; }
   .lp-section-head { margin-bottom:1.15rem; }
-  .lp-section-head h2 { margin:0 0 .35rem; font-size:1.35rem; font-weight:800; letter-spacing:-.02em; color:#0F172A; }
-  .lp-section-head p { margin:0; font-size:.95rem; color:#64748B; max-width:520px; }
-
-  .lp-flow { background:#fff; border:1px solid #E2E8F0; border-radius:12px; padding:1.5rem 1.35rem; box-shadow:0 1px 3px rgba(15,23,42,.04); }
-  .lp-flow-steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr)); gap:.75rem; margin-top:1.15rem; }
-  .lp-step { text-align:center; padding:1rem .75rem; border-radius:10px; background:#F8FAFC; border:1px solid #E2E8F0; }
-  .lp-step-num { width:28px; height:28px; margin:0 auto .55rem; border-radius:50%; background:#0E7490; color:#fff; font-size:.8rem; font-weight:800; display:grid; place-items:center; }
-  .lp-step strong { display:block; font-size:.88rem; font-weight:700; color:#0F172A; margin-bottom:.2rem; }
-  .lp-step span { font-size:.75rem; color:#64748B; }
-
-  .lp-roles { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr)); gap:.85rem; }
-  .lp-role { background:#fff; border:1px solid #E2E8F0; border-radius:12px; padding:1.15rem 1.2rem; border-left:3px solid #0E7490; transition:box-shadow .15s; }
+  .lp-section-head h2 { margin:0 0 .35rem;font-size:1.35rem;font-weight:800;letter-spacing:-.02em;color:#0F172A; }
+  .lp-section-head p { margin:0;font-size:.95rem;color:#64748B;max-width:520px; }
+  .lp-flow { background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:1.5rem 1.35rem;box-shadow:0 1px 3px rgba(15,23,42,.04); }
+  .lp-flow-steps { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:.75rem;margin-top:1.15rem; }
+  .lp-step { text-align:center;padding:1rem .75rem;border-radius:10px;background:#F8FAFC;border:1px solid #E2E8F0; }
+  .lp-step-num { width:28px;height:28px;margin:0 auto .55rem;border-radius:50%;background:#0E7490;color:#fff;font-size:.8rem;font-weight:800;display:grid;place-items:center; }
+  .lp-step strong { display:block;font-size:.88rem;font-weight:700;color:#0F172A;margin-bottom:.2rem; }
+  .lp-step span { font-size:.75rem;color:#64748B; }
+  .lp-roles { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:.85rem; }
+  .lp-role { background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:1.15rem 1.2rem;border-left:3px solid #0E7490;transition:box-shadow .15s; }
   .lp-role:hover { box-shadow:0 6px 18px rgba(15,23,42,.06); }
-  .lp-role strong { display:block; font-size:.95rem; font-weight:700; color:#0F172A; margin-bottom:.3rem; }
-  .lp-role p { margin:0; font-size:.82rem; color:#64748B; line-height:1.45; }
-
-  .lp-cta { border-radius:16px; padding:clamp(2rem,4vw,2.75rem); text-align:center; background:linear-gradient(145deg,#0B1622 0%,#122033 55%,#0E7490 160%); border:none; position:relative; overflow:hidden; }
-  .lp-cta::before { content:""; position:absolute; top:-30%; right:-10%; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle,rgba(8,145,178,.25),transparent 70%); pointer-events:none; }
-  .lp-cta h2 { margin:0 0 .5rem; font-size:clamp(1.25rem,3vw,1.6rem); font-weight:800; color:#F8FAFC; letter-spacing:-.02em; position:relative; }
-  .lp-cta p { margin:0 0 1.5rem; color:#94A3B8; font-size:.95rem; position:relative; }
-  .lp-cta .btn { position:relative; background:#0891B2; border-color:#0891B2; }
-  .lp-cta .btn:hover { background:#0E7490; border-color:#0E7490; }
-  .lp-cta-secondary { margin-left:.5rem; background:transparent!important; border:1px solid rgba(148,163,184,.45)!important; color:#E2E8F0!important; }
-  .lp-cta-secondary:hover { background:rgba(255,255,255,.06)!important; border-color:#94A3B8!important; }
-
-  @media (max-width:800px) { .lp-hero-grid { grid-template-columns:1fr; } .lp-hero-visual { min-height:360px; } }
-  @media (max-width:600px) { .lp-hero-actions { flex-direction:column; align-items:stretch; } .lp-hero-meta { gap:1rem; } .lp-hero-visual { min-height:360px; } .lp-visual-cards { inset:.7rem; } .lp-visual-card { width:min(82%,250px); } }
+  .lp-role strong { display:block;font-size:.95rem;font-weight:700;color:#0F172A;margin-bottom:.3rem; }
+  .lp-role p { margin:0;font-size:.82rem;color:#64748B;line-height:1.45; }
+  .lp-cta { border-radius:16px;padding:clamp(2rem,4vw,2.75rem);text-align:center;background:linear-gradient(145deg,#0B1622 0%,#122033 55%,#0E7490 160%);border:none;position:relative;overflow:hidden; }
+  .lp-cta::before { content:"";position:absolute;top:-30%;right:-10%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(8,145,178,.25),transparent 70%);pointer-events:none; }
+  .lp-cta h2 { margin:0 0 .5rem;font-size:clamp(1.25rem,3vw,1.6rem);font-weight:800;color:#F8FAFC;letter-spacing:-.02em;position:relative; }
+  .lp-cta p { margin:0 0 1.5rem;color:#94A3B8;font-size:.95rem;position:relative; }
+  .lp-cta .btn { position:relative;background:#0891B2;border-color:#0891B2; }
+  .lp-cta .btn:hover { background:#0E7490;border-color:#0E7490; }
+  .lp-cta-secondary { margin-left:.5rem;background:transparent!important;border:1px solid rgba(148,163,184,.45)!important;color:#E2E8F0!important; }
+  .lp-cta-secondary:hover { background:rgba(255,255,255,.06)!important;border-color:#94A3B8!important; }
+  @media (max-width:800px) { .lp-hero-grid{grid-template-columns:1fr}.lp-hero-visual{min-height:360px} }
+  @media (max-width:600px) { .lp-hero-actions{flex-direction:column;align-items:stretch}.lp-hero-meta{gap:1rem}.lp-hero-visual{min-height:360px}.lp-visual-card{width:min(86%,250px)} }
+  @media (prefers-reduced-motion:reduce) { .lp-visual-card{transition:none!important} }
 </style>
 {% endblock %}
 {% block content %}
@@ -95,23 +84,19 @@
         <div class="lp-visual-cards" aria-hidden="true">
           <div class="lp-visual-card">
             <div class="lp-visual-card-label"><i class="fas fa-clipboard-list"></i> Engineering</div>
-            <strong>MR-1042</strong>
-            <span>1,500 m required</span>
+            <strong>MR-1042</strong><span>1,500 m required</span>
           </div>
           <div class="lp-visual-card">
             <div class="lp-visual-card-label"><i class="fas fa-file-invoice-dollar"></i> Procurement</div>
-            <strong>PO-2087</strong>
-            <span>1,500 m ordered</span>
+            <strong>PO-2087</strong><span>1,500 m ordered</span>
           </div>
           <div class="lp-visual-card">
             <div class="lp-visual-card-label"><i class="fas fa-truck"></i> Delivery</div>
-            <strong>DEL-551</strong>
-            <span class="ok">Partial receipt</span>
+            <strong>DEL-551</strong><span class="ok">Partial receipt</span>
           </div>
           <div class="lp-visual-card">
             <div class="lp-visual-card-label"><i class="fas fa-warehouse"></i> Warehouse</div>
-            <strong>1,080 m received</strong>
-            <span>420 m shortage</span>
+            <strong>1,080 m received</strong><span>420 m shortage</span>
           </div>
         </div>
         <div class="lp-visual-dots" aria-label="Material control highlights">
@@ -128,13 +113,9 @@
       </div>
     </div>
   </section>
-
   <section class="lp-section">
     <div class="lp-flow">
-      <div class="lp-section-head" style="margin-bottom:0;">
-        <h2>How materials move</h2>
-        <p>A single operational chain — no disconnected spreadsheets.</p>
-      </div>
+      <div class="lp-section-head" style="margin-bottom:0;"><h2>How materials move</h2><p>A single operational chain — no disconnected spreadsheets.</p></div>
       <div class="lp-flow-steps">
         <div class="lp-step"><div class="lp-step-num">1</div><strong>Demand</strong><span>Requisition</span></div>
         <div class="lp-step"><div class="lp-step-num">2</div><strong>Source</strong><span>RFQ → PO</span></div>
@@ -144,12 +125,8 @@
       </div>
     </div>
   </section>
-
   <section class="lp-section">
-    <div class="lp-section-head">
-      <h2>Built for the people who move projects</h2>
-      <p>Role-based workspaces keep every function focused on what matters.</p>
-    </div>
+    <div class="lp-section-head"><h2>Built for the people who move projects</h2><p>Role-based workspaces keep every function focused on what matters.</p></div>
     <div class="lp-roles">
       <div class="lp-role"><strong>Project Manager</strong><p>Schedule exposure, readiness and recovery actions in one view.</p></div>
       <div class="lp-role"><strong>Procurement</strong><p>RFQ → Quote → PO → supplier recovery without losing context.</p></div>
@@ -157,16 +134,13 @@
       <div class="lp-role"><strong>Quality</strong><p>Inspect → document → release against the same record.</p></div>
     </div>
   </section>
-
   <section class="lp-cta">
-    <h2>Ready to run materials with control?</h2>
-    <p>Start free. Scale when your projects demand it.</p>
+    <h2>Ready to run materials with control?</h2><p>Start free. Scale when your projects demand it.</p>
     <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}">Create account</a>
     <a class="btn btn-lg lp-cta-secondary" href="{{ url_for('growth.demo') }}">View demo</a>
   </section>
 </div>
 {% endblock %}
-
 {% block scripts %}
 <script>
 (function () {
@@ -176,34 +150,29 @@
   const cards = Array.from(root.querySelectorAll('.lp-visual-card'));
   const dots = Array.from(root.querySelectorAll('.lp-visual-dot'));
   if (!cards.length) return;
-  let index = 0;
-  let timer;
-
+  let index = 0, timer;
   function showCard(next) {
+    const previous = index;
     index = (next + cards.length) % cards.length;
-    cards.forEach((card, i) => card.classList.toggle('active', i === index));
+    cards.forEach((card, i) => {
+      card.classList.toggle('active', i === index);
+      card.classList.toggle('exit', i === previous && i !== index);
+    });
     dots.forEach((dot, i) => {
       dot.classList.toggle('active', i === index);
       dot.setAttribute('aria-pressed', i === index ? 'true' : 'false');
     });
+    window.setTimeout(() => cards.forEach(card => card.classList.remove('exit')), 900);
   }
-
   function start() {
     clearInterval(timer);
     timer = setInterval(() => showCard(index + 1), 3000);
   }
-
-  dots.forEach((dot, i) => {
-    dot.addEventListener('click', () => { showCard(i); start(); });
-  });
-
+  dots.forEach((dot, i) => dot.addEventListener('click', () => { showCard(i); start(); }));
   root.addEventListener('mouseenter', () => clearInterval(timer));
   root.addEventListener('mouseleave', start);
   root.addEventListener('focusin', () => clearInterval(timer));
-  root.addEventListener('focusout', (event) => {
-    if (!root.contains(event.relatedTarget)) start();
-  });
-
+  root.addEventListener('focusout', e => { if (!root.contains(e.relatedTarget)) start(); });
   showCard(0);
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) start();
 })();
