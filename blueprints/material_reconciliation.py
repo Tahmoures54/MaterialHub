@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request
 from flask_login import login_required, current_user
-from sqlalchemy import or_
-from models import MaterialRequisition, PurchaseOrderItem, PurchaseOrder, Delivery, WarehouseInventory
+from models import MaterialRequisition, PurchaseOrderItem, Delivery, WarehouseInventory
 
 material_reconciliation_bp = Blueprint('material_reconciliation', __name__, template_folder='../templates')
 
@@ -25,15 +24,12 @@ def _build_rows(project_no=None, status='all', search=''):
         po_items = [x for x in po_items if x.purchase_order and x.purchase_order.company_name == current_user.company_name]
 
     by_mr = {}
-    po_ids = set()
     for item in po_items:
         by_mr.setdefault(item.material_requisition_id, []).append(item)
-        po_ids.add(item.purchase_order_id)
 
     deliveries = Delivery.query.all()
     if not current_user.is_admin:
         deliveries = [d for d in deliveries if d.company_name == current_user.company_name]
-    delivery_to_po = {d.delivery_id: d.order_id for d in deliveries}
     po_delivery_ids = {}
     for d in deliveries:
         po_delivery_ids.setdefault(d.order_id, set()).add(d.delivery_id)
@@ -95,7 +91,7 @@ def _build_rows(project_no=None, status='all', search=''):
         ]).lower()
         if search and search.lower() not in text_blob:
             continue
-        if status != 'all' and row_status != status:
+        if status != 'all' and status != row_status:
             continue
 
         rows.append({
