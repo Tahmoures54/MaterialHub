@@ -28,7 +28,7 @@ def upgrade():
     end = now + timedelta(days=45)
     bind.execute(
         sa.text(
-            "UPDATE user SET trial_started_at = :started, trial_ends_at = :ended, "
+            'UPDATE "user" SET trial_started_at = :started, trial_ends_at = :ended, '
             "subscription_plan = 'trial', subscription_status = 'trial' "
             "WHERE trial_started_at IS NULL OR trial_ends_at IS NULL "
             "OR subscription_plan IS NULL OR subscription_status IS NULL"
