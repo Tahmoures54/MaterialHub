@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Material Detail · MaterialHub{% endblock %}
+{% block content %}
+<style>
+.detail-page{--ink:#102a43;--muted:#64748b;--line:#e2e8f0;max-width:1400px;margin:0 auto}
+.detail-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;margin-bottom:20px}
+.detail-head h1{margin:0;color:var(--ink);font-size:1.65rem}.detail-head p{margin:6px 0 0;color:var(--muted)}
+.back{color:#0e7490;font-weight:700;text-decoration:none}.meta{font-size:.78rem;color:#64748b;margin-top:4px}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px}.kpi small{display:block;color:var(--muted)}.kpi strong{display:block;margin-top:5px;font-size:1.25rem;color:var(--ink)}
+.bad{color:#b42318!important}.good{color:#16794a!important}
+.flow{display:flex;align-items:center;gap:8px;margin:0 0 20px;flex-wrap:wrap}.flow span{background:#f8fafc;border:1px solid var(--line);padding:9px 12px;border-radius:10px;font-weight:750;color:#334155}.flow b{color:#94a3b8}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;margin-bottom:16px;overflow:hidden}.card h2{font-size:1rem;margin:0;padding:15px 16px;border-bottom:1px solid var(--line);color:var(--ink)}.card-body{padding:0;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:760px}th{background:#f8fafc;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:11px 13px;white-space:nowrap}td{padding:12px 13px;border-top:1px solid #edf2f7;vertical-align:top}.num{text-align:right;font-variant-numeric:tabular-nums}.code{font-weight:750;color:#102a43}.sub{font-size:.75rem;color:#64748b;margin-top:3px}.pill{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:.72rem;font-weight:750}.p-ok{background:#ecfdf3;color:#16794a}.p-warn{background:#fff7ed;color:#a15c00}.p-bad{background:#fff1f2;color:#b42318}
+.empty{padding:28px;color:#64748b;text-align:center}.flagbar{display:flex;gap:8px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--line)}.flag{padding:7px 10px;border-radius:999px;background:#fff7ed;color:#a15c00;font-size:.78rem;font-weight:750}.flag.bad{background:#fff1f2}.flag.good{background:#ecfdf3}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.detail-head{align-items:flex-start;flex-direction:column}}
+</style>
+<div class="detail-page">
+  <div class="detail-head">
+    <div>
+      <a class="back" href="{{ url_for('material_reconciliation.dashboard', project=project_no) }}">← Back to reconciliation</a>
+      <h1>{{ item_code or 'Material' }}</h1>
+      <p>{{ material_description or 'Material detail' }}</p>
+      <div class="meta">{{ project_no }} · {{ unit }}</div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><small>Required · MR</small><strong>{{ '%.2f'|format(totals.required) }}</strong></div>
+    <div class="kpi"><small>Ordered · PO</small><strong>{{ '%.2f'|format(totals.ordered) }}</strong></div>
+    <div class="kpi"><small>Received · Warehouse</small><strong>{{ '%.2f'|format(totals.received) }}</strong></div>
+    <div class="kpi"><small>Shortage</small><strong class="{% if totals.shortage %}bad{% endif %}">{{ '%.2f'|format(totals.shortage) }}</strong></div>
+    <div class="kpi"><small>Surplus</small><strong class="{% if totals.surplus %}good{% endif %}">{{ '%.2f'|format(totals.surplus) }}</strong></div>
+  </div>
+
+  <div class="flow">
+    <span>Engineering Requirement<br><small>{{ '%.2f'|format(totals.required) }}</small></span><b>→</b>
+    <span>Purchased<br><small>{{ '%.2f'|format(totals.ordered) }}</small></span><b>→</b>
+    <span>Warehouse Received<br><small>{{ '%.2f'|format(totals.received) }}</small></span><b>→</b>
+    <span>Balance<br><small>{{ '%.2f'|format(totals.received - totals.required) }}</small></span>
+  </div>
+
+  {% if totals.shortage or (totals.ordered < totals.required) or not receipts %}
+  <div class="card">
+    <div class="flagbar">
+      {% if totals.ordered < totals.required %}<span class="flag bad">Not fully ordered</span>{% endif %}
+      {% if totals.ordered >= totals.required and totals.received < totals.required %}<span class="flag">Ordered but not fully received</span>{% endif %}
+      {% if totals.shortage and totals.received > 0 %}<span class="flag bad">Partial receipt</span>{% endif %}
+      {% if not receipts %}<span class="flag bad">No warehouse receipt</span>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Engineering Requirements · MR</h2>
+    <div class="card-body">
+      {% if mrs %}
+      <table><thead><tr><th>MR</th><th>Required date</th><th>Discipline</th><th>Priority</th><th class="num">Quantity</th><th>Status</th><th>Document</th></tr></thead>
+      <tbody>{% for mr in mrs %}
+        <tr><td class="code">{{ mr.mr_no }}</td><td>{{ mr.required_date }}</td><td>{{ mr.discipline }}</td><td>{{ mr.priority }}</td><td class="num">{{ '%.2f'|format(mr.quantity) }} {{ mr.unit_of_measure }}</td><td>{{ mr.status.value }}</td><td><a href="{{ url_for('reports.report', kind='MR', record_id=mr.id) }}">Open MR</a></td></tr>
+      {% endfor %}</tbody></table>
+      {% else %}<div class="empty">No engineering requirement found.</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Purchasing · PO</h2>
+    <div class="card-body">
+      {% if po_groups %}
+      <table><thead><tr><th>PO</th><th>Supplier</th><th>Status</th><th>Issued</th><th>Delivered</th><th class="num">Ordered</th><th>MRs</th><th>Document</th></tr></thead>
+      <tbody>{% for group in po_groups %}
+        <tr><td class="code">{{ group.po.order_no }}</td><td>{{ group.po.supplier.full_name if group.po.supplier else '—' }}</td><td><span class="pill {% if group.po.status.value == 'delivered' %}p-ok{% elif group.po.status.value == 'cancelled' %}p-bad{% else %}p-warn{% endif %}">{{ group.po.status.value }}</span></td><td>{{ group.po.issued_date or '—' }}</td><td>{{ group.po.delivered_date or '—' }}</td><td class="num">{{ '%.2f'|format(group.quantity) }}</td><td>{{ group.mr_numbers|join(', ') }}</td><td><a href="{{ url_for('reports.report', kind='PO', record_id=group.po.id) }}">Open PO</a></td></tr>
+      {% endfor %}</tbody></table>
+      {% else %}<div class="empty">No PO is linked to these MR lines.</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Deliveries</h2>
+    <div class="card-body">
+      {% if deliveries %}
+      <table><thead><tr><th>Delivery</th><th>PO</th><th>Status</th><th>Date</th><th>Remarks</th></tr></thead>
+      <tbody>{% for delivery in deliveries %}
+        <tr><td class="code">{{ delivery.delivery_id }}</td><td>{{ delivery.order.order_no if delivery.order else '—' }}</td><td>{{ delivery.status.value }}</td><td>{{ delivery.delivered_date or '—' }}</td><td>{{ delivery.remarks or '—' }}</td></tr>
+      {% endfor %}</tbody></table>
+      {% else %}<div class="empty">No delivery record is linked to these purchase orders.</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Warehouse Receipts</h2>
+    <div class="card-body">
+      {% if receipts %}
+      <table><thead><tr><th>Receipt</th><th>Delivery</th><th>Date</th><th class="num">Received</th><th>Warehouse</th><th>Location</th><th>Workflow</th></tr></thead>
+      <tbody>{% for receipt in receipts %}
+        <tr><td class="code">{{ receipt.id }}</td><td>{{ receipt.delivery_id or 'Direct receipt' }}</td><td>{{ receipt.receipt_date }}</td><td class="num">{{ '%.2f'|format(receipt.received_qty) }} {{ receipt.unit }}</td><td>{{ receipt.warehouse_id }}</td><td>{{ receipt.storage_location_id or '—' }}</td><td>{{ receipt.workflow_status.value }}</td></tr>
+      {% endfor %}</tbody></table>
+      {% else %}<div class="empty">No warehouse receipt exists for this project/material.</div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
