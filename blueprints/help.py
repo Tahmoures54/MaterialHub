@@ -11,6 +11,10 @@ def help():
 def user_guide():
     return render_template('help/user_guide.html')
 
+@help_bp.route('/user-guide/fa')
+def user_guide_fa():
+    return render_template('help/user_guide_fa.html')
+
 @help_bp.route('/getting-started')
 def getting_started():
     return render_template('help/getting_started.html')
