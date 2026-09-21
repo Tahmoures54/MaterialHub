@@ -30,16 +30,16 @@
   .lp-visual-caption h3 { margin:0 0 .3rem; font-size:1.25rem; font-weight:800; }
   .lp-visual-caption p { margin:0; max-width:430px; color:#D6E4EC; font-size:.84rem; line-height:1.5; }
   .lp-visual-cards { position:absolute; inset:1rem; z-index:1; pointer-events:none; }
-  .lp-visual-card { position:absolute; min-width:150px; padding:.75rem .85rem; border-radius:11px; background:rgba(255,255,255,.94); border:1px solid rgba(226,232,240,.9); box-shadow:0 10px 24px rgba(15,23,42,.2); color:#0F172A; backdrop-filter:blur(7px); }
-  .lp-visual-card:nth-child(1) { top:0; left:0; }
-  .lp-visual-card:nth-child(2) { top:2.25rem; right:0; }
-  .lp-visual-card:nth-child(3) { top:43%; left:2%; }
-  .lp-visual-card:nth-child(4) { top:38%; right:1%; }
-  .lp-visual-card-label { display:flex; align-items:center; gap:.45rem; font-size:.68rem; color:#64748B; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  .lp-visual-card { position:absolute; top:50%; left:50%; width:min(78%,285px); padding:1rem 1.1rem; border-radius:13px; background:rgba(255,255,255,.95); border:1px solid rgba(226,232,240,.9); box-shadow:0 12px 28px rgba(15,23,42,.24); color:#0F172A; backdrop-filter:blur(8px); opacity:0; transform:translate(-50%,-42%) scale(.94); transition:opacity .55s ease, transform .55s ease; }
+  .lp-visual-card.active { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  .lp-visual-card-label { display:flex; align-items:center; gap:.45rem; font-size:.7rem; color:#64748B; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
   .lp-visual-card-label i { color:#0E7490; }
-  .lp-visual-card strong { display:block; margin-top:.22rem; font-size:.9rem; font-weight:800; }
-  .lp-visual-card span { display:block; margin-top:.15rem; font-size:.7rem; color:#64748B; }
+  .lp-visual-card strong { display:block; margin-top:.3rem; font-size:1.05rem; font-weight:800; }
+  .lp-visual-card span { display:block; margin-top:.2rem; font-size:.78rem; color:#64748B; }
   .lp-visual-card .ok { color:#0E7490; font-weight:700; }
+  .lp-visual-dots { position:absolute; left:50%; bottom:1rem; transform:translateX(-50%); z-index:3; display:flex; gap:.4rem; }
+  .lp-visual-dot { width:8px; height:8px; border:0; border-radius:50%; padding:0; background:rgba(255,255,255,.5); cursor:pointer; }
+  .lp-visual-dot.active { background:#67E8F9; box-shadow:0 0 0 3px rgba(8,145,178,.28); }
 
   .lp-section { margin-bottom:1.75rem; }
   .lp-section-head { margin-bottom:1.15rem; }
@@ -68,8 +68,8 @@
   .lp-cta-secondary { margin-left:.5rem; background:transparent!important; border:1px solid rgba(148,163,184,.45)!important; color:#E2E8F0!important; }
   .lp-cta-secondary:hover { background:rgba(255,255,255,.06)!important; border-color:#94A3B8!important; }
 
-  @media (max-width:800px) { .lp-hero-grid { grid-template-columns:1fr; } .lp-hero-visual { min-height:360px; } .lp-visual-card { min-width:135px; padding:.6rem .7rem; } .lp-visual-card:nth-child(3) { top:45%; left:0; } .lp-visual-card:nth-child(4) { top:40%; right:0; } }
-  @media (max-width:600px) { .lp-hero-actions { flex-direction:column; align-items:stretch; } .lp-hero-meta { gap:1rem; } .lp-hero-visual { min-height:420px; } .lp-visual-cards { inset:.7rem; } .lp-visual-card { min-width:120px; max-width:145px; } .lp-visual-card:nth-child(1) { top:0; left:0; } .lp-visual-card:nth-child(2) { top:0; right:0; } .lp-visual-card:nth-child(3) { top:42%; left:0; } .lp-visual-card:nth-child(4) { top:38%; right:0; } }
+  @media (max-width:800px) { .lp-hero-grid { grid-template-columns:1fr; } .lp-hero-visual { min-height:360px; } }
+  @media (max-width:600px) { .lp-hero-actions { flex-direction:column; align-items:stretch; } .lp-hero-meta { gap:1rem; } .lp-hero-visual { min-height:360px; } .lp-visual-cards { inset:.7rem; } .lp-visual-card { width:min(82%,250px); } }
 </style>
 {% endblock %}
 {% block content %}
@@ -113,6 +113,12 @@
             <strong>1,080 m received</strong>
             <span>420 m shortage</span>
           </div>
+        </div>
+        <div class="lp-visual-dots" aria-label="Material control highlights">
+          <button class="lp-visual-dot active" type="button" aria-label="Show Engineering"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Procurement"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Delivery"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Warehouse"></button>
         </div>
         <div class="lp-visual-caption">
           <span class="lp-visual-kicker">Supply chain → project control</span>
@@ -162,4 +168,44 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+(function () {
+  const root = document.querySelector('.lp-hero-visual');
+  if (!root || root.dataset.cardsReady === '1') return;
+  root.dataset.cardsReady = '1';
+  const cards = Array.from(root.querySelectorAll('.lp-visual-card'));
+  const dots = Array.from(root.querySelectorAll('.lp-visual-dot'));
+  if (!cards.length) return;
+  let index = 0;
+  let timer;
+
+  function showCard(next) {
+    index = (next + cards.length) % cards.length;
+    cards.forEach((card, i) => card.classList.toggle('active', i === index));
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === index);
+      dot.setAttribute('aria-pressed', i === index ? 'true' : 'false');
+    });
+  }
+
+  function start() {
+    clearInterval(timer);
+    timer = setInterval(() => showCard(index + 1), 3000);
+  }
+
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => { showCard(i); start(); });
+  });
+
+  root.addEventListener('mouseenter', () => clearInterval(timer));
+  root.addEventListener('mouseleave', start);
+  root.addEventListener('focusin', () => clearInterval(timer));
+  root.addEventListener('focusout', (event) => {
+    if (!root.contains(event.relatedTarget)) start();
+  });
+
+  showCard(0);
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) start();
+})();
+</script>
 {% endblock %}
