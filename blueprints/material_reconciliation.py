@@ -2,7 +2,13 @@ from collections import defaultdict
 
 from flask import Blueprint, render_template, request
 from flask_login import login_required, current_user
-from models import MaterialRequisition, PurchaseOrderItem, WarehouseInventory
+from models import (
+    Delivery,
+    MaterialRequisition,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    WarehouseInventory,
+)
 
 material_reconciliation_bp = Blueprint('material_reconciliation', __name__, template_folder='../templates')
 
@@ -168,4 +174,91 @@ def dashboard():
         status=status,
         search=search,
         problem_count=problem_count,
+    )
+
+
+@material_reconciliation_bp.get('/material-reconciliation/detail')
+@login_required
+def detail():
+    """Show the full trace for one project/material without changing the reconciliation math."""
+    project_no = (request.args.get('project') or '').strip()
+    item_code = (request.args.get('item') or '').strip()
+    if not project_no or not item_code:
+        return dashboard()
+
+    mrs = _tenant(MaterialRequisition.query, MaterialRequisition).filter(
+        MaterialRequisition.project_no == project_no,
+        MaterialRequisition.item_code == item_code,
+    ).order_by(MaterialRequisition.required_date.asc(), MaterialRequisition.id.asc()).all()
+    if not mrs:
+        return render_template(
+            'material_reconciliation/detail.html',
+            project_no=project_no,
+            item_code=item_code,
+            mrs=[], po_groups=[], deliveries=[], receipts=[], totals={
+                'required': 0.0, 'ordered': 0.0, 'received': 0.0,
+                'shortage': 0.0, 'surplus': 0.0,
+            },
+        )
+
+    mr_ids = {mr.id for mr in mrs}
+    po_items = PurchaseOrderItem.query.all()
+    po_items = [
+        item for item in po_items
+        if item.material_requisition_id in mr_ids
+        and item.purchase_order
+        and (current_user.is_admin or item.purchase_order.company_name == current_user.company_name)
+    ]
+
+    po_groups = {}
+    for item in po_items:
+        po = item.purchase_order
+        if po.id not in po_groups:
+            po_groups[po.id] = {
+                'po': po,
+                'quantity': 0.0,
+                'mr_numbers': [],
+            }
+        po_groups[po.id]['quantity'] += float(item.quantity or 0)
+        if item.material_requisition and item.material_requisition.mr_no not in po_groups[po.id]['mr_numbers']:
+            po_groups[po.id]['mr_numbers'].append(item.material_requisition.mr_no)
+
+    po_ids = set(po_groups)
+    deliveries = _tenant(Delivery.query, Delivery).filter(
+        Delivery.order_id.in_(po_ids) if po_ids else db.false()
+    ).order_by(Delivery.delivered_date.desc(), Delivery.id.desc()).all()
+
+    delivery_ids = {delivery.delivery_id for delivery in deliveries}
+    receipts = _tenant(WarehouseInventory.query, WarehouseInventory).filter(
+        WarehouseInventory.project_no == project_no,
+        WarehouseInventory.item_code == item_code,
+    ).order_by(WarehouseInventory.receipt_date.desc(), WarehouseInventory.id.desc()).all()
+
+    delivery_by_id = {delivery.delivery_id: delivery for delivery in deliveries}
+    for receipt in receipts:
+        receipt.matched_delivery = delivery_by_id.get(receipt.delivery_id)
+
+    required = sum(float(mr.quantity or 0) for mr in mrs)
+    ordered = sum(group['quantity'] for group in po_groups.values())
+    received = sum(float(receipt.received_qty or 0) for receipt in receipts)
+    shortage = max(required - received, 0.0)
+    surplus = max(received - required, 0.0)
+    return render_template(
+        'material_reconciliation/detail.html',
+        project_no=project_no,
+        item_code=item_code,
+        material_description=mrs[0].material_description or mrs[0].subject,
+        unit=mrs[0].unit_of_measure or 'EA',
+        mrs=mrs,
+        po_groups=sorted(po_groups.values(), key=lambda group: group['po'].order_no),
+        deliveries=deliveries,
+        receipts=receipts,
+        delivery_ids=delivery_ids,
+        totals={
+            'required': required,
+            'ordered': ordered,
+            'received': received,
+            'shortage': shortage,
+            'surplus': surplus,
+        },
     )
