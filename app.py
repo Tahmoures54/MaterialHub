@@ -229,6 +229,7 @@ def create_app(config_name=None):
     from blueprints.growth import growth_bp
     from blueprints.health import health_bp
     from blueprints.intelligence import intelligence_bp
+    from blueprints.operations_copilot import operations_copilot_bp
     from role_workspace import role_workspace_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -244,6 +245,7 @@ def create_app(config_name=None):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(control_center_bp)
     app.register_blueprint(intelligence_bp)
+    app.register_blueprint(operations_copilot_bp)
     app.register_blueprint(role_workspace_bp)
     app.register_blueprint(growth_bp)
     app.register_blueprint(health_bp)
