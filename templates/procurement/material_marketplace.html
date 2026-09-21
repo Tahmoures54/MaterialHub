@@ -36,10 +36,18 @@
         <form class="search-form" method="GET" action="{{ url_for('material_marketplace') }}">
             {{ form.hidden_tag() }}
             <div class="search-input-group">
-                {{ form.submit(class="search-button") }}
-                {{ form.search(placeholder="Search materials...", class="search-input") }}
-                {{ form.country(class="search-select") }}
-            </div>
+  {{ form.search(placeholder="Material name...", class="search-input") }}
+  {{ form.country(class="search-select") }}
+  <select name="material_type" class="search-select"><option value="">All Types</option>{% for value in filter_options.types %}<option value="{{ value }}" {{ 'selected' if request.args.get('material_type') == value else '' }}>{{ value }}</option>{% endfor %}</select>
+  <input name="supplier" value="{{ request.args.get('supplier','') }}" placeholder="Supplier / company" class="search-input">
+  <select name="unit" class="search-select"><option value="">All Units</option>{% for value in filter_options.units %}<option value="{{ value }}" {{ 'selected' if request.args.get('unit') == value else '' }}>{{ value }}</option>{% endfor %}</select>
+  <input type="number" name="min_price" min="0" step="0.01" value="{{ request.args.get('min_price','') }}" placeholder="Min price" class="search-input">
+  <input type="number" name="max_price" min="0" step="0.01" value="{{ request.args.get('max_price','') }}" placeholder="Max price" class="search-input">
+  <input type="number" name="min_qty" min="0" step="0.01" value="{{ request.args.get('min_qty','') }}" placeholder="Min availability" class="search-input">
+  <input type="number" name="max_delivery" min="1" step="1" value="{{ request.args.get('max_delivery','') }}" placeholder="Max delivery days" class="search-input">
+  <select name="sort" class="search-select"><option value="updated">Recently updated</option><option value="price_asc" {{ 'selected' if request.args.get('sort') == 'price_asc' else '' }}>Price: low to high</option><option value="price_desc" {{ 'selected' if request.args.get('sort') == 'price_desc' else '' }}>Price: high to low</option><option value="qty_desc" {{ 'selected' if request.args.get('sort') == 'qty_desc' else '' }}>Availability</option><option value="delivery_asc" {{ 'selected' if request.args.get('sort') == 'delivery_asc' else '' }}>Fastest delivery</option></select>
+  {{ form.submit(class="search-button", value="Search") }}
+</div>
         </form>
     </div>
 
