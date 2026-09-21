@@ -1,0 +1,3 @@
+{
+  "buildCommand": "python scripts/vercel_migrate.py"
+}
