@@ -1,6 +1,8 @@
+from collections import defaultdict
+
 from flask import Blueprint, render_template, request
 from flask_login import login_required, current_user
-from models import MaterialRequisition, PurchaseOrderItem, Delivery, WarehouseInventory
+from models import MaterialRequisition, PurchaseOrderItem, WarehouseInventory
 
 material_reconciliation_bp = Blueprint('material_reconciliation', __name__, template_folder='../templates')
 
@@ -12,8 +14,16 @@ def _tenant(query, model):
 
 
 def _build_rows(project_no=None, status='all', search=''):
+    """Build one reconciliation row per project/material, avoiding double-counting.
+
+    A material may have multiple MRs and multiple PO lines. Receipts are aggregated
+    once from warehouse records for the same tenant + project + item code, then
+    compared with the combined engineering requirement.
+    """
     mrs = _tenant(MaterialRequisition.query, MaterialRequisition).order_by(
-        MaterialRequisition.project_no.asc(), MaterialRequisition.item_code.asc(), MaterialRequisition.id.asc()
+        MaterialRequisition.project_no.asc(),
+        MaterialRequisition.item_code.asc(),
+        MaterialRequisition.id.asc(),
     ).all()
 
     if project_no:
@@ -21,60 +31,63 @@ def _build_rows(project_no=None, status='all', search=''):
 
     po_items = PurchaseOrderItem.query.all()
     if not current_user.is_admin:
-        po_items = [x for x in po_items if x.purchase_order and x.purchase_order.company_name == current_user.company_name]
+        po_items = [
+            x for x in po_items
+            if x.purchase_order and x.purchase_order.company_name == current_user.company_name
+        ]
 
-    by_mr = {}
+    by_material = defaultdict(list)
     for item in po_items:
-        by_mr.setdefault(item.material_requisition_id, []).append(item)
+        if item.material_requisition_id:
+            by_material[item.material_requisition_id].append(item)
 
-    deliveries = Delivery.query.all()
-    if not current_user.is_admin:
-        deliveries = [d for d in deliveries if d.company_name == current_user.company_name]
-    po_delivery_ids = {}
-    for d in deliveries:
-        po_delivery_ids.setdefault(d.order_id, set()).add(d.delivery_id)
+    warehouse = _tenant(WarehouseInventory.query, WarehouseInventory).all()
+    received_by_material = defaultdict(float)
+    last_receipt_by_material = {}
+    for receipt in warehouse:
+        key = (receipt.project_no, (receipt.item_code or '').strip())
+        received_by_material[key] += float(receipt.received_qty or 0)
+        current_date = receipt.receipt_date
+        if (
+            key not in last_receipt_by_material
+            or current_date > last_receipt_by_material[key].receipt_date
+        ):
+            last_receipt_by_material[key] = receipt
 
-    warehouse = WarehouseInventory.query.all()
-    if not current_user.is_admin:
-        warehouse = [w for w in warehouse if w.company_name == current_user.company_name]
+    grouped = {}
+    for mr in mrs:
+        key = (mr.project_no, (mr.item_code or '').strip())
+        if key not in grouped:
+            grouped[key] = {
+                'mrs': [],
+                'required': 0.0,
+                'ordered': 0.0,
+                'po_numbers': [],
+                'unit': mr.unit_of_measure or 'EA',
+                'item_code': (mr.item_code or '').strip(),
+                'material_description': mr.material_description or mr.subject or '',
+                'project_no': mr.project_no,
+            }
+
+        group = grouped[key]
+        group['mrs'].append(mr)
+        group['required'] += float(mr.quantity or 0)
+
+        for item in by_material.get(mr.id, []):
+            group['ordered'] += float(item.quantity or 0)
+            po = item.purchase_order
+            if po and po.order_no not in group['po_numbers']:
+                group['po_numbers'].append(po.order_no)
 
     rows = []
-    for mr in mrs:
-        items = by_mr.get(mr.id, [])
-        ordered = sum(float(x.quantity or 0) for x in items)
-        po_numbers = []
-        related_po_ids = set()
-        for item in items:
-            po = item.purchase_order
-            if po:
-                related_po_ids.add(po.id)
-                if po.order_no not in po_numbers:
-                    po_numbers.append(po.order_no)
-
-        received_entries = []
-        related_delivery_ids = set()
-        for po_id in related_po_ids:
-            related_delivery_ids.update(po_delivery_ids.get(po_id, set()))
-        if related_delivery_ids:
-            received_entries.extend(w for w in warehouse if w.delivery_id in related_delivery_ids)
-
-        # Also support legacy/direct warehouse receipts that carry the MR's
-        # material code and project but are not connected to a Delivery yet.
-        existing_ids = {w.id for w in received_entries}
-        code = (mr.item_code or '').strip()
-        if code:
-            for w in warehouse:
-                if w.id in existing_ids:
-                    continue
-                if w.project_no == mr.project_no and (w.item_code or '').strip() == code:
-                    received_entries.append(w)
-                    existing_ids.add(w.id)
-
-        received = sum(float(w.received_qty or 0) for w in received_entries)
-        required = float(mr.quantity or 0)
-        shortage = max(required - received, 0)
-        surplus = max(received - required, 0)
-        procurement_gap = max(required - ordered, 0)
+    for group in grouped.values():
+        key = (group['project_no'], group['item_code'])
+        received = received_by_material.get(key, 0.0)
+        required = group['required']
+        ordered = group['ordered']
+        shortage = max(required - received, 0.0)
+        surplus = max(received - required, 0.0)
+        procurement_gap = max(required - ordered, 0.0)
 
         if received >= required and required > 0:
             row_status = 'complete' if surplus == 0 else 'surplus'
@@ -85,17 +98,27 @@ def _build_rows(project_no=None, status='all', search=''):
         else:
             row_status = 'not_ordered'
 
+        mr_numbers = [mr.mr_no for mr in group['mrs'] if mr.mr_no]
         text_blob = ' '.join([
-            mr.item_code or '', mr.material_description or '', mr.project_no or '',
-            mr.mr_no or '', ' '.join(po_numbers)
+            group['item_code'],
+            group['material_description'],
+            group['project_no'] or '',
+            ' '.join(mr_numbers),
+            ' '.join(group['po_numbers']),
         ]).lower()
         if search and search.lower() not in text_blob:
             continue
         if status != 'all' and status != row_status:
             continue
 
+        last_receipt = last_receipt_by_material.get(key)
         rows.append({
-            'mr': mr,
+            'mrs': group['mrs'],
+            'mr_numbers': mr_numbers,
+            'item_code': group['item_code'],
+            'material_description': group['material_description'],
+            'project_no': group['project_no'],
+            'unit': group['unit'],
             'required': required,
             'ordered': ordered,
             'received': received,
@@ -103,10 +126,11 @@ def _build_rows(project_no=None, status='all', search=''):
             'surplus': surplus,
             'procurement_gap': procurement_gap,
             'status': row_status,
-            'po_numbers': po_numbers,
-            'delivery_count': len(received_entries),
+            'po_numbers': group['po_numbers'],
+            'last_receipt': last_receipt,
         })
 
+    rows.sort(key=lambda r: (r['project_no'] or '', r['item_code'] or ''))
     return rows
 
 
@@ -119,7 +143,11 @@ def dashboard():
 
     rows = _build_rows(project_no=project_no, status=status, search=search)
 
-    projects = sorted({r['mr'].project_no for r in _build_rows() if r['mr'].project_no})
+    projects = sorted({
+        r['project_no']
+        for r in _build_rows()
+        if r['project_no']
+    })
     totals = {
         'required': sum(r['required'] for r in rows),
         'ordered': sum(r['ordered'] for r in rows),
@@ -128,8 +156,16 @@ def dashboard():
         'surplus': sum(r['surplus'] for r in rows),
         'procurement_gap': sum(r['procurement_gap'] for r in rows),
     }
+    problem_count = sum(
+        1 for r in rows if r['status'] in {'shortage', 'not_ordered', 'surplus'}
+    )
     return render_template(
         'material_reconciliation/dashboard.html',
-        rows=rows, totals=totals, projects=projects,
-        project_no=project_no, status=status, search=search,
+        rows=rows,
+        totals=totals,
+        projects=projects,
+        project_no=project_no,
+        status=status,
+        search=search,
+        problem_count=problem_count,
     )
