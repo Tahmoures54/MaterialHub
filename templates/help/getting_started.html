@@ -1,16 +1,38 @@
 {% extends "base.html" %}
 {% block title %}Getting Started{% endblock %}
 {% block content %}
+<style>
+.start-story{margin-bottom:22px;padding:28px;border-radius:22px;background:linear-gradient(135deg,#102a43,#167d9a);color:#fff}.start-story h2{margin:8px 0 12px}.start-story p{line-height:1.9;max-width:900px}.start-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.start-step{padding:18px;border:1px solid #e3edf1;border-radius:16px;background:#fff}.start-step h3{margin-top:0}.start-step p,.start-step li{line-height:1.8}.tip{padding:14px 16px;margin:16px 0;background:#f4fafc;border-left:4px solid #167d9a;border-radius:10px;line-height:1.8}
+</style>
 <section class="page-hero"><div><span class="eyebrow">FIRST 30 MINUTES</span><h1>Getting Started</h1><p>A practical onboarding path for a new project team.</p></div></section>
+
+<section class="start-story">
+<span class="eyebrow" style="color:#c8f1ec">START WITH THE PROBLEM</span>
+<h2>When the crane is ready but the material is not.</h2>
+<p>On a busy project, the cost of missing information can become very real: a contractor waits, a crew is underused, a large crane stands idle, and people call one another trying to discover whether the material was requested, purchased, shipped or received.</p>
+<p>Often the information exists—but in separate Excel files, folders, emails, messages and personal notes. If the person who knows the latest status is on leave or unavailable, the project loses time.</p>
+<p><strong>MaterialHub gives the team one operational trail:</strong> Need → MR → RFQ/PO → Delivery → Warehouse Receipt → Balance. The goal of this guide is to get that trail working correctly from the first day.</p>
+</section>
+
 <div class="guide-layout">
-<aside class="guide-nav"><a href="#setup">1. Set up</a><a href="#demand">2. Register demand</a><a href="#procurement">3. Procure</a><a href="#delivery">4. Receive</a><a href="#warehouse">5. Trace & store</a><a href="#risk">6. Monitor risk</a></aside>
+<aside class="guide-nav"><a href="#setup">1. Set up</a><a href="#demand">2. Register demand</a><a href="#procurement">3. Procure</a><a href="#delivery">4. Receive</a><a href="#warehouse">5. Trace & store</a><a href="#reconcile">6. Reconcile</a><a href="#risk">7. Monitor risk</a><a href="#routine">8. Daily routine</a></aside>
 <article class="content-card guide-content">
-<section id="setup"><h2>1. Set up the project</h2><p>Confirm the project, user roles, supplier records, warehouse locations and material coding convention. Keep item codes stable because they become the backbone of traceability and analytics.</p></section>
-<section id="demand"><h2>2. Register material demand</h2><p>Create Material Requisitions with item code, description, quantity, required date and project/work package. The required date is critical for schedule-aware risk analysis.</p></section>
-<section id="procurement"><h2>3. Run procurement</h2><p>Generate an RFQ, invite qualified suppliers, capture quotes and compare price, availability, lead time and supplier performance. Convert the selected offer into a Purchase Order.</p></section>
-<section id="delivery"><h2>4. Receive and control</h2><p>Track expected delivery, actual receipt, inspection status and supporting documents. Use the 3-way match to compare PO, receipt and invoice quantities/values before payment approval.</p></section>
-<section id="warehouse"><h2>5. Trace and store</h2><p>Create QR/barcode trace records and capture heat, lot, serial or batch numbers. Attach MTC, CoC and datasheet references. Record warehouse location and material status.</p></section>
-<section id="risk"><h2>6. Monitor risk</h2><p>Open Material Intelligence and review Material Readiness, supplier OTIF, lead-time signals and schedule-aware procurement risks. When a material becomes critical, follow the recommended action and document the decision.</p></section>
-<div class="callout"><strong>Recommended operating rhythm:</strong> Engineering updates demand daily; Procurement reviews open RFQs/POs daily; Warehouse updates receipts and stock continuously; Project Management reviews the risk radar at least once per day.</div>
+
+<section id="setup"><h2>1. Set up the project</h2><p>Before entering transactions, agree on the basic language of the project.</p><ul><li>Confirm project and user roles.</li><li>Create supplier records used by Procurement.</li><li>Define warehouse and location conventions.</li><li>Agree on stable material/item codes and units.</li><li>Confirm who owns Engineering, Procurement, Quality, Delivery and Warehouse updates.</li></ul><div class="tip"><strong>Important:</strong> consistency matters more than clever configuration. If the same pipe or valve appears under several item codes, reconciliation and reporting become harder.</div></section>
+
+<section id="demand"><h2>2. Register material demand</h2><p>Create Material Requisitions (MR) for real engineering requirements.</p><ol><li>Select the correct project.</li><li>Enter item code, description/specification, quantity and unit.</li><li>Set the required date and priority.</li><li>Provide enough technical information for sourcing.</li><li>Keep the responsible discipline/owner clear.</li></ol><p>The required date is especially important because it allows the team to distinguish an ordinary open requirement from a time-sensitive one.</p></section>
+
+<section id="procurement"><h2>3. Run procurement</h2><p>Move the requirement through RFQ and supplier comparison, then issue a Purchase Order.</p><div class="start-steps"><div class="start-step"><h3>RFQ</h3><p>Invite appropriate suppliers and capture comparable offers.</p></div><div class="start-step"><h3>Compare</h3><p>Review price, specification fit, availability, lead time and supplier performance.</p></div><div class="start-step"><h3>PO</h3><p>Convert the selected commercial decision into a traceable purchase order.</p></div></div><div class="tip"><strong>Do not optimize only for price:</strong> a cheaper offer with an unsuitable specification or late delivery can create a larger project problem.</div></section>
+
+<section id="delivery"><h2>4. Receive and control Delivery</h2><p>Keep the logistics event separate from the physical warehouse receipt.</p><ul><li>Record delivery identity and expected/actual date.</li><li>Connect the delivery to the relevant PO.</li><li>Track delivery status.</li><li>When material physically arrives, verify quantity and condition at the warehouse.</li></ul><p>A delivery notice says that a shipment exists; the warehouse receipt records what actually entered stock.</p></section>
+
+<section id="warehouse"><h2>5. Trace and store</h2><p>Record the physical truth.</p><ol><li>Verify received quantity.</li><li>Record condition and acceptance state where applicable.</li><li>Capture Heat/Lot/Serial/Batch identifiers for controlled materials.</li><li>Assign warehouse/location information.</li><li>Keep MTC, CoC, datasheet and inspection references connected where required.</li></ol></section>
+
+<section id="reconcile"><h2>6. Reconcile requirement to receipt</h2><p>Open <strong>Material Reconciliation</strong> and compare the complete chain. The central question is:</p><div class="tip"><strong>What did Engineering need → what did we order → what was delivered → what did the Warehouse actually receive?</strong></div><p>Start with the problem filter. Investigate <strong>Not Ordered</strong>, <strong>Shortage</strong>, <strong>Partial Receipt</strong> and <strong>Surplus</strong>. Open the detail view when you need the underlying MR, PO, Delivery and Warehouse records.</p></section>
+
+<section id="risk"><h2>7. Monitor risk</h2><p>Use Control Center and available material intelligence to focus attention on exceptions. Review late commitments, insufficient receipts, important required dates and supplier lead-time signals.</p><p>Signals support decisions; they do not replace the source records or the responsibility of the project team.</p></section>
+
+<section id="routine"><h2>8. Recommended daily routine</h2><ol><li><strong>Morning:</strong> review Control Center and unresolved exceptions.</li><li><strong>Engineering:</strong> check urgent requirements and changes.</li><li><strong>Procurement:</strong> review Not Ordered, late POs and partial supply.</li><li><strong>Delivery/Warehouse:</strong> compare expected shipments with actual receipts.</li><li><strong>Quality:</strong> review outstanding technical/inspection evidence.</li><li><strong>Project Management:</strong> focus on shortages that can affect execution.</li><li><strong>End of day:</strong> update the system so the next person does not have to ask for the latest status.</li></ol><div class="tip"><strong>The goal of the first 30 minutes is not to configure everything.</strong> It is to establish one reliable material trail that the whole team can trust.</div></section>
+
 </article></div>
 {% endblock %}
