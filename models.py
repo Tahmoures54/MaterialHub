@@ -1053,3 +1053,37 @@ class ContactInquiry(db.Model):
 
     def __repr__(self):
         return f"<ContactInquiry {self.email}>"
+
+
+
+class ReportShare(db.Model):
+    """Tenant-scoped, revocable share link for a generated report."""
+    __tablename__ = 'report_share'
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(96), unique=True, nullable=False, index=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    report_type = db.Column(db.String(30), nullable=False)
+    record_id = db.Column(db.Integer, nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False, index=True)
+    revoked_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    creator = db.relationship('User', foreign_keys=[created_by])
+
+
+class MaterialRequest(db.Model):
+    """A lightweight, shareable request tied to an MR/PO/RFQ/Delivery/WH record."""
+    __tablename__ = 'material_request'
+    id = db.Column(db.Integer, primary_key=True)
+    request_no = db.Column(db.String(50), nullable=False, index=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    request_type = db.Column(db.String(30), nullable=False)
+    record_id = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='pending', index=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    creator = db.relationship('User', foreign_keys=[created_by])
+    __table_args__ = (db.UniqueConstraint('request_no', 'company_name', name='uq_material_request_no_company'),)
