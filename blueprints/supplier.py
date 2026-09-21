@@ -6,6 +6,16 @@ from models import SupplierMaterial, AccessLevel
 from extensions import db
 from datetime import datetime
 
+
+def _query_number(name, cast):
+    value = (request.args.get(name) or '').strip()
+    if not value:
+        return None
+    try:
+        return cast(value)
+    except (TypeError, ValueError):
+        return None
+
 supplier_bp = Blueprint("supplier", __name__, template_folder='templates')
 
 
@@ -29,10 +39,10 @@ def material_marketplace():
     type_filter = (request.args.get('material_type') or '').strip()
     unit_filter = (request.args.get('unit') or '').strip()
     supplier_filter = (request.args.get('supplier') or '').strip()
-    min_price = request.args.get('min_price', type=float)
-    max_price = request.args.get('max_price', type=float)
-    min_qty = request.args.get('min_qty', type=float)
-    max_delivery = request.args.get('max_delivery', type=int)
+    min_price = _query_number('min_price', float)
+    max_price = _query_number('max_price', float)
+    min_qty = _query_number('min_qty', float)
+    max_delivery = _query_number('max_delivery', int)
     sort_filter = request.args.get('sort') or 'updated'
 
     if search_query:
@@ -52,7 +62,12 @@ def material_marketplace():
     if min_qty is not None:
         query = query.filter(SupplierMaterial.available_qty >= min_qty)
     if max_delivery is not None:
-        query = query.filter(SupplierMaterial.delivery_time_days <= max_delivery)
+        query = query.filter(
+            db.or_(
+                SupplierMaterial.delivery_time_days.is_(None),
+                SupplierMaterial.delivery_time_days <= max_delivery,
+            )
+        )
 
     sort_map = {
         'price_asc': SupplierMaterial.price.asc(),
