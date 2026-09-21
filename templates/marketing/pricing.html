@@ -1,13 +1,114 @@
 {% extends "base.html" %}
 {% block title %} — Pricing{% endblock %}
-{% block meta_description %}MaterialHub adoption paths for project pilots, multi-role operations and enterprise material governance.{% endblock %}
+{% block meta_description %}Clear USD pricing for MaterialHub project teams, procurement, warehouse, quality and enterprise material governance.{% endblock %}
 {% block content %}
 <div class="mh-page">
-<section class="mh-workspace-hero"><h1>Simple path to adoption</h1><p class="mh-muted">Start with a project pilot, prove material visibility, then scale across projects and teams.</p></section>
-<div class="mh-grid mh-grid-3">
-<div class="mh-card"><h2>Pilot</h2><p>One project · Core material operations</p><a class="btn btn-primary" href="{{ url_for('auth.register') }}">Start Pilot</a></div>
-<div class="mh-card"><h2>Professional</h2><p>Multi-role procurement, warehouse and quality workflows</p><a class="btn btn-secondary" href="{{ url_for('growth.contact') }}">Request Demo</a></div>
-<div class="mh-card"><h2>Enterprise</h2><p>Multi-project, integrations, governance and advanced intelligence</p><a class="btn btn-secondary" href="{{ url_for('growth.contact') }}">Talk to Sales</a></div>
-</div>
+  <section class="mh-workspace-hero">
+    <h1>Simple, transparent pricing</h1>
+    <p class="mh-muted">Start with one project, prove control, then scale across teams and projects. All prices are in USD.</p>
+  </section>
+
+  <section class="mh-grid mh-grid-3" aria-label="MaterialHub pricing plans">
+    <div class="mh-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem">
+        <div>
+          <h2 style="margin-bottom:.35rem">Pilot</h2>
+          <p class="mh-muted" style="margin:0">For one project getting material control in place.</p>
+        </div>
+        <span class="mh-muted">Starter</span>
+      </div>
+      <div style="margin:1.25rem 0">
+        <strong style="font-size:2rem">$49</strong><span class="mh-muted"> / month</span>
+        <div class="mh-muted" style="font-size:.82rem;margin-top:.25rem">or $490 / year</div>
+      </div>
+      <ul style="line-height:1.9;padding-left:1.2rem">
+        <li>1 active project</li>
+        <li>Up to 5 users</li>
+        <li>Requisitions → PO → Delivery</li>
+        <li>Warehouse & basic QC</li>
+        <li>Material traceability</li>
+      </ul>
+      <a class="btn btn-primary" style="width:100%;margin-top:1rem"
+         href="https://wa.me/989160684552?text={{ 'Hello MaterialHub, I want the Pilot plan ($49/month). Please send me the signup and activation details.'|urlencode }}"
+         target="_blank" rel="noopener noreferrer">
+        Choose Pilot · WhatsApp
+      </a>
+    </div>
+
+    <div class="mh-card" style="border:2px solid #0891B2;position:relative">
+      <div style="position:absolute;top:-12px;left:1rem;padding:.25rem .7rem;border-radius:999px;background:#0891B2;color:#fff;font-size:.75rem;font-weight:700">
+        For growing teams
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem">
+        <div>
+          <h2 style="margin-bottom:.35rem">Professional</h2>
+          <p class="mh-muted" style="margin:0">For multi-role procurement and site operations.</p>
+        </div>
+      </div>
+      <div style="margin:1.25rem 0">
+        <strong style="font-size:2rem">$149</strong><span class="mh-muted"> / month</span>
+        <div class="mh-muted" style="font-size:.82rem;margin-top:.25rem">or $1,490 / year</div>
+      </div>
+      <ul style="line-height:1.9;padding-left:1.2rem">
+        <li>Up to 3 active projects</li>
+        <li>Up to 20 users</li>
+        <li>Full MR → RFQ/Tender → PO workflow</li>
+        <li>Delivery, QC & Warehouse</li>
+        <li>Excel import/export</li>
+        <li>Traceability & material intelligence</li>
+        <li>Reports & role-based workspaces</li>
+      </ul>
+      <a class="btn btn-primary" style="width:100%;margin-top:1rem"
+         href="https://wa.me/989160684552?text={{ 'Hello MaterialHub, I want the Professional plan ($149/month). Please send me the signup and activation details.'|urlencode }}"
+         target="_blank" rel="noopener noreferrer">
+        Choose Professional · WhatsApp
+      </a>
+    </div>
+
+    <div class="mh-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem">
+        <div>
+          <h2 style="margin-bottom:.35rem">Enterprise</h2>
+          <p class="mh-muted" style="margin:0">For multi-project organizations and controlled rollout.</p>
+        </div>
+      </div>
+      <div style="margin:1.25rem 0">
+        <strong style="font-size:2rem">$499</strong><span class="mh-muted"> / month</span>
+        <div class="mh-muted" style="font-size:.82rem;margin-top:.25rem">or $4,990 / year · starting price</div>
+      </div>
+      <ul style="line-height:1.9;padding-left:1.2rem">
+        <li>Up to 10 active projects</li>
+        <li>Up to 50 users</li>
+        <li>Advanced governance & permissions</li>
+        <li>Advanced intelligence & reporting</li>
+        <li>Integration and deployment support</li>
+        <li>Supplier onboarding assistance</li>
+        <li>Custom rollout and SLA options</li>
+      </ul>
+      <a class="btn btn-secondary" style="width:100%;margin-top:1rem"
+         href="https://wa.me/989160684552?text={{ 'Hello MaterialHub, I am interested in the Enterprise plan (starting at $499/month). Please send me the package and activation details.'|urlencode }}"
+         target="_blank" rel="noopener noreferrer">
+        Choose Enterprise · WhatsApp
+      </a>
+    </div>
+  </section>
+
+  <section class="mh-card" style="margin-top:1rem">
+    <h2>What happens after you choose a plan?</h2>
+    <div class="mh-grid mh-grid-3" style="margin-top:1rem">
+      <div><strong>1. Choose a plan</strong><p class="mh-muted">Select the package that matches your project size and workflow.</p></div>
+      <div><strong>2. WhatsApp opens</strong><p class="mh-muted">A pre-filled message identifies the selected plan so you do not need to explain it again.</p></div>
+      <div><strong>3. Activation details</strong><p class="mh-muted">We send the next steps, onboarding information and any required setup details.</p></div>
+    </div>
+  </section>
+
+  <section class="mh-card" style="margin-top:1rem;text-align:center">
+    <h2>Need a custom package?</h2>
+    <p class="mh-muted">For larger deployments, integrations, custom limits or implementation services, contact us directly on WhatsApp.</p>
+    <a class="btn btn-secondary" href="https://wa.me/989160684552?text={{ 'Hello MaterialHub, I need a custom enterprise package. Please contact me with the available options.'|urlencode }}"
+       target="_blank" rel="noopener noreferrer">
+      Contact on WhatsApp
+    </a>
+  </section>
 </div>
 {% endblock %}
