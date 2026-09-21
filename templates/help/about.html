@@ -1,25 +1,183 @@
 {% extends "base.html" %}
 {% block title %}About MaterialHub{% endblock %}
 {% block content %}
+<style>
+  .mh-story-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, .68);
+    backdrop-filter: blur(5px);
+  }
+  .mh-story {
+    position: relative;
+    width: min(760px, 100%);
+    max-height: min(88vh, 820px);
+    overflow: auto;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, .32);
+    padding: 38px;
+  }
+  .mh-story-kicker {
+    display: inline-flex;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #eef7f6;
+    color: #147d76;
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .mh-story h2 { margin: 14px 0 10px; font-size: clamp(1.7rem, 4vw, 2.35rem); }
+  .mh-story p { color: #475569; line-height: 1.8; margin: 0 0 15px; }
+  .mh-story .story-flow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 24px 0;
+  }
+  .mh-story .story-problem {
+    padding: 13px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: .9rem;
+    font-weight: 700;
+  }
+  .mh-story .story-ending {
+    margin-top: 20px;
+    padding: 18px 20px;
+    border-radius: 16px;
+    background: #f1f8f7;
+    border-left: 4px solid #16847c;
+  }
+  .mh-story .story-ending p { margin: 0; color: #164e4a; }
+  .mh-story-close {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #334155;
+    cursor: pointer;
+    font-size: 1.15rem;
+  }
+  .mh-story-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  @media (max-width: 680px) {
+    .mh-story { padding: 28px 22px; }
+    .mh-story .story-flow { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+
 <section class="page-hero">
-  <div><span class="eyebrow">PRODUCT OVERVIEW</span><h1>MaterialHub</h1><p>MaterialHub is a construction and EPC material operations platform that connects engineering demand, procurement, supplier performance, logistics, quality, warehouse traceability and schedule risk in one operational workflow.</p></div>
+  <div>
+    <span class="eyebrow">PRODUCT OVERVIEW</span>
+    <h1>MaterialHub</h1>
+    <p>MaterialHub is a focused construction and EPC material operations platform designed to give teams one clear view of what is needed, what has been purchased, what has arrived, and what is still missing.</p>
+  </div>
   <a class="primary-btn" href="{{ url_for('help.user_guide') }}">Open User Guide</a>
 </section>
+
 <div class="feature-grid">
   {% for title,desc,icon in [
-    ('Plan','Create material demand, requisitions and project requirements with clear ownership and deadlines.','fa-project-diagram'),
-    ('Source','Run RFQs, compare supplier quotes and use lead-time and price history to make faster sourcing decisions.','fa-search-dollar'),
-    ('Control','Track purchase orders, deliveries, receipts, invoices, QC and document completeness.','fa-tasks'),
-    ('Trace','Trace heat, lot, serial and batch identity from supplier receipt to warehouse and project issue.','fa-qrcode'),
-    ('Predict','Use readiness, OTIF, lead-time and schedule-aware risk signals to identify future material constraints.','fa-brain'),
-    ('Act','Turn intelligence into recommended actions such as expediting a PO or activating an alternate supplier.','fa-bolt')
+    ('Request','Capture engineering material requirements with clear quantities, priorities, ownership and dates.','fa-clipboard-list'),
+    ('Buy','Move from MR to RFQ, supplier comparison and PO without losing the connection to the original requirement.','fa-shopping-cart'),
+    ('Receive','Connect deliveries and warehouse receipts so the team can see what actually arrived, not just what was ordered.','fa-truck'),
+    ('Control','Compare required, ordered and received quantities and surface shortages, partial receipts and surplus early.','fa-balance-scale'),
+    ('Trace','Keep material identity and supporting documents visible through the project lifecycle.','fa-qrcode'),
+    ('Share','Create clean, read-only reports for MR, PO, Delivery and Warehouse records when others need the same facts.','fa-share-alt')
   ] %}
   <article class="feature-card"><div class="feature-icon"><i class="fas {{ icon }}"></i></div><h3>{{ title }}</h3><p>{{ desc }}</p></article>
   {% endfor %}
 </div>
+
 <section class="content-card">
- <h2>Product philosophy</h2>
- <p>MaterialHub is designed around the idea that a material system should answer three questions continuously: <strong>What do we need?</strong> <strong>Where is it?</strong> and <strong>Will it arrive in time?</strong></p>
- <div class="workflow"><span>Need</span><b>→</b><span>Source</span><b>→</b><span>Buy</span><b>→</b><span>Deliver</span><b>→</b><span>Inspect</span><b>→</b><span>Store</span><b>→</b><span>Issue</span><b>→</b><span>Predict</span></div>
+  <h2>One simple question: where is the material?</h2>
+  <p>MaterialHub is built around a practical chain of control:</p>
+  <div class="workflow"><span>Engineering Need</span><b>→</b><span>MR</span><b>→</b><span>PO</span><b>→</b><span>Delivery</span><b>→</b><span>Warehouse</span><b>→</b><span>Balance</span></div>
+  <p>Instead of forcing teams to reconstruct the truth from scattered files, messages and isolated spreadsheets, MaterialHub keeps the operational trail together.</p>
 </section>
+
+<!-- First-visit story -->
+<div id="mhStoryBackdrop" class="mh-story-backdrop" role="dialog" aria-modal="true" aria-labelledby="mhStoryTitle" hidden>
+  <article class="mh-story">
+    <button class="mh-story-close" type="button" aria-label="Close" onclick="closeMaterialHubStory()">×</button>
+    <span class="mh-story-kicker">Why MaterialHub exists</span>
+    <h2 id="mhStoryTitle">There was a project site where everyone was busy… except the material.</h2>
+
+    <p>Imagine a large construction site at the start of another demanding day.</p>
+    <p>The contractor is waiting. The crew is waiting. A huge crane is standing ready, but the next material has not arrived. Engineering has already raised the requirement, purchasing is checking old messages, the supplier is asking which revision of the request is correct, and the warehouse has a delivery note that nobody can immediately connect to the right order.</p>
+
+    <p>Nothing is necessarily broken. The real problem is that <strong>the information is scattered</strong>.</p>
+
+    <div class="story-flow">
+      <div class="story-problem">📁 Files in different folders</div>
+      <div class="story-problem">📊 Spreadsheets that drift apart</div>
+      <div class="story-problem">📞 Messages and follow-ups</div>
+      <div class="story-problem">👤 Knowledge trapped with one person</div>
+    </div>
+
+    <p>Then the questions start: <em>How much did engineering request? How much did we order? What has actually arrived? What is short? Which PO is delayed? Is this delivery for our project? Who knows the latest status?</em></p>
+
+    <p>And when the person who normally holds all those answers is on leave, in a meeting, on another site, or simply unavailable, the process slows down again.</p>
+
+    <p><strong>MaterialHub was created for exactly this moment.</strong></p>
+
+    <p>It brings the material story into one place: the engineering request, purchasing, PO, delivery, warehouse receipt and material balance. It makes shortages visible. It connects facts instead of asking people to remember them. And it gives the team a shared operational view rather than another pile of files.</p>
+
+    <div class="story-ending">
+      <p><strong>MaterialHub does not take lunch, go on leave, or disappear into another meeting.</strong> It keeps the material record available wherever the project team needs it—so people can spend less time searching for status and more time moving the project forward.</p>
+    </div>
+
+    <div class="mh-story-actions">
+      <button class="secondary-btn" type="button" onclick="closeMaterialHubStory()">Start exploring</button>
+    </div>
+  </article>
+</div>
+
+<script>
+(function () {
+  const KEY = 'materialhub_about_story_seen_v1';
+  const backdrop = document.getElementById('mhStoryBackdrop');
+
+  function closeStory() {
+    if (!backdrop) return;
+    backdrop.hidden = true;
+    document.body.style.overflow = '';
+    localStorage.setItem(KEY, '1');
+  }
+
+  window.closeMaterialHubStory = closeStory;
+
+  if (backdrop && localStorage.getItem(KEY) !== '1') {
+    backdrop.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener('click', function (event) {
+      if (event.target === backdrop) closeStory();
+    });
+  }
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && backdrop && !backdrop.hidden) closeStory();
+  });
+})();
+</script>
 {% endblock %}
