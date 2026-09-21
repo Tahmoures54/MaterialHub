@@ -1,165 +1,98 @@
 {% extends "base.html" %}
 {% block title %} — Interactive Demo{% endblock %}
-{% block meta_description %}Explore a realistic MaterialHub project scenario from engineering request through procurement, delivery, warehouse receipt and material reconciliation.{% endblock %}
-
+{% block meta_description %}Explore the MaterialHub workflow from engineering request to procurement, delivery, warehouse receipt and material reconciliation.{% endblock %}
 {% block head %}
 <style>
-  .demo-wrap{max-width:1120px;margin:0 auto}
-  .demo-hero{position:relative;overflow:hidden;border:1px solid #CBD5E1;border-radius:18px;padding:clamp(2rem,5vw,3.25rem);background:radial-gradient(ellipse 70% 80% at 95% 0%,rgba(8,145,178,.18),transparent 60%),linear-gradient(145deg,#F0FDFF,#F8FAFC 55%,#fff)}
-  .demo-kicker{display:inline-flex;align-items:center;gap:.45rem;padding:.35rem .7rem;border-radius:999px;background:#ECFEFF;border:1px solid #A5F3FC;color:#0E7490;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
-  .demo-hero h1{margin:.9rem 0 .65rem;font-size:clamp(1.9rem,4vw,3rem);line-height:1.1;color:#0F172A;letter-spacing:-.03em}
-  .demo-hero h1 span{color:#0E7490}
-  .demo-hero p{max-width:700px;margin:0;color:#64748B;line-height:1.65;font-size:1rem}
-  .demo-note{margin-top:1rem;color:#475569;font-size:.82rem}
-  .demo-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin:1rem 0}
-  .demo-card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:1.1rem 1.2rem;box-shadow:0 1px 3px rgba(15,23,42,.04)}
-  .demo-kpi .label{color:#64748B;font-size:.78rem;font-weight:600}.demo-kpi .value{margin-top:.25rem;font-size:1.65rem;font-weight:800;color:#0F172A}
-  .demo-kpi .hint{font-size:.72rem;color:#94A3B8}
-  .demo-section{margin-top:1rem}
-  .demo-section h2{margin:0 0 .3rem;color:#0F172A;font-size:1.25rem}.demo-section>p{margin:0 0 1rem;color:#64748B;font-size:.9rem}
-  .demo-tabs{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:.8rem}
-  .demo-tab{border:1px solid #CBD5E1;background:#fff;color:#475569;border-radius:9px;padding:.55rem .8rem;cursor:pointer;font-weight:700;font-size:.8rem}
-  .demo-tab.is-active{background:#0E7490;color:#fff;border-color:#0E7490}
-  .demo-panel{display:none}.demo-panel.is-active{display:block}
-  .demo-table-wrap{overflow:auto;border:1px solid #E2E8F0;border-radius:12px}
-  .demo-table{width:100%;border-collapse:collapse;min-width:720px}
-  .demo-table th,.demo-table td{padding:.75rem .8rem;text-align:left;border-bottom:1px solid #E2E8F0;font-size:.78rem;white-space:nowrap}
-  .demo-table th{background:#F8FAFC;color:#64748B;font-weight:800}.demo-table td{color:#334155}.demo-table tr:last-child td{border-bottom:0}
-  .demo-status{display:inline-flex;padding:.25rem .5rem;border-radius:999px;font-size:.68rem;font-weight:800}
-  .status-risk{background:#FEF2F2;color:#B91C1C}.status-warn{background:#FFF7ED;color:#C2410C}.status-ok{background:#F0FDF4;color:#15803D}.status-info{background:#EFF6FF;color:#1D4ED8}
-  .demo-flow{display:grid;grid-template-columns:repeat(5,1fr);gap:.65rem}
-  .demo-step{position:relative;padding:1rem .75rem;border:1px solid #E2E8F0;border-radius:11px;background:#F8FAFC;text-align:center}
-  .demo-step strong{display:block;color:#0F172A;font-size:.82rem}.demo-step span{display:block;margin-top:.25rem;color:#64748B;font-size:.7rem}
-  .demo-step .num{width:26px;height:26px;margin:0 auto .5rem;border-radius:50%;display:grid;place-items:center;background:#0E7490;color:#fff;font-weight:800;font-size:.72rem}
-  .demo-reconcile{display:grid;grid-template-columns:1.3fr .7fr;gap:1rem}
-  .demo-material h3{margin:0 0 .4rem;font-size:1rem;color:#0F172A}.demo-material p{margin:0;color:#64748B;font-size:.82rem;line-height:1.5}
-  .demo-balance{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-top:1rem}
-  .demo-balance div{padding:.7rem;border-radius:9px;background:#F8FAFC;text-align:center}.demo-balance strong{display:block;font-size:1rem;color:#0F172A}.demo-balance span{font-size:.66rem;color:#64748B}
-  .demo-action{border:1px solid #A5F3FC;background:#ECFEFF;border-radius:12px;padding:1rem}.demo-action strong{display:block;color:#0E7490;margin-bottom:.35rem;font-size:.82rem}.demo-action p{margin:0;color:#334155;font-size:.8rem;line-height:1.5}
-  .demo-footer{display:flex;flex-wrap:wrap;justify-content:center;gap:.65rem;margin:1.2rem 0 0;padding:1.5rem;border-radius:15px;background:linear-gradient(145deg,#0B1622,#122033 60%,#0E7490);text-align:center}.demo-footer h2{width:100%;margin:0;color:#F8FAFC;font-size:1.25rem}.demo-footer p{width:100%;margin:0 0 .4rem;color:#94A3B8;font-size:.85rem}
-  @media(max-width:800px){.demo-kpis{grid-template-columns:repeat(2,1fr)}.demo-flow{grid-template-columns:repeat(2,1fr)}.demo-reconcile{grid-template-columns:1fr}.demo-balance{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:520px){.demo-kpis{grid-template-columns:1fr 1fr}.demo-flow{grid-template-columns:1fr}.demo-hero{padding:1.5rem}.demo-table th,.demo-table td{padding:.65rem}}
+.demo-wrap{max-width:1120px;margin:0 auto}.demo-hero{border:1px solid #CBD5E1;border-radius:18px;padding:clamp(2rem,5vw,3.25rem);background:radial-gradient(ellipse 70% 80% at 95% 0%,rgba(8,145,178,.18),transparent 60%),linear-gradient(145deg,#F0FDFF,#F8FAFC 55%,#fff)}.demo-kicker{display:inline-flex;padding:.35rem .7rem;border-radius:999px;background:#ECFEFF;border:1px solid #A5F3FC;color:#0E7490;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}.demo-hero h1{margin:.9rem 0 .65rem;font-size:clamp(2rem,4vw,3rem);line-height:1.1;color:#0F172A}.demo-hero h1 span{color:#0E7490}.demo-hero p{max-width:760px;margin:0;color:#64748B;line-height:1.65}.demo-note{margin-top:1rem;color:#475569;font-size:.82rem}.demo-card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:1.1rem 1.2rem;box-shadow:0 1px 3px rgba(15,23,42,.04)}.demo-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin:1rem 0}.demo-kpi .label{color:#64748B;font-size:.78rem}.demo-kpi .value{font-size:1.65rem;font-weight:800;color:#0F172A;margin:.25rem 0}.demo-kpi .hint{font-size:.72rem;color:#94A3B8}.demo-section{margin-top:1rem}.demo-section h2{margin:0 0 .3rem;color:#0F172A;font-size:1.25rem}.demo-section>p{margin:0 0 1rem;color:#64748B;font-size:.9rem}.demo-tabs{display:flex;flex-wrap:wrap;gap:.45rem;margin:1rem 0 .9rem}.demo-tab{border:1px solid #CBD5E1;background:#fff;color:#475569;border-radius:9px;padding:.55rem .8rem;cursor:pointer;font-weight:700;font-size:.8rem}.demo-tab.is-active{background:#0E7490;color:#fff;border-color:#0E7490}.demo-panel{display:none}.demo-panel.is-active{display:block}.demo-table-wrap{overflow:auto;border:1px solid #E2E8F0;border-radius:12px}.demo-table{width:100%;border-collapse:collapse;min-width:720px}.demo-table th,.demo-table td{padding:.75rem .8rem;text-align:left;border-bottom:1px solid #E2E8F0;font-size:.78rem;white-space:nowrap}.demo-table th{background:#F8FAFC;color:#64748B}.demo-table td{color:#334155}.demo-table tr:last-child td{border-bottom:0}.demo-status{display:inline-flex;padding:.25rem .5rem;border-radius:999px;font-size:.68rem;font-weight:800}.status-warn{background:#FFF7ED;color:#C2410C}.status-ok{background:#F0FDF4;color:#15803D}.status-info{background:#EFF6FF;color:#1D4ED8}.demo-flow{display:grid;grid-template-columns:repeat(5,1fr);gap:.65rem}.demo-step{padding:1rem .75rem;border:1px solid #E2E8F0;border-radius:11px;background:#F8FAFC;text-align:center}.demo-step strong{display:block;color:#0F172A;font-size:.82rem}.demo-step span{display:block;margin-top:.25rem;color:#64748B;font-size:.7rem}.demo-step .num{width:26px;height:26px;margin:0 auto .5rem;border-radius:50%;display:grid;place-items:center;background:#0E7490;color:#fff;font-weight:800;font-size:.72rem}.demo-overview-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:1rem}.demo-callout{border:1px solid #A5F3FC;background:#ECFEFF;border-radius:12px;padding:1rem}.demo-callout strong{display:block;color:#0E7490;margin-bottom:.35rem}.demo-callout p{margin:0;color:#334155;font-size:.8rem;line-height:1.55}.demo-balance{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-top:1rem}.demo-balance div{padding:.75rem;border-radius:9px;background:#F8FAFC;text-align:center}.demo-balance strong{display:block;color:#0F172A}.demo-balance span{font-size:.67rem;color:#64748B}.demo-footer{display:flex;flex-wrap:wrap;justify-content:center;gap:.65rem;margin:1.2rem 0;padding:1.6rem;border-radius:15px;background:linear-gradient(145deg,#0B1622,#122033 60%,#0E7490);text-align:center}.demo-footer h2,.demo-footer p{width:100%}.demo-footer h2{margin:0;color:#F8FAFC;font-size:1.25rem}.demo-footer p{margin:0;color:#94A3B8;font-size:.85rem}.demo-footer .btn{margin-top:.25rem}@media(max-width:800px){.demo-kpis{grid-template-columns:repeat(2,1fr)}.demo-flow{grid-template-columns:repeat(2,1fr)}.demo-overview-grid{grid-template-columns:1fr}.demo-balance{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.demo-flow{grid-template-columns:1fr}.demo-hero{padding:1.5rem}}
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="demo-wrap">
-  <section class="demo-hero">
-    <span class="demo-kicker"><i class="fas fa-flask"></i> Safe demo environment</span>
-    <h1>See the material story.<br><span>From request to reality.</span></h1>
-    <p>Walk through a realistic construction project and see how one material record connects engineering demand, purchasing, delivery, warehouse receipt and reconciliation.</p>
-    <div class="demo-note"><i class="fas fa-info-circle"></i> These figures are illustrative demo data. Nothing here changes production records.</div>
-  </section>
+<section class="demo-hero">
+<span class="demo-kicker"><i class="fas fa-compass"></i> Product walkthrough</span>
+<h1>Overview: <span>see the whole material story.</span></h1>
+<p>MaterialHub brings the answers a project team needs into one connected flow: what Engineering requested, what Procurement ordered, what was delivered, what Warehouse received, and what is still missing.</p>
+<div class="demo-note"><i class="fas fa-shield-alt"></i> Safe demo data — this walkthrough never changes production records.</div>
+</section>
 
-  <section class="demo-kpis">
-    <div class="demo-card demo-kpi"><div class="label">Materials tracked</div><div class="value">1,250</div><div class="hint">Across the example project</div></div>
-    <div class="demo-card demo-kpi"><div class="label">Open purchase orders</div><div class="value">42</div><div class="hint">Orders still in progress</div></div>
-    <div class="demo-card demo-kpi"><div class="label">Items needing attention</div><div class="value">8</div><div class="hint">Shortage or delivery risk</div></div>
-    <div class="demo-card demo-kpi"><div class="label">Control points</div><div class="value">5</div><div class="hint">Demand → warehouse</div></div>
-  </section>
+<section class="demo-kpis">
+<div class="demo-card demo-kpi"><div class="label">Materials tracked</div><div class="value">1,250</div><div class="hint">Example project</div></div>
+<div class="demo-card demo-kpi"><div class="label">Open POs</div><div class="value">42</div><div class="hint">Still in progress</div></div>
+<div class="demo-card demo-kpi"><div class="label">Attention items</div><div class="value">8</div><div class="hint">Shortage / delivery risk</div></div>
+<div class="demo-card demo-kpi"><div class="label">Connected stages</div><div class="value">5</div><div class="hint">Request → warehouse</div></div>
+</section>
 
-  <section class="demo-section demo-card">
-    <h2>One project. One material story.</h2>
-    <p>Click through the workflow to see what each team needs to know.</p>
-    <div class="demo-tabs" role="tablist" aria-label="Demo workflow">
-      <button class="demo-tab is-active" type="button" data-tab="overview">Overview</button>
-      <button class="demo-tab" type="button" data-tab="engineering">Engineering</button>
-      <button class="demo-tab" type="button" data-tab="procurement">Procurement</button>
-      <button class="demo-tab" type="button" data-tab="delivery">Delivery</button>
-      <button class="demo-tab" type="button" data-tab="warehouse">Warehouse</button>
-      <button class="demo-tab" type="button" data-tab="control">Reconciliation</button>
-    </div>
+<section class="demo-section demo-card">
+<h2>Start with the Overview</h2>
+<p>The other tabs let you inspect the same scenario from each team's point of view.</p>
+<div class="demo-tabs" role="tablist" aria-label="Demo workflow">
+<button class="demo-tab is-active" type="button" data-tab="overview">Overview</button>
+<button class="demo-tab" type="button" data-tab="engineering">Engineering</button>
+<button class="demo-tab" type="button" data-tab="procurement">Procurement</button>
+<button class="demo-tab" type="button" data-tab="delivery">Delivery</button>
+<button class="demo-tab" type="button" data-tab="warehouse">Warehouse</button>
+<button class="demo-tab" type="button" data-tab="control">Reconciliation</button>
+</div>
 
-    <div class="demo-panel is-active" data-panel="overview">
-      <div class="demo-flow">
-        <div class="demo-step"><div class="num">1</div><strong>Engineering</strong><span>MR raised</span></div>
-        <div class="demo-step"><div class="num">2</div><strong>Procurement</strong><span>RFQ → PO</span></div>
-        <div class="demo-step"><div class="num">3</div><strong>Delivery</strong><span>Shipment recorded</span></div>
-        <div class="demo-step"><div class="num">4</div><strong>Warehouse</strong><span>Receipt verified</span></div>
-        <div class="demo-step"><div class="num">5</div><strong>Control</strong><span>Balance visible</span></div>
-      </div>
-    </div>
+<div class="demo-panel is-active" data-panel="overview">
+<div class="demo-overview-grid">
+<div class="demo-card">
+<h2>One material, five control points</h2>
+<div class="demo-flow">
+<div class="demo-step"><div class="num">1</div><strong>Engineering</strong><span>Need is recorded</span></div>
+<div class="demo-step"><div class="num">2</div><strong>Procurement</strong><span>Source & order</span></div>
+<div class="demo-step"><div class="num">3</div><strong>Delivery</strong><span>Shipment arrives</span></div>
+<div class="demo-step"><div class="num">4</div><strong>Warehouse</strong><span>Receipt confirmed</span></div>
+<div class="demo-step"><div class="num">5</div><strong>Control</strong><span>Balance is visible</span></div>
+</div>
+</div>
+<div class="demo-callout"><strong><i class="fas fa-eye"></i> The key question</strong><p>At any point, can the team see the gap between what the project needs and what has physically arrived?</p></div>
+</div>
+<div class="demo-card" style="margin-top:1rem">
+<h2>Example material: 12-inch CS Pipe · Project P-104</h2>
+<div class="demo-balance">
+<div><strong>1,500 m</strong><span>Required</span></div><div><strong>1,500 m</strong><span>Ordered</span></div><div><strong>1,080 m</strong><span>Received</span></div><div><strong>420 m</strong><span>Shortage</span></div>
+</div>
+</div>
+</div>
 
-    <div class="demo-panel" data-panel="engineering">
-      <div class="demo-table-wrap"><table class="demo-table"><thead><tr><th>MR</th><th>Material</th><th>Required</th><th>Required date</th><th>Priority</th><th>Status</th></tr></thead><tbody>
-        <tr><td>MR-1042</td><td>12-inch CS Pipe</td><td>1,000 m</td><td>14 Oct</td><td>High</td><td><span class="demo-status status-info">Approved</span></td></tr>
-        <tr><td>MR-1048</td><td>12-inch CS Pipe</td><td>500 m</td><td>21 Oct</td><td>Normal</td><td><span class="demo-status status-info">Approved</span></td></tr>
-      </tbody></table></div>
-    </div>
+<div class="demo-panel" data-panel="engineering"><div class="demo-table-wrap"><table class="demo-table"><thead><tr><th>MR</th><th>Material</th><th>Required</th><th>Required date</th><th>Priority</th><th>Status</th></tr></thead><tbody><tr><td>MR-1042</td><td>12-inch CS Pipe</td><td>1,000 m</td><td>14 Oct</td><td>High</td><td><span class="demo-status status-info">Approved</span></td></tr><tr><td>MR-1048</td><td>12-inch CS Pipe</td><td>500 m</td><td>21 Oct</td><td>Normal</td><td><span class="demo-status status-info">Approved</span></td></tr></tbody></table></div></div>
 
-    <div class="demo-panel" data-panel="procurement">
-      <div class="demo-table-wrap"><table class="demo-table"><thead><tr><th>PO</th><th>Supplier</th><th>Material</th><th>Ordered</th><th>Expected</th><th>Status</th></tr></thead><tbody>
-        <tr><td>PO-2087</td><td>Gulf Industrial Supply</td><td>12-inch CS Pipe</td><td>1,200 m</td><td>10 Oct</td><td><span class="demo-status status-warn">Late</span></td></tr>
-        <tr><td>PO-2094</td><td>Northline Steel</td><td>12-inch CS Pipe</td><td>300 m</td><td>18 Oct</td><td><span class="demo-status status-ok">On track</span></td></tr>
-      </tbody></table></div>
-    </div>
+<div class="demo-panel" data-panel="procurement"><div class="demo-table-wrap"><table class="demo-table"><thead><tr><th>PO</th><th>Supplier</th><th>Material</th><th>Ordered</th><th>Expected</th><th>Status</th></tr></thead><tbody><tr><td>PO-2087</td><td>Gulf Industrial Supply</td><td>12-inch CS Pipe</td><td>1,200 m</td><td>10 Oct</td><td><span class="demo-status status-warn">Late</span></td></tr><tr><td>PO-2094</td><td>Northline Steel</td><td>12-inch CS Pipe</td><td>300 m</td><td>18 Oct</td><td><span class="demo-status status-ok">On track</span></td></tr></tbody></table></div></div>
 
-    <div class="demo-panel" data-panel="delivery">
-      <div class="demo-table-wrap"><table class="demo-table"><thead><tr><th>Delivery</th><th>PO</th><th>Delivered</th><th>Date</th><th>Remarks</th><th>Status</th></tr></thead><tbody>
-        <tr><td>DEL-551</td><td>PO-2087</td><td>800 m</td><td>12 Oct</td><td>Partial shipment</td><td><span class="demo-status status-warn">Partial</span></td></tr>
-        <tr><td>DEL-558</td><td>PO-2094</td><td>300 m</td><td>18 Oct</td><td>Complete</td><td><span class="demo-status status-ok">Received</span></td></tr>
-      </tbody></table></div>
-    </div>
+<div class="demo-panel" data-panel="delivery"><div class="demo-table-wrap"><table class="demo-table"><thead><tr><th>Delivery</th><th>PO</th><th>Delivered</th><th>Date</th><th>Remarks</th><th>Status</th></tr></thead><tbody><tr><td>DEL-551</td><td>PO-2087</td><td>800 m</td><td>12 Oct</td><td>Partial shipment</td><td><span class="demo-status status-warn">Partial</span></td></tr><tr><td>DEL-558</td><td>PO-2094</td><td>300 m</td><td>18 Oct</td><td>Complete</td><td><span class="demo-status status-ok">Received</span></td></tr></tbody></table></div></div>
 
-    <div class="demo-panel" data-panel="warehouse">
-      <div class="demo-table-wrap"><table class="demo-table"><thead><tr><th>Receipt</th><th>Delivery</th><th>Warehouse</th><th>Received</th><th>Location</th><th>QC</th></tr></thead><tbody>
-        <tr><td>GRN-771</td><td>DEL-551</td><td>WH-A</td><td>780 m</td><td>Rack A-12</td><td><span class="demo-status status-ok">Accepted</span></td></tr>
-        <tr><td>GRN-778</td><td>DEL-558</td><td>WH-A</td><td>300 m</td><td>Rack A-14</td><td><span class="demo-status status-ok">Accepted</span></td></tr>
-      </tbody></table></div>
-    </div>
+<div class="demo-panel" data-panel="warehouse"><div class="demo-table-wrap"><table class="demo-table"><thead><tr><th>Receipt</th><th>Delivery</th><th>Warehouse</th><th>Received</th><th>Location</th><th>QC</th></tr></thead><tbody><tr><td>GRN-771</td><td>DEL-551</td><td>WH-A</td><td>780 m</td><td>Rack A-12</td><td><span class="demo-status status-ok">Accepted</span></td></tr><tr><td>GRN-778</td><td>DEL-558</td><td>WH-A</td><td>300 m</td><td>Rack A-14</td><td><span class="demo-status status-ok">Accepted</span></td></tr></tbody></table></div></div>
 
-    <div class="demo-panel" data-panel="control">
-      <div class="demo-reconcile">
-        <div class="demo-card demo-material">
-          <h3>12-inch CS Pipe · Project P-104</h3>
-          <p>Two engineering requests and two purchase orders are consolidated into one material balance. The warehouse receipt is counted from the physical receipt record.</p>
-          <div class="demo-balance">
-            <div><strong>1,500 m</strong><span>Required</span></div>
-            <div><strong>1,500 m</strong><span>Ordered</span></div>
-            <div><strong>1,080 m</strong><span>Received</span></div>
-            <div><strong>420 m</strong><span>Shortage</span></div>
-          </div>
-        </div>
-        <div class="demo-action"><strong><i class="fas fa-exclamation-triangle"></i> Attention needed</strong><p>The material is fully ordered but not fully received. The project team can open the linked MR, PO or delivery record and act on the shortage.</p></div>
-      </div>
-    </div>
-  </section>
+<div class="demo-panel" data-panel="control">
+<div class="demo-overview-grid"><div class="demo-card"><h2>Material reconciliation</h2><p style="color:#64748B;line-height:1.55">The project has ordered the full 1,500 m requirement, but only 1,080 m has been physically received. The visible balance is 420 m short.</p><div class="demo-balance"><div><strong>1,500 m</strong><span>Required</span></div><div><strong>1,500 m</strong><span>Ordered</span></div><div><strong>1,080 m</strong><span>Received</span></div><div><strong>420 m</strong><span>Shortage</span></div></div></div><div class="demo-callout"><strong><i class="fas fa-exclamation-triangle"></i> Attention</strong><p>Ordered does not mean received. The reconciliation view keeps that difference visible so the team can follow up.</p></div></div>
+</div>
+</section>
 
-  <section class="demo-section">
-    <div class="demo-card">
-      <h2>What this demo is designed to answer</h2>
-      <p>In a few seconds, a project team should be able to answer:</p>
-      <div class="demo-flow">
-        <div class="demo-step"><strong>What was requested?</strong><span>MR quantity & deadline</span></div>
-        <div class="demo-step"><strong>What was ordered?</strong><span>PO & supplier</span></div>
-        <div class="demo-step"><strong>What arrived?</strong><span>Delivery quantity</span></div>
-        <div class="demo-step"><strong>What was received?</strong><span>Warehouse truth</span></div>
-        <div class="demo-step"><strong>What is missing?</strong><span>Shortage / surplus</span></div>
-      </div>
-    </div>
-  </section>
+<section class="demo-section demo-card">
+<h2>What should become easier?</h2>
+<div class="demo-flow">
+<div class="demo-step"><strong>What do we need?</strong><span>Engineering requirement</span></div>
+<div class="demo-step"><strong>What did we order?</strong><span>PO & supplier</span></div>
+<div class="demo-step"><strong>What arrived?</strong><span>Delivery</span></div>
+<div class="demo-step"><strong>What entered stock?</strong><span>Warehouse receipt</span></div>
+<div class="demo-step"><strong>What is missing?</strong><span>Balance & shortage</span></div>
+</div>
+</section>
 
-  <section class="demo-footer">
-    <h2>Ready to see your own material flow?</h2>
-    <p>Move from the example to a real workspace when you are ready.</p>
-    <a class="btn btn-primary" href="{{ url_for('auth.register') }}">Start 45-Day Free Trial</a>
-    <a class="btn btn-secondary" href="{{ url_for('growth.contact') }}">Request a Demo</a>
-  </section>
+<section class="demo-footer">
+<h2>Ready to move from the example to your project?</h2>
+<p>Start with a 45-day free trial or talk to us about your workflow.</p>
+<a class="btn btn-primary" href="{{ url_for('auth.register') }}">Start 45-Day Free Trial</a>
+<a class="btn btn-secondary" href="{{ url_for('growth.contact') }}">Request a Demo</a>
+</section>
 </div>
 {% endblock %}
-
 {% block scripts %}
 <script>
 (function(){
-  var tabs=[].slice.call(document.querySelectorAll('.demo-tab'));
-  var panels=[].slice.call(document.querySelectorAll('.demo-panel'));
-  tabs.forEach(function(tab){
-    tab.addEventListener('click',function(){
-      var key=tab.getAttribute('data-tab');
-      tabs.forEach(function(item){item.classList.toggle('is-active',item===tab);});
-      panels.forEach(function(panel){panel.classList.toggle('is-active',panel.getAttribute('data-panel')===key);});
-    });
-  });
+var tabs=[].slice.call(document.querySelectorAll('.demo-tab')),panels=[].slice.call(document.querySelectorAll('.demo-panel'));
+tabs.forEach(function(tab){tab.addEventListener('click',function(){var key=tab.getAttribute('data-tab');tabs.forEach(function(x){x.classList.toggle('is-active',x===tab)});panels.forEach(function(x){x.classList.toggle('is-active',x.getAttribute('data-panel')===key)});});});
 })();
 </script>
 {% endblock %}
