@@ -5,20 +5,26 @@
 .mr-page{--ink:#102a43;--muted:#64748b;--line:#e2e8f0}
 .mr-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:20px}
 .mr-head h1{margin:0;color:var(--ink);font-size:1.7rem}.mr-head p{margin:6px 0 0;color:var(--muted)}
-.mr-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.mr-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:18px}
 .mr-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 16px}.mr-kpi small{display:block;color:var(--muted);font-size:.75rem}.mr-kpi strong{display:block;margin-top:5px;font-size:1.3rem;color:var(--ink)}
 .mr-toolbar{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}
 .mr-toolbar input,.mr-toolbar select{height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 11px;background:#fff;color:#102a43}
-.mr-toolbar input{min-width:230px}.mr-btn{height:38px;border:0;border-radius:9px;padding:0 14px;background:#0e7490;color:#fff;font-weight:700;cursor:pointer}.mr-btn.secondary{background:#f1f5f9;color:#334155;border:1px solid #cbd5e1}
+.mr-toolbar input{min-width:260px}.mr-btn{height:38px;border:0;border-radius:9px;padding:0 14px;background:#0e7490;color:#fff;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.mr-btn.secondary{background:#f1f5f9;color:#334155;border:1px solid #cbd5e1}
+.mr-problems{margin-left:auto;display:flex;align-items:center;color:#b42318;font-size:.82rem;font-weight:700}
 .mr-table-wrap{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:auto}
-.mr-table{width:100%;border-collapse:collapse;min-width:1050px}.mr-table th{background:#f8fafc;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;padding:12px;text-align:left;white-space:nowrap}.mr-table td{padding:13px 12px;border-top:1px solid #edf2f7;vertical-align:middle}.mr-code{font-weight:750;color:#102a43}.mr-sub{font-size:.75rem;color:#64748b;margin-top:3px}.num{text-align:right;font-variant-numeric:tabular-nums}.bad{color:#b42318;font-weight:800}.good{color:#16794a;font-weight:800}.warn{color:#a15c00;font-weight:800}.muted{color:#94a3b8}.pill{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:.72rem;font-weight:750;white-space:nowrap}.p-complete{background:#ecfdf3;color:#16794a}.p-shortage,.p-not_ordered{background:#fff1f2;color:#b42318}.p-ordered{background:#fff7ed;color:#a15c00}.p-surplus{background:#eff6ff;color:#1d4ed8}.links a{color:#0e7490;font-weight:700;font-size:.8rem;margin-right:7px}.empty{padding:45px;text-align:center;color:#64748b}
-@media(max-width:900px){.mr-kpis{grid-template-columns:repeat(2,1fr)}.mr-head{align-items:flex-start;flex-direction:column}}
+.mr-table{width:100%;border-collapse:collapse;min-width:1180px}.mr-table th{background:#f8fafc;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;padding:12px;text-align:left;white-space:nowrap}.mr-table td{padding:13px 12px;border-top:1px solid #edf2f7;vertical-align:middle}
+.mr-code{font-weight:750;color:#102a43}.mr-sub{font-size:.75rem;color:#64748b;margin-top:3px}.num{text-align:right;font-variant-numeric:tabular-nums}.bad{color:#b42318;font-weight:800}.good{color:#16794a;font-weight:800}.warn{color:#a15c00;font-weight:800}.muted{color:#94a3b8}
+.pill{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:.72rem;font-weight:750;white-space:nowrap}.p-complete{background:#ecfdf3;color:#16794a}.p-shortage,.p-not_ordered{background:#fff1f2;color:#b42318}.p-ordered{background:#fff7ed;color:#a15c00}.p-surplus{background:#eff6ff;color:#1d4ed8}
+.links a{color:#0e7490;font-weight:700;font-size:.8rem;margin-right:7px}.empty{padding:45px;text-align:center;color:#64748b}
+.receipt-note{font-size:.72rem;color:#64748b;margin-top:3px}.receipt-note strong{color:#334155}
+@media(max-width:1100px){.mr-kpis{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.mr-kpis{grid-template-columns:repeat(2,1fr)}.mr-head{align-items:flex-start;flex-direction:column}.mr-problems{margin-left:0}}
 </style>
 <div class="mr-page">
   <div class="mr-head">
     <div>
       <h1>Material Reconciliation</h1>
-      <p>Engineering requirement → PO → Workshop receipt → remaining balance</p>
+      <p>One view of engineering requirement, purchasing, workshop receipts and material balance.</p>
     </div>
     <a class="mr-btn" href="{{ url_for('reports.center') }}">Document Center</a>
   </div>
@@ -29,6 +35,7 @@
     <div class="mr-kpi"><small>Received · Warehouse</small><strong>{{ '%.2f'|format(totals.received) }}</strong></div>
     <div class="mr-kpi"><small>Shortage</small><strong class="bad">{{ '%.2f'|format(totals.shortage) }}</strong></div>
     <div class="mr-kpi"><small>Surplus</small><strong class="good">{{ '%.2f'|format(totals.surplus) }}</strong></div>
+    <div class="mr-kpi"><small>Not yet ordered</small><strong class="{% if totals.procurement_gap %}warn{% endif %}">{{ '%.2f'|format(totals.procurement_gap) }}</strong></div>
   </div>
 
   <form class="mr-toolbar" method="get">
@@ -39,7 +46,7 @@
     </select>
     <select name="status">
       <option value="all" {% if status=='all' %}selected{% endif %}>All statuses</option>
-      <option value="shortage" {% if status=='shortage' %}selected{% endif %}>Shortage</option>
+      <option value="shortage" {% if status=='shortage' %}selected{% endif %}>Shortage / partial receipt</option>
       <option value="not_ordered" {% if status=='not_ordered' %}selected{% endif %}>Not ordered</option>
       <option value="ordered" {% if status=='ordered' %}selected{% endif %}>Ordered / awaiting receipt</option>
       <option value="surplus" {% if status=='surplus' %}selected{% endif %}>Surplus</option>
@@ -47,32 +54,48 @@
     </select>
     <button class="mr-btn" type="submit">Apply</button>
     <a class="mr-btn secondary" href="{{ url_for('material_reconciliation.dashboard') }}">Reset</a>
+    <div class="mr-problems">{{ problem_count }} problem line{% if problem_count != 1 %}s{% endif %}</div>
   </form>
 
   <div class="mr-table-wrap">
     {% if rows %}
     <table class="mr-table">
       <thead><tr>
-        <th>Material</th><th>MR</th><th>PO</th><th>Required</th><th>Ordered</th><th>Received</th><th>Shortage</th><th>Surplus</th><th>Status</th><th>Links</th>
+        <th>Material</th><th>MR</th><th>PO</th><th>Required</th><th>Ordered</th><th>Received</th><th>Shortage</th><th>Surplus</th><th>Last receipt</th><th>Status</th><th>Links</th>
       </tr></thead>
       <tbody>
       {% for r in rows %}
         <tr>
-          <td><div class="mr-code">{{ r.mr.item_code or '—' }}</div><div class="mr-sub">{{ r.mr.material_description or r.mr.subject }}</div><div class="mr-sub">{{ r.mr.project_no }} · {{ r.mr.unit_of_measure }}</div></td>
-          <td><span class="mr-code">{{ r.mr.mr_no }}</span></td>
-          <td>{% if r.po_numbers %}{% for po in r.po_numbers %}<span class="mr-code">{{ po }}</span>{% if not loop.last %}<br>{% endif %}{% endfor %}{% else %}<span class="muted">Not ordered</span>{% endif %}</td>
+          <td>
+            <div class="mr-code">{{ r.item_code or '—' }}</div>
+            <div class="mr-sub">{{ r.material_description or '—' }}</div>
+            <div class="mr-sub">{{ r.project_no }} · {{ r.unit }}</div>
+          </td>
+          <td>
+            {% for mr in r.mrs %}
+              <span class="mr-code">{{ mr.mr_no }}</span>{% if not loop.last %}<br>{% endif %}
+            {% endfor %}
+            {% if r.mrs|length > 1 %}<div class="mr-sub">{{ r.mrs|length }} engineering requests combined</div>{% endif %}
+          </td>
+          <td>
+            {% if r.po_numbers %}
+              {% for po in r.po_numbers %}<span class="mr-code">{{ po }}</span>{% if not loop.last %}<br>{% endif %}{% endfor %}
+            {% else %}<span class="muted">Not ordered</span>{% endif %}
+          </td>
           <td class="num">{{ '%.2f'|format(r.required) }}</td>
           <td class="num">{{ '%.2f'|format(r.ordered) }}</td>
           <td class="num">{{ '%.2f'|format(r.received) }}</td>
           <td class="num {% if r.shortage %}bad{% else %}muted{% endif %}">{% if r.shortage %}{{ '%.2f'|format(r.shortage) }}{% else %}—{% endif %}</td>
           <td class="num {% if r.surplus %}good{% else %}muted{% endif %}">{% if r.surplus %}{{ '%.2f'|format(r.surplus) }}{% else %}—{% endif %}</td>
-          <td><span class="pill p-{{ r.status }}">{{ {'complete':'Complete','shortage':'Shortage','not_ordered':'Not ordered','ordered':'Awaiting receipt','surplus':'Surplus'}[r.status] }}</span></td>
+          <td>
+            {% if r.last_receipt %}
+              <span class="mr-code">{{ r.last_receipt.delivery_id or 'Receipt' }}</span>
+              <div class="receipt-note">{{ r.last_receipt.receipt_date }} · {{ '%.2f'|format(r.last_receipt.received_qty) }} {{ r.last_receipt.unit }}</div>
+            {% else %}<span class="muted">No receipt</span>{% endif %}
+          </td>
+          <td><span class="pill p-{{ r.status }}">{{ {'complete':'Complete','shortage':'Shortage / partial','not_ordered':'Not ordered','ordered':'Awaiting receipt','surplus':'Surplus'}[r.status] }}</span></td>
           <td class="links">
-            <a href="{{ url_for('reports.report', kind='MR', record_id=r.mr.id) }}">MR</a>
-            {% for po in r.po_numbers %}
-              {% set po_obj = r.mr.purchase_order_items|selectattr('purchase_order.order_no','equalto',po)|map(attribute='purchase_order')|first %}
-              {% if po_obj %}<a href="{{ url_for('reports.report', kind='PO', record_id=po_obj.id) }}">PO</a>{% endif %}
-            {% endfor %}
+            {% for mr in r.mrs %}<a href="{{ url_for('reports.report', kind='MR', record_id=mr.id) }}">MR</a>{% endfor %}
           </td>
         </tr>
       {% endfor %}
