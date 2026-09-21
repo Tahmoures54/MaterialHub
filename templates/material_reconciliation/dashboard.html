@@ -61,7 +61,7 @@
     {% if rows %}
     <table class="mr-table">
       <thead><tr>
-        <th>Material</th><th>MR</th><th>PO</th><th>Required</th><th>Ordered</th><th>Received</th><th>Shortage</th><th>Surplus</th><th>Last receipt</th><th>Status</th><th>Links</th>
+        <th>Material</th><th>MR</th><th>PO</th><th>Required</th><th>Ordered</th><th>Received</th><th>Delivery · Warehouse</th><th>Shortage</th><th>Surplus</th><th>Last receipt</th><th>Status</th><th>Links</th>
       </tr></thead>
       <tbody>
       {% for r in rows %}
@@ -85,6 +85,19 @@
           <td class="num">{{ '%.2f'|format(r.required) }}</td>
           <td class="num">{{ '%.2f'|format(r.ordered) }}</td>
           <td class="num">{{ '%.2f'|format(r.received) }}</td>
+          <td>
+            {% if r.delivery_ids %}
+              <span class="mr-code">{{ r.delivery_ids|length }} delivery{% if r.delivery_ids|length != 1 %}ies{% endif %}</span>
+              <div class="receipt-note">{{ r.delivery_statuses|join(', ') }}</div>
+            {% else %}
+              <span class="muted">No delivery</span>
+            {% endif %}
+            {% if r.last_receipt %}
+              <div class="receipt-note"><strong>Warehouse:</strong> {{ r.last_receipt.delivery_id or 'Direct receipt' }} · {{ r.last_receipt.receipt_date }}</div>
+            {% else %}
+              <div class="receipt-note"><strong>Warehouse:</strong> no receipt</div>
+            {% endif %}
+          </td>
           <td class="num {% if r.shortage %}bad{% else %}muted{% endif %}">{% if r.shortage %}{{ '%.2f'|format(r.shortage) }}{% else %}—{% endif %}</td>
           <td class="num {% if r.surplus %}good{% else %}muted{% endif %}">{% if r.surplus %}{{ '%.2f'|format(r.surplus) }}{% else %}—{% endif %}</td>
           <td>
