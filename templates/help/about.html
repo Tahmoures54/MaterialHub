@@ -1,7 +1,8 @@
 {% extends "base.html" %}
-{% block title %}About MaterialHub{% endblock %}
+{% block title %}The MaterialHub Story{% endblock %}
 {% block content %}
 <style>
+  .mh-story-backdrop[hidden] { display: none !important; }
   .mh-story-backdrop {
     position: fixed;
     inset: 0;
@@ -86,8 +87,8 @@
 
 <section class="page-hero">
   <div>
-    <span class="eyebrow">PRODUCT OVERVIEW</span>
-    <h1>MaterialHub</h1>
+    <span class="eyebrow">THE MATERIALHUB STORY</span>
+    <h1>The MaterialHub Story</h1>
     <p>MaterialHub is a focused construction and EPC material operations platform designed to give teams one clear view of what is needed, what has been purchased, what has arrived, and what is still missing.</p>
   </div>
   <a class="primary-btn" href="{{ url_for('help.user_guide') }}">Open User Guide</a>
