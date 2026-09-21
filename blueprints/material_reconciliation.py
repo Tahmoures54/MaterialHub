@@ -46,6 +46,14 @@ def _build_rows(project_no=None, status='all', search=''):
         if item.material_requisition_id:
             by_material[item.material_requisition_id].append(item)
 
+    po_ids = {item.purchase_order_id for item in po_items if item.purchase_order_id}
+    deliveries = _tenant(Delivery.query, Delivery).filter(
+        Delivery.order_id.in_(po_ids) if po_ids else Delivery.id == -1
+    ).all()
+    deliveries_by_po = defaultdict(list)
+    for delivery in deliveries:
+        deliveries_by_po[delivery.order_id].append(delivery)
+
     warehouse = _tenant(WarehouseInventory.query, WarehouseInventory).all()
     received_by_material = defaultdict(float)
     last_receipt_by_material = {}
@@ -68,6 +76,8 @@ def _build_rows(project_no=None, status='all', search=''):
                 'required': 0.0,
                 'ordered': 0.0,
                 'po_numbers': [],
+                'delivery_ids': [],
+                'delivery_statuses': [],
                 'unit': mr.unit_of_measure or 'EA',
                 'item_code': (mr.item_code or '').strip(),
                 'material_description': mr.material_description or mr.subject or '',
@@ -83,6 +93,12 @@ def _build_rows(project_no=None, status='all', search=''):
             po = item.purchase_order
             if po and po.order_no not in group['po_numbers']:
                 group['po_numbers'].append(po.order_no)
+            if po:
+                for delivery in deliveries_by_po.get(po.id, []):
+                    if delivery.delivery_id not in group['delivery_ids']:
+                        group['delivery_ids'].append(delivery.delivery_id)
+                    if delivery.status.value not in group['delivery_statuses']:
+                        group['delivery_statuses'].append(delivery.status.value)
 
     rows = []
     for group in grouped.values():
@@ -132,6 +148,8 @@ def _build_rows(project_no=None, status='all', search=''):
             'procurement_gap': procurement_gap,
             'status': row_status,
             'po_numbers': group['po_numbers'],
+            'delivery_ids': group['delivery_ids'],
+            'delivery_statuses': group['delivery_statuses'],
             'last_receipt': last_receipt,
         })
 
