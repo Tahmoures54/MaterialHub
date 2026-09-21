@@ -10,14 +10,13 @@ import sys
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
-# 1) Make sure the project root (the directory that contains the `app` package)
-#    is importable, regardless of how Vercel invokes this script.
+# 1) Make sure the project root is importable, regardless of how Vercel
+#    invokes this script (sys.path[0] is normally the scripts/ directory).
 # ---------------------------------------------------------------------------
 SCRIPT_DIR = Path(__file__).resolve().parent          # .../scripts
 PROJECT_ROOT = SCRIPT_DIR.parent                      # repository root
 
-# Some projects keep the Flask package under `src/`, `backend/`, or `server/`.
-# We try each candidate and pick the first one that actually contains `app/`.
+# Some projects keep the Flask entry under src/, backend/, server/, or api/.
 CANDIDATE_ROOTS = [
     PROJECT_ROOT,
     PROJECT_ROOT / "src",
@@ -26,32 +25,38 @@ CANDIDATE_ROOTS = [
     PROJECT_ROOT / "api",
 ]
 
+
 def _find_app_root() -> Path:
-    """Return the directory that contains the `app` package."""
+    """Return the directory from which `import app` should succeed.
+
+    Supports both layouts:
+      - package:  <root>/app/__init__.py
+      - module:   <root>/app.py
+    """
     for candidate in CANDIDATE_ROOTS:
         if (candidate / "app" / "__init__.py").is_file():
             return candidate
-    # Fall back to project root so the error message is still meaningful.
+        if (candidate / "app.py").is_file():
+            return candidate
     return PROJECT_ROOT
 
 
 APP_ROOT = _find_app_root()
 
-# Insert the discovered root at the front of sys.path so `import app` resolves.
 if str(APP_ROOT) not in sys.path:
     sys.path.insert(0, str(APP_ROOT))
 
-# Change working directory to the project root so relative paths (e.g. Alembic
-# config, .env, migrations/) keep working.
+# Relative paths (Alembic, migrations/, .env) must resolve from the repo root.
 os.chdir(PROJECT_ROOT)
 
 # ---------------------------------------------------------------------------
-# 2) Debug output – extremely useful when a Vercel build fails.
+# 2) Debug output – useful when a Vercel build fails.
 # ---------------------------------------------------------------------------
 print(f"[vercel_migrate] script dir  : {SCRIPT_DIR}")
 print(f"[vercel_migrate] project root: {PROJECT_ROOT}")
 print(f"[vercel_migrate] app root    : {APP_ROOT}")
-print(f"[vercel_migrate] app package : {(APP_ROOT / 'app').is_dir()}")
+print(f"[vercel_migrate] app package : {(APP_ROOT / 'app' / '__init__.py').is_file()}")
+print(f"[vercel_migrate] app module  : {(APP_ROOT / 'app.py').is_file()}")
 print(f"[vercel_migrate] sys.path[0] : {sys.path[0]}")
 
 # ---------------------------------------------------------------------------
@@ -109,8 +114,9 @@ def main() -> None:
         raise SystemExit(
             f"Could not import `app.create_app` from {APP_ROOT}.\n"
             f"Contents of {APP_ROOT}:\n  {listing}\n"
-            f"Make sure `app/__init__.py` exists and exports `create_app`, "
-            f"and that the folder is not excluded by .vercelignore."
+            f"Expected either app/__init__.py (package) or app.py (module) "
+            f"that exports create_app, and that the file is not excluded "
+            f"by .vercelignore."
         ) from exc
 
     app = create_app("production")
