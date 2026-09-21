@@ -22,13 +22,24 @@
   .lp-hero-meta div span { font-size:.8rem; color:#64748B; font-weight:500; }
 
   .lp-hero-grid { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr); gap:2rem; align-items:center; }
-  .lp-hero-visual { position:relative; min-height:360px; border-radius:16px; overflow:hidden; background:#0B1622; box-shadow:0 14px 34px rgba(15,23,42,.16); isolation:isolate; }
-  .lp-hero-visual img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; z-index:-2; }
-  .lp-hero-visual::after { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(180deg,rgba(11,22,34,.08) 5%,rgba(11,22,34,.18) 45%,rgba(11,22,34,.82) 100%); }
-  .lp-visual-caption { position:absolute; left:1.25rem; right:1.25rem; bottom:1.15rem; color:#F8FAFC; }
-  .lp-visual-kicker { display:inline-block; padding:.3rem .6rem; border-radius:999px; background:rgba(8,145,178,.78); border:1px solid rgba(103,232,249,.35); font-size:.68rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; margin-bottom:.55rem; }
+  .lp-hero-visual { position:relative; min-height:420px; border-radius:16px; overflow:hidden; background:#0B1622; box-shadow:0 14px 34px rgba(15,23,42,.16); isolation:isolate; }
+  .lp-hero-visual img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; z-index:-3; }
+  .lp-hero-visual::after { content:""; position:absolute; inset:0; z-index:-2; background:linear-gradient(180deg,rgba(11,22,34,.05) 0%,rgba(11,22,34,.18) 42%,rgba(11,22,34,.68) 100%); }
+  .lp-visual-caption { position:absolute; left:1.25rem; right:1.25rem; bottom:1.15rem; color:#F8FAFC; z-index:2; }
+  .lp-visual-kicker { display:inline-block; padding:.3rem .6rem; border-radius:999px; background:rgba(8,145,178,.82); border:1px solid rgba(103,232,249,.35); font-size:.68rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; margin-bottom:.55rem; }
   .lp-visual-caption h3 { margin:0 0 .3rem; font-size:1.25rem; font-weight:800; }
   .lp-visual-caption p { margin:0; max-width:430px; color:#D6E4EC; font-size:.84rem; line-height:1.5; }
+  .lp-visual-cards { position:absolute; inset:1rem; z-index:1; pointer-events:none; }
+  .lp-visual-card { position:absolute; min-width:150px; padding:.75rem .85rem; border-radius:11px; background:rgba(255,255,255,.94); border:1px solid rgba(226,232,240,.9); box-shadow:0 10px 24px rgba(15,23,42,.2); color:#0F172A; backdrop-filter:blur(7px); }
+  .lp-visual-card:nth-child(1) { top:0; left:0; }
+  .lp-visual-card:nth-child(2) { top:2.25rem; right:0; }
+  .lp-visual-card:nth-child(3) { top:43%; left:2%; }
+  .lp-visual-card:nth-child(4) { top:38%; right:1%; }
+  .lp-visual-card-label { display:flex; align-items:center; gap:.45rem; font-size:.68rem; color:#64748B; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  .lp-visual-card-label i { color:#0E7490; }
+  .lp-visual-card strong { display:block; margin-top:.22rem; font-size:.9rem; font-weight:800; }
+  .lp-visual-card span { display:block; margin-top:.15rem; font-size:.7rem; color:#64748B; }
+  .lp-visual-card .ok { color:#0E7490; font-weight:700; }
 
   .lp-section { margin-bottom:1.75rem; }
   .lp-section-head { margin-bottom:1.15rem; }
@@ -57,8 +68,8 @@
   .lp-cta-secondary { margin-left:.5rem; background:transparent!important; border:1px solid rgba(148,163,184,.45)!important; color:#E2E8F0!important; }
   .lp-cta-secondary:hover { background:rgba(255,255,255,.06)!important; border-color:#94A3B8!important; }
 
-  @media (max-width:800px) { .lp-hero-grid { grid-template-columns:1fr; } .lp-hero-visual { min-height:280px; } }
-  @media (max-width:600px) { .lp-hero-actions { flex-direction:column; align-items:stretch; } .lp-hero-meta { gap:1rem; } .lp-hero-visual { min-height:250px; } }
+  @media (max-width:800px) { .lp-hero-grid { grid-template-columns:1fr; } .lp-hero-visual { min-height:360px; } .lp-visual-card { min-width:135px; padding:.6rem .7rem; } .lp-visual-card:nth-child(3) { top:45%; left:0; } .lp-visual-card:nth-child(4) { top:40%; right:0; } }
+  @media (max-width:600px) { .lp-hero-actions { flex-direction:column; align-items:stretch; } .lp-hero-meta { gap:1rem; } .lp-hero-visual { min-height:420px; } .lp-visual-cards { inset:.7rem; } .lp-visual-card { min-width:120px; max-width:145px; } .lp-visual-card:nth-child(1) { top:0; left:0; } .lp-visual-card:nth-child(2) { top:0; right:0; } .lp-visual-card:nth-child(3) { top:42%; left:0; } .lp-visual-card:nth-child(4) { top:38%; right:0; } }
 </style>
 {% endblock %}
 {% block content %}
@@ -79,12 +90,34 @@
           <div><strong>Role-ready</strong><span>PM · Procurement · WH · QC</span></div>
         </div>
       </div>
-      <div class="lp-hero-visual" aria-label="Global logistics and container supply chain">
+      <div class="lp-hero-visual" aria-label="Global logistics and container supply chain with material control cards">
         <img src="{{ url_for('static', filename='images/pic_1.png') }}" alt="Large container ship carrying containers across the ocean">
+        <div class="lp-visual-cards" aria-hidden="true">
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-clipboard-list"></i> Engineering</div>
+            <strong>MR-1042</strong>
+            <span>1,500 m required</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-file-invoice-dollar"></i> Procurement</div>
+            <strong>PO-2087</strong>
+            <span>1,500 m ordered</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-truck"></i> Delivery</div>
+            <strong>DEL-551</strong>
+            <span class="ok">Partial receipt</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-warehouse"></i> Warehouse</div>
+            <strong>1,080 m received</strong>
+            <span>420 m shortage</span>
+          </div>
+        </div>
         <div class="lp-visual-caption">
           <span class="lp-visual-kicker">Supply chain → project control</span>
           <h3>Material moves. Your team stays in control.</h3>
-          <p>From a global shipment to a project warehouse, keep the material story visible without turning the homepage into a dashboard.</p>
+          <p>See the story at a glance — from engineering need to purchasing, delivery and warehouse receipt.</p>
         </div>
       </div>
     </div>
