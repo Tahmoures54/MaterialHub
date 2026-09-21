@@ -219,5 +219,25 @@ def request_status(request_id):
 @login_required
 def request_share(request_id):
     item = MaterialRequest.query.filter_by(id=request_id, company_name=current_user.company_name).first_or_404()
-    target = url_for('reports.request_detail', request_id=item.id, _external=True)
+    token = secrets.token_urlsafe(48)
+    share = ReportShare(token=token, company_name=current_user.company_name,
+                        report_type='REQ', record_id=item.id, created_by=current_user.id,
+                        expires_at=datetime.now(pytz.UTC) + timedelta(days=7))
+    db.session.add(share); db.session.commit()
+    target = url_for('reports.shared_request', token=token, _external=True)
     return render_template('reports/share_request.html', item=item, share_target=target, qr=_qr_data_uri(target))
+
+
+@reports_bp.get('/requests/shared/<token>')
+def shared_request(token):
+    share = ReportShare.query.filter_by(token=token, report_type='REQ').first_or_404()
+    now = datetime.now(pytz.UTC)
+    expiry = share.expires_at if share.expires_at.tzinfo else pytz.UTC.localize(share.expires_at)
+    if share.revoked_at or expiry <= now:
+        abort(410)
+    item = MaterialRequest.query.filter_by(id=share.record_id, company_name=share.company_name).first_or_404()
+    obj = _record(item.request_type, item.record_id)
+    target = url_for('reports.shared_request', token=token, _external=True)
+    return render_template('reports/request_detail.html', item=item, obj=obj,
+                           document_number=_number(item.request_type, obj),
+                           qr=_qr_data_uri(target), share_target=target, public_share=True)
