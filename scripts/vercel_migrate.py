@@ -6,6 +6,15 @@ migration point, so the live function only starts after Alembic is up to date.
 """
 
 import os
+import sys
+from pathlib import Path
+
+# When this file is executed as `python scripts/vercel_migrate.py`, Python puts
+# `scripts/` (not the repository root) on sys.path. Add the project root so
+# the Flask application package can be imported reliably in Vercel builds.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from flask_migrate import upgrade
 
