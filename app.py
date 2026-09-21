@@ -224,6 +224,7 @@ def create_app(config_name=None):
     from blueprints.warehouse import warehouse_bp
     from blueprints.project_dashboard import project_dashboard_bp
     from blueprints.report import report_bp
+    from blueprints.reports import reports_bp
     from blueprints.admin import admin_bp
     from blueprints.control_center import control_center_bp
     from blueprints.growth import growth_bp
@@ -242,6 +243,7 @@ def create_app(config_name=None):
     app.register_blueprint(warehouse_bp, url_prefix='/warehouse')
     app.register_blueprint(project_dashboard_bp, url_prefix='/project_dashboard')
     app.register_blueprint(report_bp, url_prefix='/report')
+    app.register_blueprint(reports_bp)
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(control_center_bp)
     app.register_blueprint(intelligence_bp)
