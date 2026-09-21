@@ -260,6 +260,27 @@ def create_app(config_name=None):
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
+    @app.before_request
+    def enforce_trial_access():
+        """Keep expired trial accounts on the public pricing/activation path."""
+        if not current_user.is_authenticated or current_user.is_admin:
+            return None
+
+        if current_user.subscription_status == 'active' or current_user.trial_active:
+            return None
+
+        allowed_endpoints = {
+            'growth.pricing',
+            'growth.contact',
+            'growth.demo',
+            'auth.logout',
+        }
+        if request.endpoint in allowed_endpoints:
+            return None
+
+        flash('Your 45-day free trial has ended. Choose a plan to continue using MaterialHub.', 'warning')
+        return redirect(url_for('growth.pricing'))
+
     @app.route('/')
     def index():
         if current_user.is_authenticated:
