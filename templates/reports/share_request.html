@@ -1,5 +1,0 @@
-{% extends "base.html" %}
-{% block title %}Share {{ item.request_no }}{% endblock %}
-{% block content %}
-<div style="max-width:720px;margin:40px auto;text-align:center;background:#fff;border-radius:24px;padding:35px;box-shadow:0 18px 50px rgba(16,42,67,.1)"><div style="font-size:12px;color:#718096">SECURE REQUEST SHARING</div><h1>{{ item.request_no }}</h1><p>{{ item.title }}</p><img src="{{ qr }}" style="width:220px;height:220px;padding:10px;border:1px solid #dfe9ef;border-radius:18px"><p style="word-break:break-all;color:#60727d">{{ share_target }}</p><button class="btn btn-primary" onclick="navigator.clipboard.writeText('{{ share_target }}')">Copy link</button> <button class="btn btn-secondary" onclick="window.print()">Print</button></div>
-{% endblock %}
