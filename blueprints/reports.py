@@ -138,8 +138,8 @@ def create_share(kind, record_id):
                         report_type=kind, record_id=obj.id, created_by=current_user.id,
                         expires_at=datetime.now(pytz.UTC) + timedelta(days=expires))
     db.session.add(share); db.session.commit()
-    flash('Secure report link created.', 'success')
-    return redirect(url_for('reports.report', kind=kind, record_id=record_id, shared=token))
+    flash('Secure report link created. You can now copy it or scan the QR code.', 'success')
+    return redirect(url_for('reports.shared_report', token=token))
 
 
 @reports_bp.get('/reports/shared/<token>')
