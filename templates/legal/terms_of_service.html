@@ -1,509 +1,63 @@
 {% extends "base.html" %}
-{% block title %}Privacy Policy - MaterialHub{% endblock %}
-{% block content %}
+{% block title %}Terms of Service — MaterialHub{% endblock %}
+{% block meta_description %}MaterialHub Terms of Service covering accounts, subscriptions, acceptable use, workspace data, shared reports, intellectual property and service limitations.{% endblock %}
+{% block head %}
 <style>
-    .privacy-container {
-        display: flex;
-        justify-content: center;
-        padding: 40px 20px;
-        min-height: 100vh;
-    }
-
-    .privacy-box {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        max-width: 1200px;
-        width: 100%;
-        display: flex;
-        flex-wrap: wrap;
-        padding: 40px;
-    }
-
-    /* Header */
-    .privacy-header {
-        text-align: center;
-        width: 100%;
-        margin-bottom: 40px;
-    }
-
-    .privacy-header h1 {
-        font-size: 2.5em;
-        color: #1a73e8;
-        margin-bottom: 10px;
-    }
-
-    .privacy-header p {
-        font-size: 1.2em;
-        color: #666;
-        margin-bottom: 20px;
-    }
-
-    .back-btn {
-        display: inline-block;
-        padding: 12px 24px;
-        background: #1a73e8;
-        color: #fff;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: background 0.3s ease, transform 0.2s ease;
-    }
-
-    .back-btn:hover {
-        background: #1557b0;
-        transform: translateY(-2px);
-    }
-
-    /* Content Layout */
-    .privacy-content {
-        display: flex;
-        width: 100%;
-        gap: 30px;
-    }
-
-    .privacy-main {
-        flex: 3;
-        padding-right: 20px;
-    }
-
-    /* Table of Contents */
-    .privacy-toc {
-        flex: 1;
-        position: sticky;
-        top: 20px;
-        align-self: flex-start;
-        background: #f9fbfc;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    }
-
-    .privacy-toc h3 {
-        font-size: 1.4em;
-        color: #1a73e8;
-        margin-bottom: 15px;
-    }
-
-    .privacy-toc ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .privacy-toc li {
-        margin-bottom: 10px;
-    }
-
-    .privacy-toc a {
-        color: #333;
-        text-decoration: none;
-        font-size: 1.1em;
-        transition: color 0.3s ease;
-    }
-
-    .privacy-toc a:hover {
-        color: #1a73e8;
-        text-decoration: underline;
-    }
-
-    /* Main Sections */
-    .policy-section {
-        margin-bottom: 40px;
-    }
-
-    .policy-section h2 {
-        font-size: 1.8em;
-        color: #1a73e8;
-        margin-bottom: 15px;
-        position: relative;
-    }
-
-    .policy-section h2::after {
-        content: '';
-        width: 50px;
-        height: 3px;
-        background: #1a73e8;
-        position: absolute;
-        bottom: -5px;
-        left: 0;
-    }
-
-    .policy-section p {
-        font-size: 1.1em;
-        color: #444;
-        margin-bottom: 15px;
-    }
-
-    .policy-section ul {
-        margin-left: 20px;
-        margin-bottom: 15px;
-    }
-
-    .policy-section li {
-        font-size: 1.1em;
-        color: #444;
-        margin-bottom: 10px;
-        position: relative;
-        padding-left: 20px;
-    }
-
-    .policy-section li::before {
-        content: '•';
-        color: #1a73e8;
-        position: absolute;
-        left: 0;
-        font-size: 1.2em;
-    }
-
-    .policy-section a {
-        color: #1a73e8;
-        text-decoration: none;
-        font-weight: 500;
-    }
-
-    .policy-section a:hover {
-        text-decoration: underline;
-    }
-
-    /* FAQ Section */
-    .faq-item {
-        margin-bottom: 15px;
-        border-bottom: 1px solid #eee;
-    }
-
-    .faq-question {
-        font-size: 1.2em;
-        color: #333;
-        cursor: pointer;
-        padding: 15px 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: 600;
-        transition: color 0.3s ease;
-    }
-
-    .faq-question:hover {
-        color: #1a73e8;
-    }
-
-    .faq-question::after {
-        content: '+';
-        font-size: 1.5em;
-        color: #1a73e8;
-        transition: transform 0.3s ease;
-    }
-
-    .faq-question.open::after {
-        content: '−';
-        transform: rotate(180deg);
-    }
-
-    .faq-answer {
-        display: none;
-        padding: 0 15px 15px;
-        font-size: 1.1em;
-        color: #444;
-        transition: all 0.3s ease;
-    }
-
-    .faq-answer.show {
-        display: block;
-    }
-
-    /* Footer */
-    .privacy-footer {
-        text-align: center;
-        padding-top: 20px;
-        border-top: 1px solid #eee;
-        margin-top: 40px;
-        width: 100%;
-    }
-
-    /* Flash Messages */
-    .flash-messages {
-        margin: 20px 0;
-    }
-
-    .alert {
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        font-size: 1em;
-    }
-
-    .alert-success {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    .alert-danger {
-        background: #f8d7da;
-        color: #721c24;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .privacy-box {
-            padding: 20px;
-        }
-
-        .privacy-content {
-            flex-direction: column;
-        }
-
-        .privacy-toc {
-            position: static;
-            margin-bottom: 20px;
-        }
-
-        .privacy-main {
-            padding-right: 0;
-        }
-
-        .privacy-header h1 {
-            font-size: 2em;
-        }
-
-        .policy-section h2 {
-            font-size: 1.5em;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .back-btn {
-            padding: 10px 20px;
-            font-size: 0.9em;
-        }
-
-        .policy-section p, .policy-section li {
-            font-size: 1em;
-        }
-
-        .privacy-toc a {
-            font-size: 1em;
-        }
-    }
+.terms-wrap{max-width:1180px;margin:0 auto;padding:1rem 0 2rem}.terms-hero{border:1px solid #CBD5E1;border-radius:20px;padding:clamp(2rem,5vw,3.5rem);background:radial-gradient(ellipse 70% 90% at 100% 0%,rgba(8,145,178,.2),transparent 62%),linear-gradient(145deg,#F0FDFF,#F8FAFC 55%,#fff)}.terms-kicker{display:inline-flex;gap:.45rem;padding:.4rem .75rem;border-radius:999px;background:#ECFEFF;border:1px solid #A5F3FC;color:#0E7490;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}.terms-hero h1{margin:.9rem 0 .6rem;color:#0F172A;font-size:clamp(2rem,4vw,3rem);line-height:1.1}.terms-hero h1 span{color:#0E7490}.terms-hero p{max-width:780px;margin:0;color:#64748B;line-height:1.7}.terms-meta{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:1.1rem}.terms-meta span{padding:.4rem .65rem;border:1px solid #E2E8F0;border-radius:999px;background:#fff;color:#475569;font-size:.74rem}.terms-grid{display:grid;grid-template-columns:260px minmax(0,1fr);gap:1rem;margin-top:1rem;align-items:start}.terms-toc,.terms-card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}.terms-toc{position:sticky;top:1rem;padding:1rem}.terms-toc h2{margin:0 0 .75rem;font-size:.95rem;color:#0F172A}.terms-toc a{display:block;padding:.42rem .5rem;border-radius:7px;color:#475569;text-decoration:none;font-size:.76rem}.terms-toc a:hover{background:#F0FDFF;color:#0E7490}.terms-main{min-width:0}.terms-card{padding:1.35rem;margin-bottom:.8rem;scroll-margin-top:1rem}.terms-card h2{margin:0 0 .55rem;color:#0F172A;font-size:1.15rem}.terms-card p,.terms-card li{color:#475569;line-height:1.7;font-size:.88rem}.terms-card p{margin:.45rem 0}.terms-card ul{margin:.55rem 0;padding-left:1.2rem}.terms-card li{margin:.35rem 0}.terms-card strong{color:#334155}.terms-card a{color:#0E7490;font-weight:700;text-decoration:none}.terms-card a:hover{text-decoration:underline}.terms-callout{margin:.8rem 0;padding:1rem;border:1px solid #A5F3FC;background:#ECFEFF;border-radius:11px}.terms-callout strong{display:block;color:#0E7490;margin-bottom:.25rem}.terms-callout p{margin:0}.terms-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.8rem;align-items:center;padding:1rem 0;color:#64748B;font-size:.76rem}.terms-footer a{color:#0E7490;text-decoration:none;font-weight:700;margin-right:.8rem}@media(max-width:820px){.terms-grid{grid-template-columns:1fr}.terms-toc{position:static}.terms-toc nav{display:grid;grid-template-columns:repeat(2,1fr);gap:.15rem}}@media(max-width:520px){.terms-wrap{padding:.5rem 0 1rem}.terms-hero{padding:1.5rem}.terms-toc nav{grid-template-columns:1fr}.terms-card{padding:1rem}}
 </style>
+{% endblock %}
+{% block content %}
+<div class="terms-wrap">
+<section class="terms-hero">
+<span class="terms-kicker"><i class="fas fa-file-contract"></i> Terms & use</span>
+<h1>Clear rules for using <span>MaterialHub.</span></h1>
+<p>These Terms of Service explain the relationship between you, your organization and MaterialHub when you use the platform. They are intended to keep the service reliable, secure and useful for real project work.</p>
+<div class="terms-meta"><span>Effective: September 21, 2026</span><span>Last reviewed: September 21, 2026</span><span>Business service</span></div>
+</section>
 
-<div class="privacy-container">
-    <div class="privacy-box">
-        <!-- Header -->
-        <header class="privacy-header">
-            <h1>Privacy Policy</h1>
-            <p>Effective Date: May 18, 2025</p>
-            <a href="{{ url_for('index') }}" class="back-btn">Back to Home</a>
-        </header>
+<div class="terms-grid">
+<aside class="terms-toc"><h2>On this page</h2><nav>
+<a href="#acceptance">Acceptance</a><a href="#service">The service</a><a href="#accounts">Accounts & security</a><a href="#workspace">Workspace data</a><a href="#acceptable">Acceptable use</a><a href="#sharing">Reports & sharing</a><a href="#trial">Trials & subscriptions</a><a href="#fees">Fees & activation</a><a href="#content">Your content</a><a href="#ip">Intellectual property</a><a href="#third-party">Third parties</a><a href="#availability">Availability</a><a href="#disclaimers">Disclaimers</a><a href="#liability">Liability</a><a href="#termination">Termination</a><a href="#changes">Changes</a><a href="#law">Governing terms</a><a href="#contact">Contact</a>
+</nav></aside>
 
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+<main class="terms-main">
+<section class="terms-card" id="acceptance"><h2>1. Acceptance of these Terms</h2><p>By creating an account, accessing or using MaterialHub, you agree to these Terms of Service and the <a href="{{ url_for('auth.privacy_policy') }}">Privacy Policy</a>. If you use MaterialHub on behalf of an organization, you confirm that you are authorized to accept these Terms for that organization.</p></section>
 
-        <!-- Main Content -->
-        <div class="privacy-content">
-            <!-- Table of Contents -->
-            <aside class="privacy-toc">
-                <h3>Table of Contents</h3>
-                <ul>
-                    <li><a href="#introduction">1. Introduction</a></li>
-                    <li><a href="#information-collect">2. Information We Collect</a></li>
-                    <li><a href="#use-information">3. How We Use Your Information</a></li>
-                    <li><a href="#share-information">4. How We Share Your Information</a></li>
-                    <li><a href="#security">5. Security of Your Information</a></li>
-                    <li><a href="#rights-choices">6. Your Rights and Choices</a></li>
-                    <li><a href="#cookies">7. Cookies and Tracking</a></li>
-                    <li><a href="#third-party">8. Third-Party Links</a></li>
-                    <li><a href="#children">9. Children's Data</a></li>
-                    <li><a href="#international">10. International Data Transfers</a></li>
-                    <li><a href="#changes">11. Changes to This Privacy Policy</a></li>
-                    <li><a href="#contact">12. Contact Us</a></li>
-                    <li><a href="#faq">13. FAQs About Privacy</a></li>
-                </ul>
-            </aside>
+<section class="terms-card" id="service"><h2>2. The MaterialHub service</h2><p>MaterialHub provides tools for construction material operations, including engineering material requests, procurement workflows, purchase orders, delivery records, warehouse receipts, quality information, traceability, reports and material reconciliation.</p><p>Features may change as the service evolves. We may add, modify or discontinue features while taking reasonable steps to preserve the core service and communicate material changes when appropriate.</p></section>
 
-            <!-- Main Privacy Policy Sections -->
-            <main class="privacy-main">
-                <section class="policy-section" id="introduction">
-                    <h2>1. Introduction</h2>
-                    <p>At MaterialHub, your privacy is our priority. This Privacy Policy outlines how we collect, use, share, and safeguard your personal information when you use our website, services, and applications (collectively, the "Service"). By using MaterialHub, you consent to the practices described here. For more on your use of the Service, see our <a href="{{ url_for('auth.terms_of_service') }}">Terms of Service</a>.</p>
-                </section>
+<section class="terms-card" id="accounts"><h2>3. Accounts and account security</h2><ul><li>You are responsible for providing accurate registration information and keeping it reasonably current.</li><li>You are responsible for safeguarding credentials and authentication methods associated with your account.</li><li>Do not share credentials or allow unauthorized people to use an account.</li><li>Organizations are responsible for assigning appropriate roles and permissions to their users.</li><li>Notify MaterialHub promptly if you suspect unauthorized access or misuse.</li></ul></section>
 
-                <section class="policy-section" id="information-collect">
-                    <h2>2. Information We Collect</h2>
-                    <p>We collect information to deliver and enhance the Service. The types of information include:</p>
-                    <ul>
-                        <li><strong>Personal Information:</strong> During registration, we collect your company name, company email, company phone number, full name, country, company address, and role (e.g., Project Manager or Supplier).</li>
-                        <li><strong>Authentication Data:</strong> We store a TOTP secret for two-factor authentication, securely linked to your account via Microsoft Authenticator.</li>
-                        <li><strong>Usage Data:</strong> We track how you interact with the Service, including pages visited, materials listed or requested, and team management actions.</li>
-                        <li><strong>Technical Data:</strong> We collect device details, browser information, IP addresses, and cookies to improve functionality and security.</li>
-                    </ul>
-                </section>
+<section class="terms-card" id="workspace"><h2>4. Workspace and project data</h2><p>Your organization may use MaterialHub to store business and project information such as material requirements, supplier information, purchase orders, deliveries, warehouse receipts, quality records and traceability information.</p><div class="terms-callout"><strong>Keep operational records accurate.</strong><p>MaterialHub provides workflow and control tools; users remain responsible for the accuracy, completeness and appropriateness of information they enter and for decisions made from that information.</p></div></section>
 
-                <section class="policy-section" id="use-information">
-                    <h2>3. How We Use Your Information</h2>
-                    <p>We use your information to:</p>
-                    <ul>
-                        <li>Provide and maintain the Service, including account setup, authentication, and material management.</li>
-                        <li>Enable transactions and communication in the <a href="{{ url_for('supplier.material_marketplace') }}">Material Marketplace</a>.</li>
-                        <li>Enhance the Service by analyzing usage trends and user feedback.</li>
-                        <li>Send essential updates, such as policy changes or service alerts (non-optional communications).</li>
-                        <li>Protect security through TOTP authentication and monitoring for suspicious activity.</li>
-                    </ul>
-                </section>
+<section class="terms-card" id="acceptable"><h2>5. Acceptable use</h2><p>You must not use MaterialHub to violate applicable law or the rights of others, interfere with the service, attempt unauthorized access, introduce malicious code, abuse authentication controls, scrape or overload the service, or use the platform for fraudulent or deceptive activity.</p></section>
 
-                <section class="policy-section" id="share-information">
-                    <h2>4. How We Share Your Information</h2>
-                    <p>We do not sell or rent your personal information. We may share it in these cases:</p>
-                    <ul>
-                        <li><strong>With Other Users:</strong> In the Material Marketplace, your company name and contact details may be shared with other users (e.g., suppliers or buyers) to facilitate transactions.</li>
-                        <li><strong>Service Providers:</strong> We engage trusted third parties (e.g., cloud hosting, analytics) who process data under strict confidentiality agreements.</li>
-                        <li><strong>Legal Requirements:</strong> We may disclose information if required by law, such as to comply with a court order or protect our rights.</li>
-                    </ul>
-                </section>
+<section class="terms-card" id="sharing"><h2>6. Reports and shared links</h2><p>MaterialHub allows authorized users to create read-only shared reports for supported records such as MR, PO, Delivery and Warehouse reports.</p><ul><li>You are responsible for choosing what information to share and with whom.</li><li>A person who obtains a valid share link may be able to view the report until the link expires or is revoked.</li><li>Do not place confidential or sensitive information into a share link unless you are authorized to disclose it.</li><li>Shared reports are informational documents and do not grant access to the underlying workspace.</li></ul></section>
 
-                <section class="policy-section" id="security">
-                    <h2>5. Security of Your Information</h2>
-                    <p>We implement robust measures to protect your data, including:</p>
-                    <ul>
-                        <li><strong>TOTP Authentication:</strong> Microsoft Authenticator generates unique codes every 30 seconds, preventing unauthorized access.</li>
-                        <li><strong>Encryption:</strong> Data is encrypted in transit and at rest using industry-standard protocols.</li>
-                        <li><strong>Access Controls:</strong> Only authorized personnel access your data, with regular system audits.</li>
-                    </ul>
-                    <p>While we strive for maximum security, no system is infallible. If you suspect a breach, contact us immediately via the in-app support feature.</p>
-                </section>
+<section class="terms-card" id="trial"><h2>7. Free trial and subscriptions</h2><p>MaterialHub may offer a limited-time free trial as described on the pricing page. The current self-serve offer provides a 45-day trial for eligible new users, subject to the terms displayed at signup.</p><p>When a trial ends, continued access to paid functionality may require selecting and activating an applicable subscription plan. Trial availability, duration or eligibility may change for future accounts.</p></section>
 
-                <section class="policy-section" id="rights-choices">
-                    <h2>6. Your Rights and Choices</h2>
-                    <p>You have the following rights:</p>
-                    <ul>
-                        <li><strong>Access:</strong> Request a copy of your data.</li>
-                        <li><strong>Correction:</strong> Update inaccurate information via account settings.</li>
-                        <li><strong>Deletion:</strong> Request account deletion, subject to legal obligations.</li>
-                        <li><strong>Objection:</strong> Object to certain data uses (e.g., analytics), where applicable.</li>
-                    </ul>
-                    <p>Contact us via the in-app support feature to exercise these rights. We’ll respond within 30 days.</p>
-                </section>
+<section class="terms-card" id="fees"><h2>8. Fees, plans and activation</h2><p>Paid plans, prices, included limits and billing arrangements are described on the MaterialHub pricing page or in an applicable commercial agreement. Prices and plan features may change for future purchases; the applicable offer will be identified when you select a plan.</p><p>Where activation is handled through a sales or support channel, a plan is not considered active until MaterialHub confirms activation or otherwise states that access has begun.</p></section>
 
-                <section class="policy-section" id="cookies">
-                    <h2>7. Cookies and Tracking</h2>
-                    <p>We use cookies to improve your experience, such as saving preferences and analyzing usage. You can manage cookies via browser settings, but disabling them may limit functionality.</p>
-                </section>
+<section class="terms-card" id="content"><h2>9. Your content and authorization</h2><p>You retain your rights in information and documents that you submit to MaterialHub, subject to the rights needed for us to operate the service. You represent that you have the necessary rights and permissions to upload, process and share that content.</p></section>
 
-                <section class="policy-section" id="third-party">
-                    <h2>8. Third-Party Links</h2>
-                    <p>Our Service may link to third-party sites (e.g., Microsoft Authenticator’s download page). We are not responsible for their privacy practices. Review their policies before sharing information.</p>
-                </section>
+<section class="terms-card" id="ip"><h2>10. Intellectual property</h2><p>MaterialHub and its software, interface, branding, documentation and related materials are protected by applicable intellectual-property laws. Except where these Terms or applicable law permit it, you may not copy, modify, distribute, reverse engineer or commercially exploit the service or its proprietary materials without authorization.</p></section>
 
-                <section class="policy-section" id="children">
-                    <h2>9. Children's Data</h2>
-                    <p>MaterialHub is not intended for users under 18. We do not knowingly collect data from children. If we learn that a child’s data has been collected, we will delete it promptly. Contact us if you believe we have such data.</p>
-                </section>
+<section class="terms-card" id="third-party"><h2>11. Third-party services</h2><p>MaterialHub may integrate with or link to third-party services. Those services are governed by their own terms and policies. MaterialHub is not responsible for independent third-party services, their availability or their content.</p></section>
 
-                <section class="policy-section" id="international">
-                    <h2>10. International Data Transfers</h2>
-                    <p>Your data may be transferred to and processed in countries outside your own, including the United States, where our servers are located. We ensure compliance with applicable data protection laws, using safeguards like standard contractual clauses.</p>
-                </section>
+<section class="terms-card" id="availability"><h2>12. Availability and maintenance</h2><p>We aim to keep MaterialHub available and reliable, but continuous or uninterrupted availability is not guaranteed. Service interruptions may occur because of maintenance, infrastructure failures, network conditions, security events or circumstances outside reasonable control.</p></section>
 
-                <section class="policy-section" id="changes">
-                    <h2>11. Changes to This Privacy Policy</h2>
-                    <p>We may update this policy to reflect changes in our practices or legal requirements. Significant updates will be posted on the Service or communicated via email. Continued use of the Service after changes indicates your acceptance.</p>
-                </section>
+<section class="terms-card" id="disclaimers"><h2>13. Operational information and disclaimers</h2><p>MaterialHub is a software platform for organizing and controlling project material information. It does not replace professional engineering, procurement, quality, safety, legal, financial or other expert judgment.</p><p>Users are responsible for independently verifying critical quantities, specifications, approvals, delivery conditions, quality documentation and other information before making consequential decisions.</p></section>
 
-                <section class="policy-section" id="contact">
-                    <h2>12. Contact Us</h2>
-                    <p>For questions about this Privacy Policy or our data practices, use the in-app support feature or visit our <a href="{{ url_for('auth.contact_support') }}">Contact Support</a> page. Additional resources are available in our <a href="{{ url_for('help.help') }}">Help Center</a>.</p>
-                </section>
+<section class="terms-card" id="liability"><h2>14. Limitation of liability</h2><p>To the extent permitted by applicable law, MaterialHub will not be responsible for indirect, incidental, special or consequential losses arising from use of the service, including losses caused by reliance on inaccurate user-entered information, third-party services, service interruptions or unauthorized access resulting from compromised user credentials.</p><p>Nothing in these Terms excludes or limits liability that cannot lawfully be excluded or limited.</p></section>
 
-                <!-- FAQs -->
-                <section class="policy-section" id="faq">
-                    <h2>13. FAQs About Privacy</h2>
-                    <div class="faq-item">
-                        <h3 class="faq-question">What data does MaterialHub collect?</h3>
-                        <div class="faq-answer">
-                            <p>We collect personal details (e.g., name, email), authentication data (TOTP), usage data, and technical data to provide and improve the Service. See Section 2 for details.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <h3 class="faq-question">Does MaterialHub sell my data?</h3>
-                        <div class="faq-answer">
-                            <p>No, we do not sell or rent your data. We only share it with other users for transactions, with service providers under strict agreements, or as required by law.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <h3 class="faq-question">How can I delete my account?</h3>
-                        <div class="faq-answer">
-                            <p>Contact us via the in-app support feature to request account deletion. We’ll process it within 30 days, subject to legal obligations.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <h3 class="faq-question">Are cookies required to use MaterialHub?</h3>
-                        <div class="faq-answer">
-                            <p>Cookies enhance functionality but are not strictly required. Disabling them via browser settings may affect your experience.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <h3 class="faq-question">Is my data secure with MaterialHub?</h3>
-                        <div class="faq-answer">
-                            <p>Yes, we use TOTP authentication, encryption, and access controls to protect your data. See Section 5 for more details.</p>
-                        </div>
-                    </div>
-                </section>
-            </main>
-        </div>
+<section class="terms-card" id="termination"><h2>15. Suspension and termination</h2><p>You may stop using MaterialHub at any time. We may suspend or terminate access where reasonably necessary to address security, abuse, non-payment, material breach of these Terms or legal requirements. Where appropriate, we will provide notice and an opportunity to resolve an issue.</p><p>Termination does not automatically remove legal or contractual obligations that by their nature should survive termination.</p></section>
 
-        <!-- Footer -->
-        <footer class="privacy-footer">
-            <div class="footer-content">
-                <p>© 2025 MaterialHub. All Rights Reserved.</p>
-                <div class="footer-links">
-                    <a href="{{ url_for('auth.privacy_policy') }}">Privacy Policy</a>
-                    <a href="{{ url_for('auth.terms_of_service') }}">Terms of Service</a>
-                    <a href="{{ url_for('help.help') }}">Help Center</a>
-                    <a href="{{ url_for('auth.contact_support') }}">Contact Us</a>
-                </div>
-            </div>
-        </footer>
-    </div>
+<section class="terms-card" id="changes"><h2>16. Changes to these Terms</h2><p>We may update these Terms when the service, commercial model or applicable requirements change. The effective date above will be updated when a new version is published. Material changes may also be communicated through the service or another appropriate channel.</p></section>
+
+<section class="terms-card" id="law"><h2>17. Applicable law and jurisdiction</h2><p>These Terms are subject to the mandatory laws that apply to the relationship between you and MaterialHub. Any governing-law or jurisdiction provision in a separately executed commercial agreement will take precedence where applicable.</p></section>
+
+<section class="terms-card" id="contact"><h2>18. Contact</h2><p>Questions about these Terms, subscriptions or your use of MaterialHub can be sent through <a href="{{ url_for('contact_support') }}">Contact Support</a>. Product guidance is available in the <a href="{{ url_for('help.help') }}">Help Center</a>.</p></section>
+</main></div>
+
+<footer class="terms-footer"><div>© 2026 MaterialHub. Terms of Service.</div><div><a href="{{ url_for('auth.privacy_policy') }}">Privacy Policy</a><a href="{{ url_for('help.help') }}">Help Center</a><a href="{{ url_for('contact_support') }}">Contact Support</a></div></footer>
 </div>
-
-<!-- JavaScript for TOC and FAQ -->
-<script>
-    // Smooth scrolling for TOC links
-    document.querySelectorAll('.privacy-toc a').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href').substring(1);
-            const targetElement = document.getElementById(targetId);
-            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-    });
-
-    // FAQ accordion
-    document.querySelectorAll('.faq-question').forEach(item => {
-        item.addEventListener('click', () => {
-            const answer = item.nextElementSibling;
-            const isOpen = answer.classList.contains('show');
-
-            // Close all answers
-            document.querySelectorAll('.faq-answer').forEach(ans => {
-                ans.classList.remove('show');
-                ans.previousElementSibling.classList.remove('open');
-            });
-
-            // Open clicked answer
-            if (!isOpen) {
-                answer.classList.add('show');
-                item.classList.add('open');
-            }
-        });
-    });
-</script>
 {% endblock %}
