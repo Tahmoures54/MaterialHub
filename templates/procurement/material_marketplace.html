@@ -48,6 +48,20 @@
   <select name="sort" class="search-select"><option value="updated">Recently updated</option><option value="price_asc" {{ 'selected' if request.args.get('sort') == 'price_asc' else '' }}>Price: low to high</option><option value="price_desc" {{ 'selected' if request.args.get('sort') == 'price_desc' else '' }}>Price: high to low</option><option value="qty_desc" {{ 'selected' if request.args.get('sort') == 'qty_desc' else '' }}>Availability</option><option value="delivery_asc" {{ 'selected' if request.args.get('sort') == 'delivery_asc' else '' }}>Fastest delivery</option></select>
   {{ form.submit(class="search-button", value="Search") }}
 </div>
+<details style="margin-top:1rem;border-top:1px solid #e5ebf0;padding-top:.8rem;">
+  <summary style="cursor:pointer;font-weight:700;color:#0b1f3a;">Advanced filters</summary>
+  <div class="search-input-group" style="margin-top:.8rem;">
+    <select name="material_type" class="search-select"><option value="">All Types</option>{% for value in filter_options.types %}<option value="{{ value }}" {{ 'selected' if request.args.get('material_type') == value else '' }}>{{ value }}</option>{% endfor %}</select>
+    <input name="supplier" value="{{ request.args.get('supplier','') }}" placeholder="Supplier / company" class="search-input">
+    <select name="unit" class="search-select"><option value="">All Units</option>{% for value in filter_options.units %}<option value="{{ value }}" {{ 'selected' if request.args.get('unit') == value else '' }}>{{ value }}</option>{% endfor %}</select>
+    <input type="number" name="min_price" min="0" step="0.01" value="{{ request.args.get('min_price','') }}" placeholder="Min price" class="search-input">
+    <input type="number" name="max_price" min="0" step="0.01" value="{{ request.args.get('max_price','') }}" placeholder="Max price" class="search-input">
+    <input type="number" name="min_qty" min="0" step="0.01" value="{{ request.args.get('min_qty','') }}" placeholder="Min availability" class="search-input">
+    <input type="number" name="max_delivery" min="1" step="1" value="{{ request.args.get('max_delivery','') }}" placeholder="Max delivery days" class="search-input">
+    <select name="sort" class="search-select"><option value="updated">Recently updated</option><option value="price_asc" {{ 'selected' if request.args.get('sort') == 'price_asc' else '' }}>Price: low to high</option><option value="price_desc" {{ 'selected' if request.args.get('sort') == 'price_desc' else '' }}>Price: high to low</option><option value="qty_desc" {{ 'selected' if request.args.get('sort') == 'qty_desc' else '' }}>Availability</option><option value="delivery_asc" {{ 'selected' if request.args.get('sort') == 'delivery_asc' else '' }}>Fastest delivery</option></select>
+    <a href="{{ url_for('material_marketplace') }}" class="search-button" style="text-decoration:none;text-align:center;background:#edf3f6;color:#28445b;">Reset filters</a>
+  </div>
+</details>
         </form>
     </div>
 
@@ -65,15 +79,17 @@
     <!-- Main Marketplace Section -->
     <main class="marketplace-main">
         <section class="materials-section">
-            <h2>Available materials</h2>
+            <h2>Available materials <span style="font-size:.8rem;color:#64788a;font-weight:400;">({{ materials|length }} results)</span></h2>
             {% if materials %}
                 <div class="materials-grid">
                     {% for material in materials %}
-                        <div class="material-card">
+                        <div class="material-card" data-id="{{ material.id }}">
+                            <label style="display:flex;gap:.4rem;align-items:center;margin-bottom:.65rem;font-size:.82rem;color:#52677a;"><input type="checkbox" class="market-compare" value="{{ material.id }}" data-name="{{ material.material_name or material.name }}" data-price="{{ '%.2f'|format(material.price or 0) }}" data-unit="{{ material.unit or '—' }}" data-type="{{ material.material_type or '—' }}" data-qty="{{ material.available_qty if material.available_qty is not none else '—' }}" data-delivery="{{ material.delivery_time_days if material.delivery_time_days is not none else '—' }}" data-country="{{ COUNTRY_NAMES_BY_CODE.get(material.country_code, 'Unknown') }}"> Compare</label>
                             <h3>{{ material.material_name or material.name }}</h3>
                             <p class="material-price">Price: ${{ '%.2f'|format(material.price or 0) }}</p>
                             <p class="material-unit">Unit: {{ material.unit }}</p>
                             <p class="material-country">Country: {{ COUNTRY_NAMES_BY_CODE.get(material.country_code, 'Unknown') }}</p>
+                            <p class="material-country">Available: {{ material.available_qty if material.available_qty is not none else '—' }} · Delivery: {{ material.delivery_time_days if material.delivery_time_days is not none else '—' }} days</p>
                             <button class="contact-button" onclick="window.location.href='{{ url_for('contact_support') }}?material={{ material.id }}'">Ask about this material</button>
                         </div>
                     {% endfor %}
@@ -83,9 +99,60 @@
             {% endif %}
         </section>
     </main>
+    <div id="marketCompare" style="display:none;margin-top:1rem;background:#fff;border:1px solid #dbe4ea;border-radius:18px;padding:1rem;overflow:auto;"></div>
+    <div id="marketCompareBar" style="display:none;position:sticky;bottom:1rem;z-index:10;margin-top:1rem;padding:.8rem 1rem;background:#0b1f3a;color:#fff;border-radius:14px;justify-content:space-between;align-items:center;gap:1rem;">
+      <span><strong id="marketCompareCount">0</strong>/3 selected for comparison</span>
+      <span><button type="button" id="marketCompareBtn" style="border:0;border-radius:9px;padding:.6rem .9rem;">Compare</button> <button type="button" id="marketCompareClear" style="border:1px solid rgba(255,255,255,.35);border-radius:9px;padding:.6rem .9rem;background:transparent;color:#fff;">Clear</button></span>
+    </div>
 </div>
 
 <script>
+    const marketCompare = new Map();
+    const marketCompareBar = document.getElementById('marketCompareBar');
+    const marketCompareUpdate = () => {
+      const count = marketCompare.size;
+      document.getElementById('marketCompareCount').textContent = count;
+      marketCompareBar.style.display = count ? 'flex' : 'none';
+      document.querySelectorAll('.market-compare').forEach(cb => {
+        cb.disabled = !cb.checked && count >= 3;
+      });
+    };
+    document.querySelectorAll('.market-compare').forEach(cb => cb.addEventListener('change', () => {
+      if (cb.checked && marketCompare.size >= 3) { cb.checked = false; return; }
+      if (cb.checked) marketCompare.set(cb.value, {...cb.dataset});
+      else marketCompare.delete(cb.value);
+      marketCompareUpdate();
+    }));
+    document.getElementById('marketCompareBtn').addEventListener('click', () => {
+      const items = [...marketCompare.values()];
+      if (!items.length) return;
+      const rows = [['Price','price'],['Unit','unit'],['Type','type'],['Available quantity','qty'],['Delivery days','delivery'],['Country','country']];
+      document.getElementById('marketCompare').innerHTML = '<table style="width:100%;border-collapse:collapse;min-width:600px;"><thead><tr><th style="text-align:left;padding:.65rem;">Attribute</th>' + items.map(x => '<th style="text-align:left;padding:.65rem;">' + x.name + '</th>').join('') + '</tr></thead><tbody>' + rows.map(r => '<tr><td style="font-weight:700;padding:.65rem;border-top:1px solid #e5ebf0;">' + r[0] + '</td>' + items.map(x => '<td style="padding:.65rem;border-top:1px solid #e5ebf0;">' + (r[0] === 'Price' ? '
+    // Add slide-in animation for flash messages
+    document.addEventListener('DOMContentLoaded', () => {
+        const flashMessages = document.querySelectorAll('.flash-message');
+        flashMessages.forEach((msg, index) => {
+            setTimeout(() => {
+                msg.classList.add('show');
+                setTimeout(() => {
+                    msg.classList.remove('show');
+                }, 3500 + index * 500);
+            }, index * 200);
+        });
+    });
+</script>
+{% endblock %} : '') + x[r[1]] + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
+      document.getElementById('marketCompare').style.display = 'block';
+      document.getElementById('marketCompare').scrollIntoView({behavior:'smooth',block:'start'});
+    });
+    document.getElementById('marketCompareClear').addEventListener('click', () => {
+      marketCompare.clear();
+      document.querySelectorAll('.market-compare').forEach(cb => cb.checked = false);
+      document.getElementById('marketCompare').style.display = 'none';
+      marketCompareUpdate();
+    });
+    marketCompareUpdate();
+
     // Add slide-in animation for flash messages
     document.addEventListener('DOMContentLoaded', () => {
         const flashMessages = document.querySelectorAll('.flash-message');
