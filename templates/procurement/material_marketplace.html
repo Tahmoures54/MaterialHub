@@ -2,369 +2,38 @@
 {% block title %}MaterialHub Marketplace{% endblock %}
 {% block content %}
 <style>
-    :root {
-        --primary-color: #1e3a8a;
-        --secondary-color: #3b82f6;
-        --background-color: #f3f4f6;
-        --card-bg: #ffffff;
-        --text-color: #111827;
-        --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        --border-radius: 12px;
-        --transition: all 0.3s ease;
-    }
-
-    body {
-        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
-        background-color: var(--background-color);
-        color: var(--text-color);
-        margin: 0;
-        line-height: 1.5;
-    }
-
-    .marketplace-container {
-        max-width: 1280px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-
-    /* Header */
-    .marketplace-header {
-        text-align: center;
-        padding: 50px 20px;
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        color: #fff;
-        border-radius: var(--border-radius);
-        margin-bottom: 30px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .marketplace-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.15), transparent);
-        animation: wave 10s infinite linear;
-    }
-
-    @keyframes wave {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .marketplace-header h1 {
-        font-size: 2.8rem;
-        font-weight: 700;
-        margin-bottom: 12px;
-        position: relative;
-        z-index: 1;
-    }
-
-    .marketplace-header p {
-        font-size: 1.2rem;
-        max-width: 700px;
-        margin: 0 auto;
-        opacity: 0.85;
-        position: relative;
-        z-index: 1;
-    }
-
-    /* Search Bar */
-    .search-bar {
-        margin: 25px 0;
-        display: flex;
-        justify-content: center;
-    }
-
-    .search-form {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-        width: 100%;
-        max-width: 900px;
-        align-items: center;
-    }
-
-    .search-button {
-        padding: 12px;
-        background: var(--secondary-color);
-        color: #fff;
-        border: none;
-        border-radius: var(--border-radius);
-        font-size: 1rem;
-        cursor: pointer;
-        transition: var(--transition);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 48px;
-        height: 48px;
-    }
-
-    .search-button::before {
-        content: '🔍';
-        font-size: 1.2rem;
-    }
-
-    .search-button:hover {
-        background: #2563eb;
-        transform: scale(1.05);
-    }
-
-    .search-input, .search-select {
-        padding: 12px 16px;
-        border: 1px solid #d1d5db;
-        border-radius: var(--border-radius);
-        font-size: 1rem;
-        transition: var(--transition);
-        background: #fff;
-        width: 100%;
-        max-width: 280px;
-    }
-
-    .search-select {
-        max-width: 200px;
-    }
-
-    .search-input:focus, .search-select:focus {
-        outline: none;
-        border-color: var(--secondary-color);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    /* Flash Messages */
-    .flash-container {
-        max-width: 900px;
-        margin: 20px auto;
-    }
-
-    .flash-message {
-        padding: 12px 20px;
-        border-radius: var(--border-radius);
-        margin-bottom: 12px;
-        font-size: 0.95rem;
-        opacity: 0;
-        transform: translateX(-20px);
-        transition: var(--transition);
-    }
-
-    .flash-message.show {
-        opacity: 1;
-        transform: translateX(0);
-    }
-
-    .flash-success {
-        background: #d1fae5;
-        color: #065f46;
-    }
-
-    .flash-danger {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    /* Materials Section */
-    .materials-section {
-        padding: 20px;
-    }
-
-    .materials-section h2 {
-        font-size: 2.2rem;
-        font-weight: 600;
-        text-align: center;
-        color: var(--primary-color);
-        margin-bottom: 30px;
-        position: relative;
-    }
-
-    .materials-section h2::after {
-        content: '';
-        width: 60px;
-        height: 4px;
-        background: var(--secondary-color);
-        position: absolute;
-        bottom: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-
-    .materials-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
-        animation: fadeIn 0.5s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .material-card {
-        background: var(--card-bg);
-        padding: 20px;
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow);
-        text-align: center;
-        transition: var(--transition);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .material-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: var(--secondary-color);
-        transform: scaleX(0);
-        transition: transform 0.3s ease;
-    }
-
-    .material-card:hover::before {
-        transform: scaleX(1);
-    }
-
-    .material-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-    }
-
-    .material-card h3 {
-        font-size: 1.6rem;
-        font-weight: 600;
-        color: var(--text-color);
-        margin-bottom: 12px;
-    }
-
-    .material-price, .material-unit, .material-country {
-        font-size: 1rem;
-        color: #6b7280;
-        margin: 6px 0;
-    }
-
-    .contact-button {
-        padding: 10px 20px;
-        background: var(--primary-color);
-        color: #fff;
-        border: none;
-        border-radius: var(--border-radius);
-        font-size: 0.95rem;
-        cursor: pointer;
-        transition: var(--transition);
-        width: 100%;
-        max-width: 220px;
-        margin-top: 12px;
-    }
-
-    .contact-button:hover {
-        background: #1e3a8a;
-        transform: translateY(-2px);
-    }
-
-    .no-materials {
-        text-align: center;
-        font-size: 1.2rem;
-        color: #6b7280;
-        padding: 25px;
-        background: var(--card-bg);
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow);
-        margin: 20px auto;
-        max-width: 700px;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .marketplace-container {
-            padding: 15px;
-        }
-
-        .marketplace-header {
-            padding: 40px 15px;
-        }
-
-        .marketplace-header h1 {
-            font-size: 2.2rem;
-        }
-
-        .marketplace-header p {
-            font-size: 1rem;
-        }
-
-        .search-form {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .search-button, .search-input, .search-select {
-            max-width: 100%;
-            width: 100%;
-        }
-
-        .materials-grid {
-            grid-template-columns: 1fr;
-            gap: 15px;
-        }
-
-        .material-card h3 {
-            font-size: 1.4rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .marketplace-header {
-            padding: 30px 10px;
-        }
-
-        .marketplace-header h1 {
-            font-size: 1.8rem;
-        }
-
-        .marketplace-header p {
-            font-size: 0.9rem;
-        }
-
-        .materials-section h2 {
-            font-size: 1.8rem;
-        }
-
-        .material-card {
-            padding: 15px;
-        }
-
-        .material-card h3 {
-            font-size: 1.3rem;
-        }
-
-        .contact-button {
-            padding: 8px 16px;
-            font-size: 0.9rem;
-        }
-
-        .no-materials {
-            font-size: 1rem;
-            padding: 15px;
-        }
-    }
+.marketplace-container{max-width:1200px;margin:0 auto;padding:2rem 1rem 4rem}
+.marketplace-header{position:relative;overflow:hidden;text-align:left;padding:clamp(2rem,5vw,3.75rem);background:linear-gradient(135deg,#0b1f3a,#123d5a 55%,#0b7180);color:#fff;border-radius:28px;margin-bottom:1.2rem;box-shadow:0 20px 55px rgba(11,31,58,.16)}
+.marketplace-header h1{position:relative;z-index:1;font-size:clamp(2rem,4vw,3.25rem);line-height:1.05;margin:.8rem 0}.marketplace-header p{position:relative;z-index:1;max-width:760px;margin:0;color:rgba(255,255,255,.84);font-size:1.05rem}
+.marketplace-header .market-note{position:relative;z-index:1;margin-top:1rem;color:rgba(255,255,255,.7);font-size:.9rem}
+.search-bar{background:#fff;border:1px solid rgba(11,31,58,.09);border-radius:22px;padding:1rem;box-shadow:0 10px 35px rgba(11,31,58,.07);margin:0 0 1.5rem}
+.search-form{display:grid;grid-template-columns:1fr 220px auto;gap:.75rem;align-items:end;max-width:none}
+.search-input-group{display:contents}.search-input,.search-select{width:100%;max-width:none;box-sizing:border-box;border:1px solid #d5dee7;border-radius:12px;padding:.78rem .9rem;background:#fbfcfe}
+.search-input:focus,.search-select:focus{outline:2px solid rgba(12,145,154,.2);border-color:#0c919a}
+.search-button{width:auto;height:44px;padding:.7rem 1.1rem;border-radius:12px;background:#0b7180;color:#fff;border:0}
+.materials-section{padding:0}.materials-section h2{text-align:left;font-size:1.6rem;color:#0b1f3a;margin:0 0 .9rem}.materials-section h2:after{display:none}
+.materials-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.material-card{background:#fff;padding:1.25rem;border:1px solid rgba(11,31,58,.09);border-radius:20px;box-shadow:0 8px 28px rgba(11,31,58,.06);text-align:left;display:flex;flex-direction:column}
+.material-card:before{display:none}.material-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(11,31,58,.1)}
+.material-card h3{font-size:1.15rem;color:#102a43;margin:0 0 1rem}.material-price,.material-unit,.material-country{font-size:.92rem;color:#627487;margin:.45rem 0}
+.contact-button{width:100%;max-width:none;margin-top:auto;padding:.75rem 1rem;background:#0b7180;border:0;border-radius:12px;color:#fff}
+.contact-button:hover{background:#095e69}
+.no-materials{text-align:center;padding:2.5rem 1.25rem;background:#fff;border:1px dashed #ccd8e2;border-radius:20px;color:#637487;box-shadow:none}
+@media(max-width:900px){.materials-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.search-form{grid-template-columns:1fr 1fr}.search-button{grid-column:1/-1;width:100%}}
+@media(max-width:620px){.marketplace-container{padding:1rem .75rem 3rem}.materials-grid{grid-template-columns:1fr}.search-form{grid-template-columns:1fr}.search-button{grid-column:auto}.marketplace-header{padding:2rem 1.25rem}.marketplace-header h1{font-size:2.1rem}}
 </style>
 
 <div class="marketplace-container">
     <!-- Marketplace Header -->
     <header class="marketplace-header">
         <h1>MaterialHub Marketplace</h1>
-        <p>Connect with global suppliers for top-quality materials</p>
+        <p>Discover supplier-listed materials without losing procurement control</p>
+        <div class="market-note">Use the marketplace to discover materials. Keep approved purchasing, delivery, warehouse receipt and reconciliation inside MaterialHub.</div>
     </header>
 
     <!-- Advanced Search Bar -->
     <div class="search-bar">
-        <form class="search-form" method="GET" action="{{ url_for('supplier.material_marketplace') }}">
+        <form class="search-form" method="GET" action="{{ url_for('material_marketplace') }}">
             {{ form.hidden_tag() }}
             <div class="search-input-group">
                 {{ form.submit(class="search-button") }}
@@ -388,7 +57,7 @@
     <!-- Main Marketplace Section -->
     <main class="marketplace-main">
         <section class="materials-section">
-            <h2>Available Materials</h2>
+            <h2>Available materials</h2>
             {% if materials %}
                 <div class="materials-grid">
                     {% for material in materials %}
@@ -397,7 +66,7 @@
                             <p class="material-price">Price: ${{ '%.2f'|format(material.price or 0) }}</p>
                             <p class="material-unit">Unit: {{ material.unit }}</p>
                             <p class="material-country">Country: {{ COUNTRY_NAMES_BY_CODE.get(material.country_code, 'Unknown') }}</p>
-                            <button class="contact-button" onclick="window.location.href='{{ url_for('contact_support') }}?material={{ material.id }}'">Contact Supplier</button>
+                            <button class="contact-button" onclick="window.location.href='{{ url_for('contact_support') }}?material={{ material.id }}'">Ask about this material</button>
                         </div>
                     {% endfor %}
                 </div>
