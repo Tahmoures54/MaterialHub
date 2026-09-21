@@ -98,8 +98,8 @@ def register():
                 qr_code_base64=None,
                 totp_confirmed=False,
                 project_id=None,
-                trial_started_at=datetime.now(pytz.UTC),
-                trial_ends_at=datetime.now(pytz.UTC) + timedelta(days=45),
+                trial_started_at=None,
+                trial_ends_at=None,
                 subscription_plan='trial',
                 subscription_status='trial'
             )
@@ -174,6 +174,11 @@ def confirm_totp():
         totp = pyotp.TOTP(user.decrypt_totp_secret())
         if totp.verify(form.totp_code.data) and form.totp_confirmed.data:
             user.totp_confirmed = True
+            trial_started = datetime.now(pytz.UTC)
+            user.trial_started_at = trial_started
+            user.trial_ends_at = trial_started + timedelta(days=45)
+            user.subscription_plan = 'trial'
+            user.subscription_status = 'trial'
             db.session.commit()
             session.pop('pending_user_id', None)
             logger.info(f"TOTP confirmed for user: {user.company_email} (ID: {user.id}, IP: {request.remote_addr})")
