@@ -1085,9 +1085,7 @@ class MaterialRequest(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
     creator = db.relationship('User', foreign_keys=[created_by])
-    __table_args__ = (db.UniqueConstraint('request_no', 'company_name', name='uq_material_request_no_company'),)
-
-, kwargs['warehouse_id']):
+    __table_args__ = (db.UniqueConstraint('request_no', 'company_name', name='uq_material_request_no_company'),), kwargs['warehouse_id']):
             raise ValidationError('Warehouse ID must be in format WH-XXXX (letters, numbers, or hyphens)')
         if 'received_qty' in kwargs and kwargs['received_qty'] <= 0:
             raise ValidationError('Received quantity must be positive')
@@ -1537,4 +1535,3 @@ class MaterialRequest(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
     creator = db.relationship('User', foreign_keys=[created_by])
     __table_args__ = (db.UniqueConstraint('request_no', 'company_name', name='uq_material_request_no_company'),)
-
