@@ -1,6 +1,6 @@
 import enum
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import pytz
 import base64
 import hashlib
@@ -870,6 +870,10 @@ class User(db.Model, UserMixin):
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True, index=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    trial_started_at = db.Column(db.DateTime, nullable=True, index=True)
+    trial_ends_at = db.Column(db.DateTime, nullable=True, index=True)
+    subscription_plan = db.Column(db.String(30), nullable=False, default='trial')
+    subscription_status = db.Column(db.String(20), nullable=False, default='trial')
     project = db.relationship('Project', backref=db.backref('users', lazy=True))
 
     def __init__(self, **kwargs):
@@ -982,6 +986,28 @@ class User(db.Model, UserMixin):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
+
+    @property
+    def trial_active(self):
+        if self.subscription_status == 'active':
+            return True
+        if self.subscription_status != 'trial' or not self.trial_ends_at:
+            return False
+        end = self.trial_ends_at
+        if end.tzinfo is None:
+            end = pytz.UTC.localize(end)
+        return datetime.now(pytz.UTC) < end
+
+    @property
+    def trial_days_remaining(self):
+        if self.subscription_status == 'active':
+            return None
+        if not self.trial_ends_at:
+            return 0
+        end = self.trial_ends_at
+        if end.tzinfo is None:
+            end = pytz.UTC.localize(end)
+        return max(0, (end - datetime.now(pytz.UTC)).days)
 
     @property
     def is_active(self):
