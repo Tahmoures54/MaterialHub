@@ -5,404 +5,64 @@
 <style>
   .lp { max-width: 1120px; margin: 0 auto; }
 
-  /* Hero */
   .lp-hero {
-    position: relative;
-    overflow: hidden;
-    border-radius: 16px;
-    border: 1px solid #CBD5E1;
-    background:
-      radial-gradient(ellipse 80% 60% at 85% 10%, rgba(8, 145, 178, 0.14), transparent 55%),
-      radial-gradient(ellipse 50% 40% at 10% 90%, rgba(14, 116, 144, 0.08), transparent 50%),
-      linear-gradient(160deg, #F0FDFF 0%, #F8FAFC 45%, #FFFFFF 100%);
-    padding: clamp(2.25rem, 5vw, 3.75rem) clamp(1.5rem, 4vw, 3rem);
-    margin-bottom: 1.75rem;
+    position: relative; overflow: hidden; border-radius: 16px; border: 1px solid #CBD5E1;
+    background: radial-gradient(ellipse 80% 60% at 85% 10%, rgba(8,145,178,.14), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 10% 90%, rgba(14,116,144,.08), transparent 50%),
+      linear-gradient(160deg,#F0FDFF 0%,#F8FAFC 45%,#FFFFFF 100%);
+    padding: clamp(2.25rem,5vw,3.75rem) clamp(1.5rem,4vw,3rem); margin-bottom:1.75rem;
   }
-  .lp-hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.35rem 0.75rem;
-    border-radius: 999px;
-    background: #ECFEFF;
-    border: 1px solid #A5F3FC;
-    color: #0E7490;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    margin-bottom: 1.15rem;
-  }
-  .lp-hero h1 {
-    margin: 0 0 1rem;
-    font-size: clamp(1.85rem, 4.2vw, 3.1rem);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1.12;
-    color: #0F172A;
-  }
-  .lp-hero h1 span { color: #0E7490; }
-  .lp-hero-lead {
-    margin: 0;
-    max-width: 560px;
-    font-size: 1.05rem;
-    line-height: 1.65;
-    color: #64748B;
-  }
-  .lp-hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1.85rem;
-  }
-  .lp-hero-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #E2E8F0;
-  }
-  .lp-hero-meta div strong {
-    display: block;
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: #0F172A;
-    letter-spacing: -0.02em;
-  }
-  .lp-hero-meta div span {
-    font-size: 0.8rem;
-    color: #64748B;
-    font-weight: 500;
-  }
+  .lp-hero-badge { display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .75rem; border-radius:999px; background:#ECFEFF; border:1px solid #A5F3FC; color:#0E7490; font-size:.75rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-bottom:1.15rem; }
+  .lp-hero h1 { margin:0 0 1rem; font-size:clamp(1.85rem,4.2vw,3.1rem); font-weight:800; letter-spacing:-.03em; line-height:1.12; color:#0F172A; }
+  .lp-hero h1 span { color:#0E7490; }
+  .lp-hero-lead { margin:0; max-width:560px; font-size:1.05rem; line-height:1.65; color:#64748B; }
+  .lp-hero-actions { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:1.85rem; }
+  .lp-hero-meta { display:flex; flex-wrap:wrap; gap:1.5rem; margin-top:2rem; padding-top:1.5rem; border-top:1px solid #E2E8F0; }
+  .lp-hero-meta div strong { display:block; font-size:1.35rem; font-weight:800; color:#0F172A; letter-spacing:-.02em; }
+  .lp-hero-meta div span { font-size:.8rem; color:#64748B; font-weight:500; }
 
   .lp-hero-grid { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr); gap:2rem; align-items:center; }
-  .lp-hero-banner { position:relative; min-height:270px; border-radius:16px; overflow:hidden; background:linear-gradient(145deg,#0B1622,#122033 55%,#0E4A5C); box-shadow:0 12px 30px rgba(15,23,42,.12); }
-  .lp-banner-slide { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:2rem; opacity:0; transform:translateX(24px); pointer-events:none; transition:opacity .35s ease,transform .35s ease; }
-  .lp-banner-slide.is-active { opacity:1; transform:translateX(0); pointer-events:auto; z-index:1; }
-  .lp-banner-icon { width:58px; height:58px; border-radius:14px; background:rgba(8,145,178,.22); border:1px solid rgba(56,189,248,.25); color:#67E8F9; display:grid; place-items:center; font-size:1.4rem; margin-bottom:1rem; }
-  .lp-banner-label { font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#67E8F9; margin-bottom:.4rem; }
-  .lp-banner-slide h3 { margin:0 0 .5rem; font-size:1.35rem; color:#F8FAFC; }
-  .lp-banner-slide p { margin:0; color:#94A3B8; line-height:1.6; font-size:.9rem; }
-  .lp-banner-nav { position:absolute; bottom:14px; left:1.5rem; right:1.5rem; display:flex; justify-content:space-between; align-items:center; z-index:2; }
-  .lp-banner-dots { display:flex; gap:6px; }
-  .lp-banner-dot { width:7px; height:7px; border:0; border-radius:50%; padding:0; background:rgba(148,163,184,.4); cursor:pointer; }
-  .lp-banner-dot.is-active { width:20px; border-radius:4px; background:#22D3EE; }
-  .lp-banner-btns { display:flex; gap:6px; }
-  .lp-banner-btn { width:30px; height:30px; border-radius:8px; border:1px solid rgba(148,163,184,.35); background:rgba(15,23,42,.35); color:#E2E8F0; cursor:pointer; }
-  .lp-banner-progress { position:absolute; bottom:0; left:0; height:3px; width:0; background:#22D3EE; z-index:3; }
-  .lp-banner-progress.is-running { animation:lp-progress 2.8s linear forwards; }
-  @keyframes lp-progress { from{width:0} to{width:100%} }
+  .lp-hero-visual { position:relative; min-height:360px; border-radius:16px; overflow:hidden; background:#0B1622; box-shadow:0 14px 34px rgba(15,23,42,.16); isolation:isolate; }
+  .lp-hero-visual img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; z-index:-2; }
+  .lp-hero-visual::after { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(180deg,rgba(11,22,34,.08) 5%,rgba(11,22,34,.18) 45%,rgba(11,22,34,.82) 100%); }
+  .lp-visual-caption { position:absolute; left:1.25rem; right:1.25rem; bottom:1.15rem; color:#F8FAFC; }
+  .lp-visual-kicker { display:inline-block; padding:.3rem .6rem; border-radius:999px; background:rgba(8,145,178,.78); border:1px solid rgba(103,232,249,.35); font-size:.68rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; margin-bottom:.55rem; }
+  .lp-visual-caption h3 { margin:0 0 .3rem; font-size:1.25rem; font-weight:800; }
+  .lp-visual-caption p { margin:0; max-width:430px; color:#D6E4EC; font-size:.84rem; line-height:1.5; }
 
-  /* Section */
-  .lp-section { margin-bottom: 1.75rem; }
-  .lp-section-head { margin-bottom: 1.15rem; }
-  .lp-section-head h2 {
-    margin: 0 0 0.35rem;
-    font-size: 1.35rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: #0F172A;
-  }
-  .lp-section-head p {
-    margin: 0;
-    font-size: 0.95rem;
-    color: #64748B;
-    max-width: 520px;
-  }
+  .lp-section { margin-bottom:1.75rem; }
+  .lp-section-head { margin-bottom:1.15rem; }
+  .lp-section-head h2 { margin:0 0 .35rem; font-size:1.35rem; font-weight:800; letter-spacing:-.02em; color:#0F172A; }
+  .lp-section-head p { margin:0; font-size:.95rem; color:#64748B; max-width:520px; }
 
-  /* First section — banner opens the page */
-  .lp-section-first {
-    margin-bottom: 1.5rem;
-  }
-  .lp-section-first .lp-section-head {
-    margin-bottom: 0.85rem;
-  }
+  .lp-flow { background:#fff; border:1px solid #E2E8F0; border-radius:12px; padding:1.5rem 1.35rem; box-shadow:0 1px 3px rgba(15,23,42,.04); }
+  .lp-flow-steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr)); gap:.75rem; margin-top:1.15rem; }
+  .lp-step { text-align:center; padding:1rem .75rem; border-radius:10px; background:#F8FAFC; border:1px solid #E2E8F0; }
+  .lp-step-num { width:28px; height:28px; margin:0 auto .55rem; border-radius:50%; background:#0E7490; color:#fff; font-size:.8rem; font-weight:800; display:grid; place-items:center; }
+  .lp-step strong { display:block; font-size:.88rem; font-weight:700; color:#0F172A; margin-bottom:.2rem; }
+  .lp-step span { font-size:.75rem; color:#64748B; }
 
-  /* Capability banner carousel */
-  .lp-banner {
-    position: relative;
-    border-radius: 14px;
-    overflow: hidden;
-    border: 1px solid #CBD5E1;
-    background: linear-gradient(135deg, #0B1622 0%, #122033 50%, #0E4A5C 100%);
-    min-height: 200px;
-  }
-  .lp-banner-track {
-    position: relative;
-    min-height: 200px;
-  }
-  .lp-banner-slide {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    padding: 1.75rem 1.75rem 2.5rem;
-    opacity: 0;
-    transform: translateX(28px);
-    pointer-events: none;
-    transition: opacity 0.32s ease, transform 0.32s ease;
-  }
-  .lp-banner-slide.is-active {
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
-    z-index: 1;
-  }
-  .lp-banner-slide.is-exit {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  .lp-banner-icon {
-    flex-shrink: 0;
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
-    background: rgba(8, 145, 178, 0.22);
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    color: #67E8F9;
-    display: grid;
-    place-items: center;
-    font-size: 1.55rem;
-  }
-  .lp-banner-body { min-width: 0; flex: 1; }
-  .lp-banner-label {
-    display: inline-block;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #67E8F9;
-    margin-bottom: 0.4rem;
-  }
-  .lp-banner-body h3 {
-    margin: 0 0 0.45rem;
-    font-size: clamp(1.15rem, 2.5vw, 1.45rem);
-    font-weight: 800;
-    color: #F8FAFC;
-    letter-spacing: -0.02em;
-  }
-  .lp-banner-body p {
-    margin: 0;
-    font-size: 0.95rem;
-    line-height: 1.55;
-    color: #94A3B8;
-    max-width: 520px;
-  }
-  .lp-banner-nav {
-    position: absolute;
-    bottom: 14px;
-    left: 1.75rem;
-    right: 1.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    z-index: 2;
-  }
-  .lp-banner-dots {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
-  .lp-banner-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    border: 0;
-    padding: 0;
-    background: rgba(148, 163, 184, 0.4);
-    cursor: pointer;
-    transition: background 0.2s, transform 0.2s, width 0.2s;
-  }
-  .lp-banner-dot.is-active {
-    background: #22D3EE;
-    width: 20px;
-    border-radius: 4px;
-  }
-  .lp-banner-progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    width: 0%;
-    background: linear-gradient(90deg, #0891B2, #22D3EE);
-    z-index: 3;
-  }
-  .lp-banner-progress.is-running {
-    animation: lp-progress 2.4s linear forwards;
-  }
-  @keyframes lp-progress {
-    from { width: 0%; }
-    to { width: 100%; }
-  }
-  .lp-banner-btns {
-    display: flex;
-    gap: 6px;
-  }
-  .lp-banner-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: rgba(15, 23, 42, 0.35);
-    color: #E2E8F0;
-    cursor: pointer;
-    display: grid;
-    place-items: center;
-    font-size: 0.75rem;
-    transition: background 0.15s, border-color 0.15s;
-  }
-  .lp-banner-btn:hover {
-    background: rgba(8, 145, 178, 0.35);
-    border-color: #22D3EE;
-  }
+  .lp-roles { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr)); gap:.85rem; }
+  .lp-role { background:#fff; border:1px solid #E2E8F0; border-radius:12px; padding:1.15rem 1.2rem; border-left:3px solid #0E7490; transition:box-shadow .15s; }
+  .lp-role:hover { box-shadow:0 6px 18px rgba(15,23,42,.06); }
+  .lp-role strong { display:block; font-size:.95rem; font-weight:700; color:#0F172A; margin-bottom:.3rem; }
+  .lp-role p { margin:0; font-size:.82rem; color:#64748B; line-height:1.45; }
 
-  @media (max-width: 800px) { .lp-hero-grid { grid-template-columns:1fr; } .lp-hero-banner { min-height:235px; } }
+  .lp-cta { border-radius:16px; padding:clamp(2rem,4vw,2.75rem); text-align:center; background:linear-gradient(145deg,#0B1622 0%,#122033 55%,#0E7490 160%); border:none; position:relative; overflow:hidden; }
+  .lp-cta::before { content:""; position:absolute; top:-30%; right:-10%; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle,rgba(8,145,178,.25),transparent 70%); pointer-events:none; }
+  .lp-cta h2 { margin:0 0 .5rem; font-size:clamp(1.25rem,3vw,1.6rem); font-weight:800; color:#F8FAFC; letter-spacing:-.02em; position:relative; }
+  .lp-cta p { margin:0 0 1.5rem; color:#94A3B8; font-size:.95rem; position:relative; }
+  .lp-cta .btn { position:relative; background:#0891B2; border-color:#0891B2; }
+  .lp-cta .btn:hover { background:#0E7490; border-color:#0E7490; }
+  .lp-cta-secondary { margin-left:.5rem; background:transparent!important; border:1px solid rgba(148,163,184,.45)!important; color:#E2E8F0!important; }
+  .lp-cta-secondary:hover { background:rgba(255,255,255,.06)!important; border-color:#94A3B8!important; }
 
-  @media (max-width: 600px) {
-    .lp-banner-slide {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1rem;
-      padding: 1.35rem 1.25rem 2.75rem;
-    }
-    .lp-banner-track { min-height: 240px; }
-    .lp-banner { min-height: 240px; }
-    .lp-banner-nav { left: 1.25rem; right: 1.25rem; }
-  }
-
-  /* Flow */
-  .lp-flow {
-    background: #fff;
-    border: 1px solid #E2E8F0;
-    border-radius: 12px;
-    padding: 1.5rem 1.35rem;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-  }
-  .lp-flow-steps {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
-    gap: 0.75rem;
-    margin-top: 1.15rem;
-  }
-  .lp-step {
-    text-align: center;
-    padding: 1rem 0.75rem;
-    border-radius: 10px;
-    background: #F8FAFC;
-    border: 1px solid #E2E8F0;
-  }
-  .lp-step-num {
-    width: 28px;
-    height: 28px;
-    margin: 0 auto 0.55rem;
-    border-radius: 50%;
-    background: #0E7490;
-    color: #fff;
-    font-size: 0.8rem;
-    font-weight: 800;
-    display: grid;
-    place-items: center;
-  }
-  .lp-step strong {
-    display: block;
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: #0F172A;
-    margin-bottom: 0.2rem;
-  }
-  .lp-step span { font-size: 0.75rem; color: #64748B; }
-
-  /* Roles */
-  .lp-roles {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
-    gap: 0.85rem;
-  }
-  .lp-role {
-    background: #fff;
-    border: 1px solid #E2E8F0;
-    border-radius: 12px;
-    padding: 1.15rem 1.2rem;
-    border-left: 3px solid #0E7490;
-    transition: box-shadow 0.15s;
-  }
-  .lp-role:hover { box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06); }
-  .lp-role strong {
-    display: block;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #0F172A;
-    margin-bottom: 0.3rem;
-  }
-  .lp-role p {
-    margin: 0;
-    font-size: 0.82rem;
-    color: #64748B;
-    line-height: 1.45;
-  }
-
-  /* CTA */
-  .lp-cta {
-    border-radius: 16px;
-    padding: clamp(2rem, 4vw, 2.75rem);
-    text-align: center;
-    background: linear-gradient(145deg, #0B1622 0%, #122033 55%, #0E7490 160%);
-    border: none;
-    position: relative;
-    overflow: hidden;
-  }
-  .lp-cta::before {
-    content: "";
-    position: absolute;
-    top: -30%;
-    right: -10%;
-    width: 280px;
-    height: 280px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(8, 145, 178, 0.25), transparent 70%);
-    pointer-events: none;
-  }
-  .lp-cta h2 {
-    margin: 0 0 0.5rem;
-    font-size: clamp(1.25rem, 3vw, 1.6rem);
-    font-weight: 800;
-    color: #F8FAFC;
-    letter-spacing: -0.02em;
-    position: relative;
-  }
-  .lp-cta p {
-    margin: 0 0 1.5rem;
-    color: #94A3B8;
-    font-size: 0.95rem;
-    position: relative;
-  }
-  .lp-cta .btn {
-    position: relative;
-    background: #0891B2;
-    border-color: #0891B2;
-  }
-  .lp-cta .btn:hover {
-    background: #0E7490;
-    border-color: #0E7490;
-  }
-  .lp-cta-secondary {
-    margin-left: 0.5rem;
-    background: transparent !important;
-    border: 1px solid rgba(148, 163, 184, 0.45) !important;
-    color: #E2E8F0 !important;
-  }
-  .lp-cta-secondary:hover {
-    background: rgba(255,255,255,0.06) !important;
-    border-color: #94A3B8 !important;
-  }
+  @media (max-width:800px) { .lp-hero-grid { grid-template-columns:1fr; } .lp-hero-visual { min-height:280px; } }
+  @media (max-width:600px) { .lp-hero-actions { flex-direction:column; align-items:stretch; } .lp-hero-meta { gap:1rem; } .lp-hero-visual { min-height:250px; } }
 </style>
 {% endblock %}
 {% block content %}
 <div class="lp">
-
-  <!-- 2. Hero -->
   <section class="lp-hero">
     <div class="lp-hero-grid">
       <div>
@@ -419,107 +79,54 @@
           <div><strong>Role-ready</strong><span>PM · Procurement · WH · QC</span></div>
         </div>
       </div>
-      <div class="lp-hero-banner" id="lp-banner" aria-roledescription="carousel" aria-label="MaterialHub capabilities">
-        <div class="lp-banner-progress" id="lp-banner-progress"></div>
-        <div class="lp-banner-slide is-active"><div class="lp-banner-icon"><i class="fas fa-balance-scale"></i></div><span class="lp-banner-label">01 / 06 · Material Control</span><h3>Stop asking where the material is.</h3><p>See required, ordered and received quantities together — and surface shortages before they become surprises.</p></div>
-        <div class="lp-banner-slide"><div class="lp-banner-icon"><i class="fas fa-file-invoice-dollar"></i></div><span class="lp-banner-label">02 / 06 · Procurement</span><h3>Keep MR, RFQ and PO connected.</h3><p>Move from engineering demand to purchasing without losing the reason, quantity or deadline behind the order.</p></div>
-        <div class="lp-banner-slide"><div class="lp-banner-icon"><i class="fas fa-truck"></i></div><span class="lp-banner-label">03 / 06 · Delivery</span><h3>Know what was shipped — and what arrived.</h3><p>Keep delivery status separate from the physical warehouse receipt so the numbers tell the same story.</p></div>
-        <div class="lp-banner-slide"><div class="lp-banner-icon"><i class="fas fa-warehouse"></i></div><span class="lp-banner-label">04 / 06 · Warehouse</span><h3>Make physical stock visible.</h3><p>Record actual receipts, locations and material identity instead of relying on messages or someone’s memory.</p></div>
-        <div class="lp-banner-slide"><div class="lp-banner-icon"><i class="fas fa-qrcode"></i></div><span class="lp-banner-label">05 / 06 · Traceability</span><h3>Follow the material through the project.</h3><p>Keep QR, heat, lot, serial and supporting quality information connected to the material record.</p></div>
-        <div class="lp-banner-slide"><div class="lp-banner-icon"><i class="fas fa-users"></i></div><span class="lp-banner-label">06 / 06 · Team Control</span><h3>The status should not live with one person.</h3><p>When someone is on leave, in a meeting or on another site, the project should still have access to the latest material status.</p></div>
-        <div class="lp-banner-nav"><div class="lp-banner-dots" id="lp-banner-dots"></div><div class="lp-banner-btns"><button type="button" class="lp-banner-btn" id="lp-banner-prev" aria-label="Previous"><i class="fas fa-chevron-left"></i></button><button type="button" class="lp-banner-btn" id="lp-banner-next" aria-label="Next"><i class="fas fa-chevron-right"></i></button></div></div>
+      <div class="lp-hero-visual" aria-label="Global logistics and container supply chain">
+        <img src="{{ url_for('static', filename='images/pic_1.png') }}" alt="Large container ship carrying containers across the ocean">
+        <div class="lp-visual-caption">
+          <span class="lp-visual-kicker">Supply chain → project control</span>
+          <h3>Material moves. Your team stays in control.</h3>
+          <p>From a global shipment to a project warehouse, keep the material story visible without turning the homepage into a dashboard.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- 3. Operating flow -->
   <section class="lp-section">
     <div class="lp-flow">
-      <div class="lp-section-head" style="margin-bottom: 0;">
+      <div class="lp-section-head" style="margin-bottom:0;">
         <h2>How materials move</h2>
         <p>A single operational chain — no disconnected spreadsheets.</p>
       </div>
       <div class="lp-flow-steps">
-        <div class="lp-step">
-          <div class="lp-step-num">1</div>
-          <strong>Demand</strong>
-          <span>Requisition</span>
-        </div>
-        <div class="lp-step">
-          <div class="lp-step-num">2</div>
-          <strong>Source</strong>
-          <span>RFQ → PO</span>
-        </div>
-        <div class="lp-step">
-          <div class="lp-step-num">3</div>
-          <strong>Deliver</strong>
-          <span>Inbound logistics</span>
-        </div>
-        <div class="lp-step">
-          <div class="lp-step-num">4</div>
-          <strong>Receive</strong>
-          <span>QC & stock</span>
-        </div>
-        <div class="lp-step">
-          <div class="lp-step-num">5</div>
-          <strong>Issue</strong>
-          <span>To site / job</span>
-        </div>
+        <div class="lp-step"><div class="lp-step-num">1</div><strong>Demand</strong><span>Requisition</span></div>
+        <div class="lp-step"><div class="lp-step-num">2</div><strong>Source</strong><span>RFQ → PO</span></div>
+        <div class="lp-step"><div class="lp-step-num">3</div><strong>Deliver</strong><span>Inbound logistics</span></div>
+        <div class="lp-step"><div class="lp-step-num">4</div><strong>Receive</strong><span>QC & stock</span></div>
+        <div class="lp-step"><div class="lp-step-num">5</div><strong>Issue</strong><span>To site / job</span></div>
       </div>
     </div>
   </section>
 
-  <!-- 4. Roles -->
   <section class="lp-section">
     <div class="lp-section-head">
       <h2>Built for the people who move projects</h2>
       <p>Role-based workspaces keep every function focused on what matters.</p>
     </div>
     <div class="lp-roles">
-      <div class="lp-role">
-        <strong>Project Manager</strong>
-        <p>Schedule exposure, readiness and recovery actions in one view.</p>
-      </div>
-      <div class="lp-role">
-        <strong>Procurement</strong>
-        <p>RFQ → Quote → PO → supplier recovery without losing context.</p>
-      </div>
-      <div class="lp-role">
-        <strong>Warehouse</strong>
-        <p>Receive → locate → issue with full material identity.</p>
-      </div>
-      <div class="lp-role">
-        <strong>Quality</strong>
-        <p>Inspect → document → release against the same record.</p>
-      </div>
+      <div class="lp-role"><strong>Project Manager</strong><p>Schedule exposure, readiness and recovery actions in one view.</p></div>
+      <div class="lp-role"><strong>Procurement</strong><p>RFQ → Quote → PO → supplier recovery without losing context.</p></div>
+      <div class="lp-role"><strong>Warehouse</strong><p>Receive → locate → issue with full material identity.</p></div>
+      <div class="lp-role"><strong>Quality</strong><p>Inspect → document → release against the same record.</p></div>
     </div>
   </section>
 
-  <!-- 5. CTA -->
   <section class="lp-cta">
     <h2>Ready to run materials with control?</h2>
     <p>Start free. Scale when your projects demand it.</p>
     <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}">Create account</a>
     <a class="btn btn-lg lp-cta-secondary" href="{{ url_for('growth.demo') }}">View demo</a>
   </section>
-
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-(function(){
-  var INTERVAL=2800,root=document.getElementById('lp-banner');if(!root)return;
-  var slides=[].slice.call(root.querySelectorAll('.lp-banner-slide')),dotsWrap=document.getElementById('lp-banner-dots'),progress=document.getElementById('lp-banner-progress'),prev=document.getElementById('lp-banner-prev'),next=document.getElementById('lp-banner-next'),i=0,timer=null,paused=false;
-  slides.forEach(function(_,idx){var d=document.createElement('button');d.type='button';d.className='lp-banner-dot'+(idx===0?' is-active':'');d.setAttribute('aria-label','Slide '+(idx+1));d.addEventListener('click',function(){go(idx);});dotsWrap.appendChild(d);});
-  var dots=[].slice.call(dotsWrap.children);
-  function progressRun(){progress.classList.remove('is-running');void progress.offsetWidth;progress.classList.add('is-running');}
-  function schedule(){clearTimeout(timer);if(!paused)timer=setTimeout(function(){go(i+1);},INTERVAL);}
-  function go(n){var old=i;slides[old].classList.remove('is-active');i=(n+slides.length)%slides.length;slides[i].classList.add('is-active');dots[old].classList.remove('is-active');dots[i].classList.add('is-active');progressRun();schedule();}
-  function pause(){paused=true;clearTimeout(timer);progress.classList.remove('is-running');}
-  function resume(){paused=false;progressRun();schedule();}
-  prev.addEventListener('click',function(){go(i-1);});next.addEventListener('click',function(){go(i+1);});root.addEventListener('mouseenter',pause);root.addEventListener('mouseleave',resume);root.addEventListener('focusin',pause);root.addEventListener('focusout',function(e){if(!root.contains(e.relatedTarget))resume();});
-  progressRun();schedule();
-})();
-</script>
 {% endblock %}
