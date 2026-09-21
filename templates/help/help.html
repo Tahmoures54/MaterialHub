@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Help Center{% endblock %}
+{% block meta_description %}MaterialHub Help Center — practical guidance for material requests, procurement, delivery, warehouse, reconciliation, traceability and reports.{% endblock %}
+{% block content %}
+<style>
+.hc-hero{background:linear-gradient(135deg,#102a43,#167d9a);color:#fff;border-radius:24px;padding:30px;margin-bottom:22px}.hc-hero h1{margin:7px 0}.hc-hero p{max-width:800px;line-height:1.6;opacity:.9}.hc-search{max-width:700px}.hc-search input{width:100%;padding:12px;border:0;border-radius:10px;font-size:15px}.hc-title{margin:28px 0 12px}.hc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.hc-card{background:#fff;border:1px solid #e3edf1;border-radius:17px;padding:19px;text-decoration:none;color:inherit;box-shadow:0 7px 24px rgba(16,42,67,.06)}.hc-card:hover{transform:translateY(-2px);border-color:#b9dce6}.hc-icon{width:38px;height:38px;border-radius:10px;background:#ecfeff;color:#0e7490;display:grid;place-items:center;margin-bottom:12px}.hc-card h3{margin:0 0 6px}.hc-card p{margin:0;color:#60727d;line-height:1.55;font-size:14px}.hc-flow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.hc-flow span{background:#f4fafc;border:1px solid #dcecf1;padding:9px 12px;border-radius:9px;font-weight:700}.hc-tip{margin-top:18px;padding:15px;background:#f5fafc;border-left:4px solid #0e7490;border-radius:10px;color:#526b76}.hc-table{width:100%;border-collapse:collapse}.hc-table th,.hc-table td{text-align:left;padding:12px;border-bottom:1px solid #edf2f5}
+</style>
+<section class="hc-hero"><div style="font-size:12px;letter-spacing:.12em;opacity:.75">MATERIALHUB SUPPORT</div><h1>Help Center</h1><p>Practical guidance for keeping material operations simple, visible and under control — from Engineering demand to purchasing, delivery, warehouse receipt and reporting.</p><form class="hc-search" onsubmit="return false"><input id="hcSearch" type="search" placeholder="Search help…" aria-label="Search help"></form></section>
+<h2 class="hc-title">Start here</h2><div class="hc-grid">
+<a class="hc-card" href="{{ url_for('help.getting_started') }}"><div class="hc-icon"><i class="fas fa-rocket"></i></div><h3>Getting Started</h3><p>Set up a project and follow the core workflow step by step.</p></a>
+<a class="hc-card" href="{{ url_for('help.user_guide') }}"><div class="hc-icon"><i class="fas fa-book"></i></div><h3>User Guide</h3><p>Role-based instructions for Engineering, Procurement, Delivery, Quality and Warehouse.</p></a>
+<a class="hc-card" href="{{ url_for('help.about') }}"><div class="hc-icon"><i class="fas fa-info-circle"></i></div><h3>About MaterialHub</h3><p>Understand the product scope and simple operating philosophy.</p></a>
+</div>
+<h2 class="hc-title">Core workflows</h2><div class="hc-grid">
+<a class="hc-card" href="{{ url_for('material_requisitions.material_requisitions') }}"><div class="hc-icon"><i class="fas fa-clipboard-list"></i></div><h3>Material Requisitions</h3><p>Record Engineering requirements, quantities, projects and required dates.</p></a>
+<a class="hc-card" href="{{ url_for('purchase_order.purchase_order') }}"><div class="hc-icon"><i class="fas fa-file-invoice-dollar"></i></div><h3>Purchase Orders</h3><p>Track ordered quantities, supplier commitments and expected delivery.</p></a>
+<a class="hc-card" href="{{ url_for('delivery.delivery_order') }}"><div class="hc-icon"><i class="fas fa-truck"></i></div><h3>Delivery</h3><p>Follow shipments and connect delivery information with warehouse receipts.</p></a>
+<a class="hc-card" href="{{ url_for('warehouse.warehouse_operations') }}"><div class="hc-icon"><i class="fas fa-warehouse"></i></div><h3>Warehouse</h3><p>Record actual receipts, locations and material status.</p></a>
+<a class="hc-card" href="{{ url_for('material_reconciliation.dashboard') }}"><div class="hc-icon"><i class="fas fa-balance-scale"></i></div><h3>Material Reconciliation</h3><p>Compare MR, PO, Delivery and Warehouse receipt in one view and find shortages or surplus.</p></a>
+<a class="hc-card" href="{{ url_for('reports.center') }}"><div class="hc-icon"><i class="fas fa-chart-bar"></i></div><h3>Reports & Sharing</h3><p>Create reports for MR, PO, Delivery and Warehouse records and share clean read-only links without site promotions.</p></a>
+</div>
+<h2 class="hc-title">The simple control loop</h2><section class="content-card"><div class="hc-flow"><span>Engineering Need</span><b>→</b><span>PO</span><b>→</b><span>Delivery</span><b>→</b><span>Warehouse Receipt</span><b>→</b><span>Balance</span></div><div class="hc-tip"><strong>Control principle:</strong> Ordered is not the same as Received. Material Reconciliation makes the difference visible without another complex workflow.</div></section>
+<h2 class="hc-title">Common questions</h2><section class="content-card"><div class="table-responsive"><table class="hc-table">
+<tr><th>Question</th><th>Where to go</th></tr>
+<tr><td>What should I review first?</td><td><a href="{{ url_for('control_center.dashboard') }}">Control Center</a></td></tr>
+<tr><td>Where do I register an Engineering requirement?</td><td><a href="{{ url_for('material_requisitions.material_requisitions') }}">Material Requisitions</a></td></tr>
+<tr><td>How do I see shortages?</td><td><a href="{{ url_for('material_reconciliation.dashboard') }}">Material Reconciliation</a></td></tr>
+<tr><td>How do I track heat, lot or serial numbers?</td><td><a href="{{ url_for('intelligence.traceability') }}">Traceability</a></td></tr>
+<tr><td>How do I validate an Excel register?</td><td><a href="{{ url_for('intelligence.excel_import') }}">Excel Import</a></td></tr>
+<tr><td>How do I create a report to send externally?</td><td><a href="{{ url_for('reports.center') }}">Reports</a> → open MR, PO, Delivery or Warehouse → Create share link</td></tr>
+<tr><td>How do I get support?</td><td><a href="{{ url_for('contact_support') }}">Contact Support</a></td></tr>
+</table></div></section>
+<script>(function(){const i=document.getElementById('hcSearch');i&&i.addEventListener('input',function(){const q=this.value.trim().toLowerCase();document.querySelectorAll('.hc-card').forEach(c=>c.style.display=!q||c.textContent.toLowerCase().includes(q)?'':'none')})})()</script>
+{% endblock %}
