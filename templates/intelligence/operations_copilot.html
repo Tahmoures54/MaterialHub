@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Operations Copilot{% endblock %}
+{% block content %}
+<style>
+.oc{max-width:1450px;margin:auto}.oc-hero{padding:26px;border-radius:20px;background:linear-gradient(135deg,#0f172a,#155e75);color:#fff}
+.oc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}.oc-panel{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:18px;margin-top:16px}
+.oc-kpi{font-size:1.8rem;font-weight:800}.oc-muted{color:#64748b;font-size:.9rem}table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid #eef2f4;text-align:left;font-size:.88rem}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#ecfeff;color:#0f766e;font-weight:700}.bad{background:#fef2f2;color:#b91c1c}.warn{background:#fff7ed;color:#c2410c}.btnx{display:inline-block;padding:7px 11px;border-radius:8px;background:#0f766e;color:#fff;text-decoration:none;border:0}
+@media(max-width:900px){.oc-grid{grid-template-columns:1fr}}
+</style>
+<div class="oc">
+<section class="oc-hero">
+<h1>Operations Copilot</h1>
+<p>One lightweight control layer for procurement, receiving, inventory risk, supplier performance and invoice exceptions.</p>
+</section>
+<div class="oc-grid">
+<div class="oc-panel"><div class="oc-muted">Open purchase orders</div><div class="oc-kpi">{{ open_pos|length }}</div></div>
+<div class="oc-panel"><div class="oc-muted">Matching exceptions</div><div class="oc-kpi">{{ exceptions|length }}</div></div>
+<div class="oc-panel"><div class="oc-muted">Material risks</div><div class="oc-kpi">{{ risks|length }}</div></div>
+</div>
+<div class="oc-panel">
+<h2>Smart Receiving & 3-Way Check</h2>
+<p class="oc-muted">Record a receipt against a PO and immediately compare the invoice amount with the PO. Exceptions stay visible for human review.</p>
+<table><tr><th>PO</th><th>Supplier</th><th>Total</th><th>Status</th><th></th></tr>
+{% for po in open_pos %}
+<tr><td>{{ po.order_no }}</td><td>{{ po.supplier.company_name if po.supplier else "-" }}</td><td>{{ po.total_price }}</td><td><span class="badge">{{ po.status.value }}</span></td><td><a class="btnx" href="{{ url_for('operations_copilot.receive', po_id=po.id) }}">Receive & Check</a></td></tr>
+{% else %}<tr><td colspan="5">No open purchase orders.</td></tr>{% endfor %}</table>
+</div>
+<div class="oc-grid">
+<section class="oc-panel"><h2>Material Risk</h2>
+{% for r in risks %}<p><b>{{ r.item_code }}</b> — {{ r.description|truncate(45) }}<br><span class="badge {% if r.coverage < r.required_qty %}bad{% else %}warn{% endif %}">{{ r.coverage }} / {{ r.required_qty }}</span> coverage · {{ r.days if r.days is not none else "—" }} days</p>{% else %}<p>No immediate material risks detected.</p>{% endfor %}</section>
+<section class="oc-panel"><h2>Supplier Performance</h2>
+<table><tr><th>Supplier</th><th>Overall</th><th>OTIF</th></tr>{% for s in suppliers %}<tr><td>{{ s.supplier.company_name }}</td><td>{{ s.overall_score|round(1) }}%</td><td>{{ s.otif_score|round(1) }}%</td></tr>{% else %}<tr><td colspan="3">Scores appear as history accumulates.</td></tr>{% endfor %}</table></section>
+<section class="oc-panel"><h2>RFQ Pipeline</h2>
+{% for r in rfqs %}<p><b>{{ r.rfq_no }}</b> · {{ r.status.value }} · due {{ r.due_date or "—" }}<br><a class="btnx" href="{{ url_for('operations_copilot.rfq_detail', rfq_id=r.id) }}">Compare quotes</a></p>{% else %}<p>No active RFQs.</p>{% endfor %}</section>
+</div>
+<div class="oc-panel"><h2>Invoice / Delivery Exceptions</h2>
+<table><tr><th>PO</th><th>PO amount</th><th>Invoice</th><th>Variance</th><th>Status</th></tr>
+{% for m in exceptions %}<tr><td>{{ m.po.order_no if m.po else m.po_id }}</td><td>{{ m.po_amount }}</td><td>{{ m.invoice_amount }}</td><td>{{ m.variance_amount }}</td><td><span class="badge bad">Exception</span></td></tr>{% else %}<tr><td colspan="5">No exceptions.</td></tr>{% endfor %}</table></div>
+</div>
+{% endblock %}
