@@ -95,6 +95,7 @@
           </td>
           <td><span class="pill p-{{ r.status }}">{{ {'complete':'Complete','shortage':'Shortage / partial','not_ordered':'Not ordered','ordered':'Awaiting receipt','surplus':'Surplus'}[r.status] }}</span></td>
           <td class="links">
+            <a href="{{ url_for('material_reconciliation.detail', project=r.project_no, item=r.item_code) }}">Details</a>
             {% for mr in r.mrs %}<a href="{{ url_for('reports.report', kind='MR', record_id=mr.id) }}">MR</a>{% endfor %}
           </td>
         </tr>
