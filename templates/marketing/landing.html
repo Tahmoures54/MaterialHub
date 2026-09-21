@@ -74,9 +74,9 @@
           <a class="btn btn-secondary btn-lg" href="{{ url_for('growth.contact') }}">Request a Demo</a>
         </div>
         <div class="lp-hero-meta">
-          <div><strong>End-to-end</strong><span>Requisition → Issue</span></div>
-          <div><strong>Traceable</strong><span>QR · Heat · Lot · Serial</span></div>
-          <div><strong>Role-ready</strong><span>PM · Procurement · WH · QC</span></div>
+          <div><strong>MR → PO</strong><span>Engineering to Procurement</span></div>
+          <div><strong>Delivery → WH</strong><span>Receive, QC & stock</span></div>
+          <div><strong>Control</strong><span>Reconcile every material</span></div>
         </div>
       </div>
       <div class="lp-hero-visual" aria-label="Global logistics and container supply chain with material control cards">
@@ -84,26 +84,56 @@
         <div class="lp-visual-cards" aria-hidden="true">
           <div class="lp-visual-card">
             <div class="lp-visual-card-label"><i class="fas fa-clipboard-list"></i> Engineering</div>
-            <strong>MR-1042</strong><span>1,500 m required</span>
+            <strong>Material Requisition</strong><span>Register project material needs with quantity, priority and required date.</span>
           </div>
           <div class="lp-visual-card">
             <div class="lp-visual-card-label"><i class="fas fa-file-invoice-dollar"></i> Procurement</div>
-            <strong>PO-2087</strong><span>1,500 m ordered</span>
+            <strong>RFQ / Tender → PO</strong><span>Request quotes, compare offers and create purchase orders.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-users"></i> Suppliers</div>
+            <strong>Supplier Management</strong><span>Search suppliers and materials by price, quantity, country and delivery time.</span>
           </div>
           <div class="lp-visual-card">
             <div class="lp-visual-card-label"><i class="fas fa-truck"></i> Delivery</div>
-            <strong>DEL-551</strong><span class="ok">Partial receipt</span>
+            <strong>Delivery Tracking</strong><span>Follow inbound deliveries and connect them directly to purchase orders.</span>
           </div>
           <div class="lp-visual-card">
             <div class="lp-visual-card-label"><i class="fas fa-warehouse"></i> Warehouse</div>
-            <strong>1,080 m received</strong><span>420 m shortage</span>
+            <strong>Receiving & Stock</strong><span>Receive material, record location and keep the warehouse balance visible.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-scale-balanced"></i> Control</div>
+            <strong>Material Reconciliation</strong><span>Compare MR, PO, Delivery and Warehouse to expose shortage, surplus and gaps.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-qrcode"></i> Quality & Traceability</div>
+            <strong>QC · MTC / CoC · QR</strong><span>Keep quality evidence and material identity connected to the record.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-file-export"></i> Reports</div>
+            <strong>Reports & Sharing</strong><span>Print, export and securely share MR, PO, Delivery and Warehouse reports.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-store"></i> Marketplace</div>
+            <strong>Material Marketplace</strong><span>Filter and compare materials by supplier, price, availability and delivery.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-user-shield"></i> Workspace</div>
+            <strong>Roles & Control</strong><span>Role-based workspaces, tenant-aware data and controlled access for project teams.</span>
           </div>
         </div>
         <div class="lp-visual-dots" aria-label="Material control highlights">
           <button class="lp-visual-dot active" type="button" aria-label="Show Engineering"></button>
           <button class="lp-visual-dot" type="button" aria-label="Show Procurement"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Suppliers"></button>
           <button class="lp-visual-dot" type="button" aria-label="Show Delivery"></button>
           <button class="lp-visual-dot" type="button" aria-label="Show Warehouse"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Reconciliation"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Quality and Traceability"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Reports"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Marketplace"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Roles and Control"></button>
         </div>
         <div class="lp-visual-caption">
           <span class="lp-visual-kicker">Supply chain → project control</span>
