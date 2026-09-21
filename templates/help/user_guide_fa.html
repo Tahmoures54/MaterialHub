@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}راهنمای کاربری{% endblock %}
+{% block content %}
+<style>
+.fa-guide{direction:rtl;text-align:right}.fa-hero{background:linear-gradient(135deg,#102a43,#167d9a);color:#fff;border-radius:24px;padding:30px;margin-bottom:22px}.fa-hero h1{margin:7px 0}.fa-hero p{max-width:820px;line-height:1.9;opacity:.92}.fa-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.fa-actions a{display:inline-block;padding:10px 15px;border-radius:10px;background:#fff;color:#0f6179;text-decoration:none;font-weight:700}.fa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.fa-card{background:#fff;border:1px solid #e3edf1;border-radius:17px;padding:19px;box-shadow:0 7px 24px rgba(16,42,67,.06)}.fa-card h3{margin:0 0 8px}.fa-card p{margin:0;color:#60727d;line-height:1.9}.fa-flow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.fa-flow span{background:#f4fafc;border:1px solid #dcecf1;padding:9px 12px;border-radius:9px;font-weight:700}.fa-flow b{color:#8aa0ab}.fa-table{width:100%;border-collapse:collapse}.fa-table th,.fa-table td{text-align:right;padding:12px;border-bottom:1px solid #edf2f5;line-height:1.8}.fa-table th{color:#48606e}.fa-note{margin-top:18px;padding:15px;background:#f5fafc;border-right:4px solid #0e7490;border-radius:10px;color:#526b76;line-height:1.9}
+</style>
+<div class="fa-guide">
+<section class="fa-hero"><div style="font-size:12px;letter-spacing:.08em;opacity:.75">راهنمای MATERIALHUB</div><h1>راهنمای کاربری</h1><p>یک راهنمای عملی برای استفاده روزمره از MaterialHub؛ از نیاز مهندسی و خرید تا تحویل، دریافت انبار، کنترل کسری و تهیه گزارش.</p><div class="fa-actions"><a href="{{ url_for('help.getting_started') }}">شروع سریع</a><a href="{{ url_for('help.help') }}">مرکز راهنما</a><a href="{{ url_for('help.user_guide') }}">English Guide</a></div></section>
+
+<section class="content-card"><h2>جریان اصلی کار</h2><div class="fa-flow"><span>نیاز مهندسی</span><b>←</b><span>MR</span><b>←</b><span>PO</span><b>←</b><span>Delivery</span><b>←</b><span>دریافت انبار</span><b>←</b><span>موجودی و کسری</span></div><div class="fa-note"><strong>اصل کنترل:</strong> ثبت سفارش به معنی دریافت کالا نیست. برای کنترل واقعی، مقدار موردنیاز، مقدار سفارش‌داده‌شده و مقدار دریافت‌شده را کنار هم ببینید.</div></section>
+
+<h2>نقش‌ها و مسئولیت‌ها</h2><section class="content-card"><div class="table-responsive"><table class="fa-table"><tr><th>نقش</th><th>مسئولیت اصلی</th></tr><tr><td>مدیر پروژه</td><td>کنترل وضعیت پروژه، اولویت‌ها، ریسک تأمین و پیگیری موارد مهم.</td></tr><tr><td>مهندسی</td><td>ثبت نیاز، مشخصات فنی، مقدار و تاریخ موردنیاز.</td></tr><tr><td>خرید</td><td>RFQ، دریافت پیشنهادها، انتخاب تأمین‌کننده، PO و پیگیری تأخیرها.</td></tr><tr><td>تأمین‌کننده</td><td>ارائه پیشنهاد و اطلاعات تأمین و پاسخ به RFQ/Tender.</td></tr><tr><td>کنترل کیفیت</td><td>بازرسی، کنترل MTC/CoC و وضعیت پذیرش.</td></tr><tr><td>Delivery</td><td>ثبت و پیگیری محموله و وضعیت تحویل.</td></tr><tr><td>انبار</td><td>دریافت واقعی، محل نگهداری، موجودی و ردیابی کالا.</td></tr></table></div></section>
+
+<h2>راهنمای بخش‌ها</h2><div class="fa-grid">
+<div class="fa-card"><h3>۱. درخواست کالا (MR)</h3><p>نیاز مهندسی را با کد کالا، شرح، مقدار، واحد، پروژه و تاریخ موردنیاز ثبت کنید. کد کالا را تا حد امکان ثابت نگه دارید.</p></div>
+<div class="fa-card"><h3>۲. خرید و RFQ</h3><p>برای نیازهای تأییدشده RFQ ایجاد کنید، پیشنهاد تأمین‌کنندگان را مقایسه کنید و سپس PO صادر کنید.</p></div>
+<div class="fa-card"><h3>۳. Purchase Order</h3><p>مقدار سفارش، تأمین‌کننده و تاریخ وعده تحویل را دقیق نگه دارید. تغییرات را روی رکورد موجود ثبت کنید.</p></div>
+<div class="fa-card"><h3>۴. Delivery</h3><p>تحویل‌های مرتبط با PO را پیگیری کنید. تعداد یا وضعیت تحویل را با دریافت واقعی انبار اشتباه نگیرید.</p></div>
+<div class="fa-card"><h3>۵. Warehouse</h3><p>مقدار واقعی دریافت‌شده، وضعیت کالا، محل نگهداری و اطلاعات ردیابی مانند Heat/Lot/Serial را ثبت کنید.</p></div>
+<div class="fa-card"><h3>۶. Material Reconciliation</h3><p>MR، PO، Delivery و Warehouse را در یک صفحه مقایسه کنید تا Not Ordered، Shortage، Partial Receipt و Surplus سریع دیده شوند.</p></div>
+<div class="fa-card"><h3>۷. Traceability</h3><p>برای کالاهای کنترل‌شده اطلاعات Heat، Lot، Serial یا Batch و اسناد MTC/CoC را ثبت و قابل پیگیری نگه دارید.</p></div>
+<div class="fa-card"><h3>۸. Reports</h3><p>برای MR، PO، Delivery و Warehouse گزارش بسازید. گزارش‌ها را می‌توان به‌صورت لینک امن و فقط‌خواندنی با دیگران به اشتراک گذاشت.</p></div>
+</div>
+
+<h2>گزارش و اشتراک‌گذاری</h2><section class="content-card"><p>از <a href="{{ url_for('reports.center') }}">مرکز گزارش‌ها</a> گزارش موردنظر را باز کنید و لینک اشتراک‌گذاری بسازید. گزارش اشتراکی برای گیرنده فقط محتوای گزارش را نمایش می‌دهد و منو، فوتر و تبلیغات سایت در آن نمایش داده نمی‌شود.</p><div class="fa-note"><strong>پیشنهاد:</strong> قبل از ارسال گزارش، مقدار Required، Ordered و Received را بررسی کنید؛ اگر اختلافی وجود دارد، بخش Shortage/Surplus را نیز کنترل کنید.</div></section>
+
+<h2>کنترل روزانه</h2><section class="content-card"><p>برای شروع روز، ابتدا موارد باز در Control Center را بررسی کنید. سپس در Material Reconciliation فقط موارد مشکل‌دار را دنبال کنید: <strong>Not Ordered، Shortage، Partial Receipt و Surplus</strong>.</p></section>
+</div>
+{% endblock %}
