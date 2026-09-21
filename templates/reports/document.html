@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · {{ number }}{% endblock %}
+{% block content %}
+<style>
+.doc{max-width:1050px;margin:auto;background:#fff;border:1px solid #dfe9ef;border-radius:22px;overflow:hidden;box-shadow:0 18px 50px rgba(16,42,67,.1)}.doc-head{padding:28px;background:linear-gradient(135deg,#0e3146,#16819d);color:#fff;display:flex;justify-content:space-between;gap:24px}.doc-meta{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:10px;margin-top:18px}.meta{background:rgba(255,255,255,.1);padding:10px;border-radius:10px}.qr{background:#fff;padding:9px;border-radius:14px;align-self:flex-start}.qr img{width:128px;height:128px}.doc-body{padding:26px}.row{display:grid;grid-template-columns:210px 1fr;border-bottom:1px solid #edf2f5;padding:13px 0}.row b{color:#48606e}.doc-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}.doc-actions a,.doc-actions button{padding:10px 14px;border-radius:10px;border:1px solid #d6e3e9;background:#fff;text-decoration:none;color:#0d647d;font-weight:700;cursor:pointer}.doc-actions .primary{background:#0d647d;color:#fff}.share{padding:16px;background:#f5fafc;border-radius:14px;margin-top:22px}.share form{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.share input{padding:9px;border:1px solid #d7e4ea;border-radius:8px;width:70px}
+@media print{.doc-actions,.share,.mh-sidebar,.mh-footer{display:none!important}.doc{box-shadow:none;border:0}.doc-head{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+</style>
+<div class="doc">
+<header class="doc-head"><div><div style="font-size:12px;opacity:.75">{{ kind }} · MATERIALHUB DOCUMENT</div><h1 style="margin:6px 0">{{ title }}</h1><div style="font-size:18px;font-weight:800">{{ number }}</div><div class="doc-meta"><div class="meta"><small>Company</small><br>{{ current_user.company_name if current_user.is_authenticated else obj.company_name }}</div><div class="meta"><small>Generated</small><br>{{ obj.updated_at or obj.created_at }}</div></div></div><div class="qr"><img src="{{ qr }}" alt="QR"></div></header>
+<div class="doc-body">
+<div class="doc-actions"><button class="primary" onclick="window.print()">🖨 Print / PDF</button><a href="{{ url_for('reports.export_csv',kind=kind,record_id=obj.id) }}">⇩ CSV</a><a href="{{ url_for('reports.center') }}">← Center</a></div>
+{% if not public_share %}<div class="share"><strong>Secure sharing</strong><p style="margin:6px 0 12px;color:#60727d">Create a tenant-isolated link. QR code opens the same document.</p><form method="post" action="{{ url_for('reports.create_share',kind=kind,record_id=obj.id) }}"><input type="number" name="days" value="7" min="1" max="30"> days <button class="primary">Create share link</button></form></div>{% endif %}
+<h2>Document Details</h2>{% for label,value in rows %}<div class="row"><b>{{ label }}</b><span>{{ value }}</span></div>{% endfor %}
+</div></div>
+{% endblock %}
