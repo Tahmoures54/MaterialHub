@@ -74,7 +74,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
       - name: Run production migrations on empty PostgreSQL
-        run: flask --app wsgi:app db upgrade
+        run: VERCEL_ENV=production python scripts/vercel_migrate.py
       - name: Smoke test production app, readiness and public funnel
         run: |
           python - <<'PY'
