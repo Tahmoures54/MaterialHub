@@ -225,7 +225,7 @@ def detail():
 
     po_ids = set(po_groups)
     deliveries = _tenant(Delivery.query, Delivery).filter(
-        Delivery.order_id.in_(po_ids) if po_ids else db.false()
+        Delivery.order_id.in_(po_ids) if po_ids else Delivery.id == -1
     ).order_by(Delivery.delivered_date.desc(), Delivery.id.desc()).all()
 
     delivery_ids = {delivery.delivery_id for delivery in deliveries}
