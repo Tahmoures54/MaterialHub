@@ -211,6 +211,7 @@ class MaterialRequisition(db.Model):
     drawing_revision = db.Column(db.String(10))
     drawing_page = db.Column(db.String(10))
     material_type = db.Column(db.String(50))
+    material_id = db.Column(db.Integer, db.ForeignKey('material_master.id'), nullable=True, index=True)
     item_code = db.Column(db.String(50), nullable=False, index=True)
     material_description = db.Column(db.Text, nullable=False)
     category = db.Column(db.String(50))
@@ -679,6 +680,7 @@ class WarehouseInventory(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
     user = db.relationship('User', backref=db.backref('warehouse_entries', lazy=True))
+    material = db.relationship('MaterialMaster', foreign_keys=[material_id], backref=db.backref('warehouse_inventory', lazy=True))
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -699,6 +701,7 @@ class WarehouseInventory(db.Model):
             'id': self.id,
             'warehouse_id': self.warehouse_id,
             'delivery_id': self.delivery_id,
+            'material_id': self.material_id,
             'item_code': self.item_code,
             'material_description': self.material_description,
             'material_category': self.material_category,
@@ -802,6 +805,7 @@ class WarehouseTransaction(db.Model):
     transaction_no = db.Column(db.String(50), nullable=False, index=True)
     transaction_type = db.Column(db.String(30), nullable=False, index=True)
     warehouse_id = db.Column(db.String(50), nullable=False, index=True)
+    material_id = db.Column(db.Integer, db.ForeignKey('material_master.id'), nullable=True, index=True)
     item_code = db.Column(db.String(50), nullable=False, index=True)
     material_description = db.Column(db.Text, nullable=False)
     quantity = db.Column(db.Float, nullable=False)
@@ -815,7 +819,11 @@ class WarehouseTransaction(db.Model):
     company_name = db.Column(db.String(100), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    balance_before = db.Column(db.Float, nullable=True)
+    balance_after = db.Column(db.Float, nullable=True)
+    destination_warehouse_id = db.Column(db.String(50), nullable=True, index=True)
     user = db.relationship('User', backref=db.backref('warehouse_transactions', lazy=True))
+    material = db.relationship('MaterialMaster', foreign_keys=[material_id], backref=db.backref('warehouse_transactions', lazy=True))
 
     def to_dict(self):
         return {
@@ -823,6 +831,7 @@ class WarehouseTransaction(db.Model):
             'transaction_no': self.transaction_no,
             'transaction_type': self.transaction_type,
             'warehouse_id': self.warehouse_id,
+            'material_id': self.material_id,
             'item_code': self.item_code,
             'material_description': self.material_description,
             'quantity': self.quantity,
@@ -833,6 +842,9 @@ class WarehouseTransaction(db.Model):
             'storage_location_id': self.storage_location_id,
             'reference_no': self.reference_no,
             'remarks': self.remarks,
+            'balance_before': self.balance_before,
+            'balance_after': self.balance_after,
+            'destination_warehouse_id': self.destination_warehouse_id,
             'company_name': self.company_name,
             'user_id': self.user_id,
             'created_at': self.created_at.isoformat() if self.created_at else None,
