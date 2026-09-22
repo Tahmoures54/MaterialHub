@@ -5,7 +5,7 @@ from io import StringIO
 import csv
 import logging
 from datetime import datetime
-from models import db, WarehouseInventory, Delivery, WorkflowStatus, AccessLevel, ValidationError
+from models import db, WarehouseInventory, WarehouseTransaction, Delivery, WorkflowStatus, AccessLevel, ValidationError
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -69,6 +69,25 @@ def api_receive_inventory():
                 return jsonify({'error': 'Missing required fields'}), 400
             inventory = WarehouseInventory.from_dict(item, current_user.company_name, current_user.id)
             db.session.add(inventory)
+            db.session.flush()
+            from utils import generate_next_warehouse_transaction_no
+            tx = WarehouseTransaction(
+                transaction_no=generate_next_warehouse_transaction_no(current_user.company_name),
+                transaction_type='RECEIPT',
+                warehouse_id=inventory.warehouse_id,
+                item_code=inventory.item_code,
+                material_description=inventory.material_description,
+                quantity=float(inventory.received_qty),
+                unit=inventory.unit,
+                project_no=inventory.project_no,
+                delivery_id=inventory.delivery_id,
+                storage_location_id=inventory.storage_location_id,
+                reference_no=inventory.delivery_id,
+                remarks=inventory.remarks,
+                company_name=current_user.company_name,
+                user_id=current_user.id,
+            )
+            db.session.add(tx)
         db.session.commit()
         logger.info(f"User {current_user.id} received {len(data)} inventory items")
         return jsonify({'message': 'Materials received successfully'}), 201
@@ -171,6 +190,24 @@ def api_issue_inventory():
                 logger.warning(f"Insufficient stock for {item['warehouse_id']} by user {current_user.id}")
                 return jsonify({'error': f'Insufficient stock for {item["warehouse_id"]}'}), 400
             inventory.received_quantity -= issue_quantity
+            from utils import generate_next_warehouse_transaction_no
+            tx = WarehouseTransaction(
+                transaction_no=generate_next_warehouse_transaction_no(current_user.company_name),
+                transaction_type='ISSUE',
+                warehouse_id=inventory.warehouse_id,
+                item_code=inventory.item_code,
+                material_description=inventory.material_description,
+                quantity=issue_quantity,
+                unit=inventory.unit,
+                project_no=item.get('project_no') or inventory.project_no,
+                contractor=item.get('contractor'),
+                storage_location_id=inventory.storage_location_id,
+                reference_no=item.get('reference_no'),
+                remarks=item.get('remarks'),
+                company_name=current_user.company_name,
+                user_id=current_user.id,
+            )
+            db.session.add(tx)
         db.session.commit()
         logger.info(f"User {current_user.id} issued {len(data)} inventory items")
         return jsonify({'message': 'Materials issued successfully'}), 200
@@ -184,6 +221,89 @@ def api_issue_inventory():
         db.session.rollback()
         logger.error(f"Error issuing inventory for user {current_user.id}: {str(e)}")
         return jsonify({'error': 'Failed to issue materials'}), 500
+
+@warehouse_bp.route('/api/transactions', methods=['GET'])
+@login_required
+def api_get_transactions():
+    """Return the tenant-scoped warehouse movement ledger."""
+    try:
+        query = WarehouseTransaction.query.filter_by(company_name=current_user.company_name)
+        transaction_type = request.args.get('type')
+        item_code = request.args.get('item_code')
+        warehouse_id = request.args.get('warehouse_id')
+        limit = min(max(int(request.args.get('limit', 100)), 1), 500)
+        if transaction_type:
+            query = query.filter_by(transaction_type=transaction_type.upper())
+        if item_code:
+            query = query.filter(WarehouseTransaction.item_code.ilike(f'%{item_code.strip()}%'))
+        if warehouse_id:
+            query = query.filter_by(warehouse_id=warehouse_id.strip())
+        rows = query.order_by(WarehouseTransaction.created_at.desc()).limit(limit).all()
+        return jsonify([row.to_dict() for row in rows]), 200
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid transaction query'}), 400
+    except Exception as e:
+        logger.error(f"Error fetching warehouse transactions: {e}")
+        return jsonify({'error': 'Failed to fetch transactions'}), 500
+
+
+@warehouse_bp.route('/api/transactions', methods=['POST'])
+@login_required
+def api_create_transaction():
+    """Record an adjustment/return/transfer movement and update stock."""
+    if current_user.access_level != AccessLevel.warehouse:
+        return jsonify({'error': 'Unauthorized'}), 403
+    try:
+        data = request.get_json() or {}
+        validate_csrf(data.get('csrf_token'))
+        tx_type = str(data.get('transaction_type') or '').upper()
+        allowed = {'RETURN', 'ADJUSTMENT_IN', 'ADJUSTMENT_OUT', 'TRANSFER'}
+        if tx_type not in allowed:
+            return jsonify({'error': 'Unsupported transaction type'}), 400
+        warehouse_id = str(data.get('warehouse_id') or '').strip()
+        quantity = float(data.get('quantity') or 0)
+        if not warehouse_id or quantity <= 0:
+            return jsonify({'error': 'Warehouse ID and positive quantity are required'}), 400
+        inventory = WarehouseInventory.query.filter_by(
+            warehouse_id=warehouse_id, company_name=current_user.company_name
+        ).first()
+        if not inventory:
+            return jsonify({'error': 'Inventory not found'}), 404
+        signed = quantity if tx_type == 'RETURN' or tx_type == 'ADJUSTMENT_IN' else -quantity
+        if signed < 0 and inventory.received_qty < quantity:
+            return jsonify({'error': 'Insufficient stock'}), 400
+        inventory.received_qty += signed
+        from utils import generate_next_warehouse_transaction_no
+        tx = WarehouseTransaction(
+            transaction_no=generate_next_warehouse_transaction_no(current_user.company_name),
+            transaction_type=tx_type,
+            warehouse_id=inventory.warehouse_id,
+            item_code=inventory.item_code,
+            material_description=inventory.material_description,
+            quantity=quantity,
+            unit=inventory.unit,
+            project_no=data.get('project_no') or inventory.project_no,
+            contractor=data.get('contractor'),
+            storage_location_id=inventory.storage_location_id,
+            reference_no=data.get('reference_no'),
+            remarks=data.get('remarks'),
+            company_name=current_user.company_name,
+            user_id=current_user.id,
+        )
+        db.session.add(tx)
+        db.session.commit()
+        return jsonify({'message': 'Transaction recorded', 'transaction': tx.to_dict()}), 201
+    except CSRFError:
+        db.session.rollback()
+        return jsonify({'error': 'Invalid CSRF token'}), 403
+    except (TypeError, ValueError):
+        db.session.rollback()
+        return jsonify({'error': 'Invalid quantity'}), 400
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error recording warehouse transaction: {e}")
+        return jsonify({'error': 'Failed to record transaction'}), 500
+
 
 @warehouse_bp.route('/api/approve', methods=['POST'])
 @login_required
