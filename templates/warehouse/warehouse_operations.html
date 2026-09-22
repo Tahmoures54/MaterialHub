@@ -90,24 +90,50 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <div class="transaction-steps"><span class="active">1 Movement</span><span>2 Details</span><span>3 Confirm</span></div>
+            <div class="transaction-steps"><span class="active">1 Material</span><span>2 Movement</span><span>3 Confirm</span></div>
             <form id="transaction-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="row g-3">
-                <div class="col-md-6"><label class="form-label">Movement type</label><select class="form-select" id="txType" required>
-                  <option value="">Select movement</option><option value="RETURN">Return to Stock</option><option value="ADJUSTMENT_IN">Stock Adjustment In</option><option value="ADJUSTMENT_OUT">Stock Adjustment Out</option><option value="TRANSFER">Internal Transfer</option>
-                </select></div>
-                <div class="col-md-6"><label class="form-label">Stock ID</label><select class="form-select" id="txWarehouse" required><option value="">Select stock</option></select></div>
-                <div class="col-md-6"><label class="form-label">Quantity</label><input class="form-control" id="txQuantity" type="number" min="0.0001" step="any" required></div>
-                <div class="col-md-6"><label class="form-label">Reference No.</label><input class="form-control" id="txReference" placeholder="Return / transfer / document no."></div>
+                <div class="col-md-6">
+                  <label class="form-label">Material Master</label>
+                  <select class="form-select" id="txMaterial" required><option value="">Select a material</option></select>
+                  <div id="txMaterialMeta" class="small text-muted mt-2">Select the approved material identity used across procurement and warehouse.</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Movement type</label>
+                  <select class="form-select" id="txType" required>
+                    <option value="">Select movement</option>
+                    <option value="RETURN">Return to Stock</option>
+                    <option value="ADJUSTMENT_IN">Stock Adjustment In</option>
+                    <option value="ADJUSTMENT_OUT">Stock Adjustment Out</option>
+                    <option value="TRANSFER">Internal Transfer</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Source Stock</label>
+                  <select class="form-select" id="txWarehouse" required><option value="">Select material first</option></select>
+                  <div id="txStockBalance" class="small fw-semibold mt-2"></div>
+                </div>
+                <div class="col-md-6" id="txDestinationWrap" style="display:none">
+                  <label class="form-label">Destination Stock</label>
+                  <select class="form-select" id="txDestination"><option value="">Select destination</option></select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Quantity</label>
+                  <input class="form-control" id="txQuantity" type="number" min="0.0001" step="any" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Reference No.</label>
+                  <input class="form-control" id="txReference" placeholder="Document / return / transfer no.">
+                </div>
                 <div class="col-md-6"><label class="form-label">Project No.</label><input class="form-control" id="txProject"></div>
-                <div class="col-md-6"><label class="form-label">Contractor / Destination</label><input class="form-control" id="txContractor"></div>
+                <div class="col-md-6"><label class="form-label">Contractor / Note</label><input class="form-control" id="txContractor"></div>
                 <div class="col-12"><label class="form-label">Remarks</label><textarea class="form-control" id="txRemarks" rows="3"></textarea></div>
               </div>
             </form>
-            <div class="transaction-note mt-3"><i class="fas fa-shield-alt me-2"></i>The system assigns a tenant-scoped <strong>WT-####</strong> transaction number automatically. Stock is updated atomically with the movement record.</div>
+            <div class="transaction-note mt-3"><i class="fas fa-shield-alt me-2"></i>Material code is never typed manually. The selected Material Master identity is recorded with the movement and the system assigns a tenant-scoped <strong>WT-######</strong> number.</div>
           </div>
-          <div class="modal-footer"><button class="btn btn-light border" data-bs-dismiss="modal">Cancel</button><button class="btn btn-custom" id="submitTransaction"><i class="fas fa-check me-1"></i>Record Movement</button></div>
+          <div class="modal-footer"><button class="btn btn-light border" data-bs-dismiss="modal">Cancel</button><button class="btn btn-custom" id="submitTransaction"><i class="fas fa-check me-1"></i>Review & Record</button></div>
         </div>
       </div>
     </div>
@@ -1285,8 +1311,27 @@
    }catch(e){body.innerHTML='<tr><td colspan="8" class="text-center text-danger py-4">Could not load movement history.</td></tr>';}
  }
  async function loadStockOptions(){
-   const sel=document.getElementById('txWarehouse'); if(!sel)return;
-   try{const res=await fetch('/warehouse/api/inventory');const rows=await res.json();sel.innerHTML='<option value="">Select stock</option>'+rows.map(x=>'<option value="'+escapeHtml(x.warehouse_id)+'">'+escapeHtml(x.warehouse_id)+' — '+escapeHtml(x.item_code)+' — '+escapeHtml(x.material_description)+'</option>').join('');}catch(e){}
+   const materialSel=document.getElementById('txMaterial');
+   const stockSel=document.getElementById('txWarehouse');
+   if(!materialSel||!stockSel)return;
+   try{
+     const res=await fetch('/api/material-master?status=active');
+     const rows=await res.json();
+     materialSel.innerHTML='<option value="">Select a material</option>'+rows.map(x=>'<option value="'+escapeHtml(x.id)+'" data-code="'+escapeHtml(x.material_code)+'" data-unit="'+escapeHtml(x.unit)+'" data-name="'+escapeHtml(x.material_name)+'">'+escapeHtml(x.material_code)+' — '+escapeHtml(x.material_name)+'</option>').join('');
+     stockSel.innerHTML='<option value="">Select material first</option>';
+   }catch(e){materialSel.innerHTML='<option value="">Material Master unavailable</option>';}
+   document.getElementById('txMaterial')?.dispatchEvent(new Event('change'));
+ }
+ async function loadStocksForMaterial(){
+   const id=document.getElementById('txMaterial')?.value;
+   const stockSel=document.getElementById('txWarehouse'); const dest=document.getElementById('txDestination');
+   if(!id||!stockSel)return;
+   try{
+     const res=await fetch('/warehouse/api/inventory'); const rows=await res.json();
+     const selected=rows.filter(x=>String(x.material_id||'')===String(id));
+     stockSel.innerHTML=selected.length?'<option value="">Select source stock</option>'+selected.map(x=>'<option value="'+escapeHtml(x.warehouse_id)+'" data-balance="'+escapeHtml(x.received_qty)+'">'+escapeHtml(x.warehouse_id)+' — '+escapeHtml(x.received_qty)+' '+escapeHtml(x.unit)+' — '+escapeHtml(x.storage_location_id||'No location')+'</option>').join(''):'<option value="">No stock record for this material</option>';
+     if(dest) dest.innerHTML='<option value="">Select destination</option>'+selected.map(x=>'<option value="'+escapeHtml(x.warehouse_id)+'">'+escapeHtml(x.warehouse_id)+' — '+escapeHtml(x.storage_location_id||'No location')+'</option>').join('');
+   }catch(e){stockSel.innerHTML='<option value="">Could not load stock</option>';}
  }
  document.addEventListener('DOMContentLoaded',()=>{
    loadTransactions(); loadStockOptions();
