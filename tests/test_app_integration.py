@@ -259,7 +259,7 @@ def test_material_requisition_api_workflow_and_tenant_boundary(client, app):
 def test_material_requisition_csv_export_and_import(client, app):
     user = _persist_user(app, "csv@example.com", AccessLevel.engineering, "CSV EPC")
     _authenticate_session(client, user)
-    material = _ensure_test_material(app, user, "PIPE-CSV", "CSV Pipe")
+    _ensure_test_material(app, user, "PIPE-CSV", "CSV Pipe")
     csv_body = (
         "mr_no,subject,material_code,item_code,material_description,discipline,required_date,"
         "unit_of_measure,quantity,priority,project_no\n"
