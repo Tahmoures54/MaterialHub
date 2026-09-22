@@ -14,6 +14,7 @@ from models import (
     DeliveryStatus,
     InspectionStatus,
     MaterialRequisition,
+    MaterialMaster,
     PurchaseOrder,
     PurchaseOrderItem,
     PurchaseOrderStatus,
@@ -106,9 +107,18 @@ def test_project_and_material_requisition_round_trip(app):
         user = make_user("Acme", "mr-user@example.com")
         db.session.add(user)
         db.session.flush()
+        material = MaterialMaster(
+            material_code="PIPE-CS", family_code="PIP", material_name="Carbon steel pipe",
+            description="Carbon steel pipe", unit="EA", discipline="Piping",
+            fingerprint=("test:Acme:PIPE-CS").encode().hex().ljust(64, "0")[:64],
+            company_name="Acme", created_by=user.id, status="active", lifecycle_status="active",
+        )
+        db.session.add(material)
+        db.session.flush()
         mr = MaterialRequisition.from_dict(
             {
                 "mr_no": "MR-1000",
+                "material_id": material.id,
                 "subject": "Pipe",
                 "item_code": "PIPE-CS",
                 "material_description": "Carbon steel pipe",
@@ -223,8 +233,16 @@ def test_tender_bid_and_approval_serialization(app):
         supplier = make_user("Acme", "supplier3@example.com", AccessLevel.supplier)
         db.session.add_all([project, creator, supplier])
         db.session.flush()
+        material = MaterialMaster(
+            material_code="VALVE", family_code="VAL", material_name="Valve",
+            description="Valve", unit="EA", discipline="Mechanical",
+            fingerprint=("test:Acme:VALVE").encode().hex().ljust(64, "0")[:64],
+            company_name="Acme", created_by=creator.id, status="active", lifecycle_status="active",
+        )
+        db.session.add(material)
+        db.session.flush()
         mr = MaterialRequisition.from_dict(
-            {"mr_no": "MR-4000", "item_code": "VALVE", "material_description": "Valve",
+            {"mr_no": "MR-4000", "material_id": material.id, "item_code": "VALVE", "material_description": "Valve",
              "quantity": 2, "project_no": "PRJ-400", "discipline": "Mechanical"},
             "Acme", creator.id,
         )
