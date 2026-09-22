@@ -6,6 +6,7 @@ import re
 from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user, login_required
 from flask_wtf.csrf import CSRFError, validate_csrf
+from sqlalchemy import or_
 
 from models import AccessLevel, MaterialMaster, db
 from utils import generate_next_material_code
@@ -101,7 +102,7 @@ def api_list():
     if q:
         pattern = f"%{q}%"
         query = query.filter(
-            db.or_(
+            or_(
                 MaterialMaster.material_code.ilike(pattern),
                 MaterialMaster.material_name.ilike(pattern),
                 MaterialMaster.description.ilike(pattern),
