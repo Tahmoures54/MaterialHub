@@ -5,7 +5,10 @@ from io import StringIO
 import csv
 import logging
 from datetime import datetime
-from models import db, WarehouseInventory, WarehouseTransaction, Delivery, MaterialMaster, WorkflowStatus, AccessLevel, ValidationError
+from models import (db, WarehouseInventory, WarehouseTransaction, Delivery, MaterialMaster,
+                    WorkflowStatus, AccessLevel, ValidationError, PurchaseOrder,
+                    PackingList, PackingListLine, GoodsReceipt, GoodsReceiptLine,
+                    OSDReport, OSDReportLine, ReceivingStatus, OSDStatus)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -651,6 +654,404 @@ def api_get_opi():
     except Exception as e:
         logger.error(f"Error fetching OPI data for user {current_user.id}: {str(e)}")
         return jsonify({'error': 'Failed to fetch OPI data'}), 500
+
+
+# ---------------------------------------------------------------------------
+# Inbound receiving: Packing List -> Goods Receipt -> Receipt Lines -> OS&D
+# ---------------------------------------------------------------------------
+
+def _receiving_user_allowed():
+    return current_user.is_admin or current_user.access_level in (
+        AccessLevel.warehouse, AccessLevel.delivery, AccessLevel.project_manager
+    )
+
+def _purchase_user_allowed():
+    return current_user.is_admin or current_user.access_level in (
+        AccessLevel.purchase, AccessLevel.delivery, AccessLevel.warehouse, AccessLevel.project_manager
+    )
+
+@warehouse_bp.route('/api/packing-lists', methods=['GET'])
+@login_required
+def api_list_packing_lists():
+    query = PackingList.query.filter_by(company_name=current_user.company_name)
+    rows = query.order_by(PackingList.created_at.desc()).limit(500).all()
+    return jsonify([row.to_dict() for row in rows]), 200
+
+@warehouse_bp.route('/api/packing-lists/<int:packing_list_id>', methods=['GET'])
+@login_required
+def api_get_packing_list(packing_list_id):
+    row = PackingList.query.filter_by(
+        id=packing_list_id, company_name=current_user.company_name
+    ).first()
+    if not row:
+        return jsonify({'error': 'Packing List not found'}), 404
+    return jsonify(row.to_dict()), 200
+
+@warehouse_bp.route('/api/packing-lists', methods=['POST'])
+@login_required
+def api_create_packing_list():
+    if not _purchase_user_allowed():
+        return jsonify({'error': 'Unauthorized'}), 403
+    try:
+        data = request.get_json() or {}
+        validate_csrf(data.get('csrf_token'))
+        packing_list_no = str(data.get('packing_list_no') or '').strip()
+        if not packing_list_no:
+            from utils import generate_next_packing_list_no
+            packing_list_no = generate_next_packing_list_no(current_user.company_name)
+        if PackingList.query.filter_by(
+            packing_list_no=packing_list_no, company_name=current_user.company_name
+        ).first():
+            return jsonify({'error': 'Packing List number already exists'}), 409
+
+        delivery = None
+        order = None
+        delivery_pk = data.get('delivery_id')
+        if delivery_pk:
+            delivery = Delivery.query.filter_by(
+                id=int(delivery_pk), company_name=current_user.company_name
+            ).first()
+            if not delivery:
+                return jsonify({'error': 'Delivery not found for this company'}), 404
+            order = delivery.order
+        if data.get('order_id'):
+            order = PurchaseOrder.query.filter_by(
+                id=int(data['order_id']), company_name=current_user.company_name
+            ).first()
+            if not order:
+                return jsonify({'error': 'Purchase Order not found for this company'}), 404
+            if delivery and delivery.order_id != order.id:
+                return jsonify({'error': 'Delivery does not belong to the selected Purchase Order'}), 409
+
+        lines = data.get('lines') or []
+        if not lines:
+            return jsonify({'error': 'Packing List must contain at least one material line'}), 400
+
+        pl = PackingList(
+            packing_list_no=packing_list_no,
+            order_id=order.id if order else None,
+            delivery_id=delivery.id if delivery else None,
+            supplier_id=order.supplier_id if order else data.get('supplier_id'),
+            packing_list_date=datetime.strptime(
+                str(data.get('packing_list_date') or datetime.utcnow().date()), '%Y-%m-%d'
+            ).date(),
+            vehicle_no=data.get('vehicle_no'),
+            package_count=int(data['package_count']) if data.get('package_count') not in (None, '') else None,
+            gross_weight=float(data['gross_weight']) if data.get('gross_weight') not in (None, '') else None,
+            net_weight=float(data['net_weight']) if data.get('net_weight') not in (None, '') else None,
+            document_path=data.get('document_path'),
+            status=str(data.get('status') or 'received').lower(),
+            remarks=data.get('remarks'),
+            company_name=current_user.company_name,
+            created_by=current_user.id,
+        )
+        db.session.add(pl)
+        db.session.flush()
+
+        for raw in lines:
+            material = MaterialMaster.query.filter_by(
+                id=int(raw.get('material_id')), company_name=current_user.company_name, status='active'
+            ).first()
+            if not material:
+                raise ValidationError('Every Packing List line must reference an active Material Master item.')
+            qty = float(raw.get('quantity') or 0)
+            if qty <= 0:
+                raise ValidationError('Packing List line quantity must be positive.')
+            pl.lines.append(PackingListLine(
+                material_id=material.id,
+                item_code=material.material_code,
+                material_description=material.description,
+                quantity=qty,
+                unit=raw.get('unit') or material.unit,
+                package_no=raw.get('package_no'),
+                lot_no=raw.get('lot_no'),
+                heat_no=raw.get('heat_no'),
+                serial_no=raw.get('serial_no'),
+                remarks=raw.get('remarks'),
+            ))
+        db.session.commit()
+        return jsonify(pl.to_dict()), 201
+    except CSRFError:
+        db.session.rollback()
+        return jsonify({'error': 'Invalid CSRF token'}), 403
+    except (ValidationError, ValueError, TypeError) as exc:
+        db.session.rollback()
+        return jsonify({'error': str(exc)}), 400
+    except Exception as exc:
+        db.session.rollback()
+        logger.exception('Packing List creation failed')
+        return jsonify({'error': 'Failed to create Packing List', 'detail': str(exc)}), 500
+
+@warehouse_bp.route('/api/goods-receipts', methods=['GET'])
+@login_required
+def api_list_goods_receipts():
+    rows = GoodsReceipt.query.filter_by(
+        company_name=current_user.company_name
+    ).order_by(GoodsReceipt.created_at.desc()).limit(500).all()
+    return jsonify([row.to_dict() for row in rows]), 200
+
+@warehouse_bp.route('/api/goods-receipts/<int:receipt_id>', methods=['GET'])
+@login_required
+def api_get_goods_receipt(receipt_id):
+    row = GoodsReceipt.query.filter_by(
+        id=receipt_id, company_name=current_user.company_name
+    ).first()
+    if not row:
+        return jsonify({'error': 'Goods Receipt not found'}), 404
+    return jsonify(row.to_dict()), 200
+
+@warehouse_bp.route('/api/goods-receipts', methods=['POST'])
+@login_required
+def api_create_goods_receipt():
+    if not (current_user.is_admin or current_user.access_level in (
+        AccessLevel.warehouse, AccessLevel.project_manager
+    )):
+        return jsonify({'error': 'Only warehouse users can post a Goods Receipt'}), 403
+    try:
+        data = request.get_json() or {}
+        validate_csrf(data.get('csrf_token'))
+        pl = PackingList.query.filter_by(
+            id=int(data.get('packing_list_id') or 0),
+            company_name=current_user.company_name
+        ).first()
+        if not pl:
+            return jsonify({'error': 'Packing List not found'}), 404
+        if pl.status in ('cancelled', 'closed'):
+            return jsonify({'error': 'Packing List is not receivable in its current status'}), 409
+
+        warehouse_id = str(data.get('warehouse_id') or '').strip()
+        if not warehouse_id:
+            return jsonify({'error': 'Warehouse ID is required'}), 400
+        raw_lines = data.get('lines') or []
+        if not raw_lines:
+            return jsonify({'error': 'Goods Receipt must contain at least one Receipt Line'}), 400
+
+        from utils import generate_next_goods_receipt_no, generate_next_warehouse_transaction_no, generate_next_osd_no
+        receipt = GoodsReceipt(
+            receipt_no=str(data.get('receipt_no') or generate_next_goods_receipt_no(current_user.company_name)),
+            packing_list_id=pl.id,
+            delivery_id=pl.delivery_id,
+            order_id=pl.order_id,
+            warehouse_id=warehouse_id,
+            receipt_date=datetime.strptime(
+                str(data.get('receipt_date') or datetime.utcnow().date()), '%Y-%m-%d'
+            ).date(),
+            received_by=current_user.id,
+            status=ReceivingStatus.posted,
+            remarks=data.get('remarks'),
+            company_name=current_user.company_name,
+        )
+        if GoodsReceipt.query.filter_by(
+            receipt_no=receipt.receipt_no, company_name=current_user.company_name
+        ).first():
+            return jsonify({'error': 'Goods Receipt number already exists'}), 409
+        db.session.add(receipt)
+        db.session.flush()
+
+        created_lines = []
+        osd_candidates = []
+        for raw in raw_lines:
+            pl_line = PackingListLine.query.filter_by(
+                id=int(raw.get('packing_list_line_id') or 0),
+                packing_list_id=pl.id
+            ).first()
+            if not pl_line:
+                raise ValidationError('Receipt Line must reference a line from the selected Packing List.')
+            received_qty = float(raw.get('received_qty') or 0)
+            if received_qty <= 0:
+                raise ValidationError('Received quantity must be positive.')
+
+            previous_qty = db.session.query(db.func.coalesce(db.func.sum(GoodsReceiptLine.received_qty), 0.0)).join(
+                GoodsReceipt, GoodsReceipt.id == GoodsReceiptLine.goods_receipt_id
+            ).filter(
+                GoodsReceiptLine.packing_list_line_id == pl_line.id,
+                GoodsReceipt.company_name == current_user.company_name,
+                GoodsReceipt.status == ReceivingStatus.posted,
+            ).scalar() or 0.0
+            cumulative_qty = float(previous_qty) + received_qty
+
+            line = GoodsReceiptLine(
+                goods_receipt_id=receipt.id,
+                packing_list_line_id=pl_line.id,
+                material_id=pl_line.material_id,
+                item_code=pl_line.item_code,
+                material_description=pl_line.material_description,
+                expected_qty=pl_line.quantity,
+                received_qty=received_qty,
+                unit=raw.get('unit') or pl_line.unit,
+                storage_location_id=raw.get('storage_location_id'),
+                inspection_status=str(raw.get('inspection_status') or 'pending').lower(),
+                lot_no=raw.get('lot_no') or pl_line.lot_no,
+                heat_no=raw.get('heat_no') or pl_line.heat_no,
+                serial_no=raw.get('serial_no') or pl_line.serial_no,
+                remarks=raw.get('remarks'),
+            )
+            db.session.add(line)
+            db.session.flush()
+            created_lines.append(line)
+
+            inventory = WarehouseInventory.query.filter_by(
+                warehouse_id=warehouse_id,
+                material_id=pl_line.material_id,
+                company_name=current_user.company_name,
+            ).first()
+            before = float(inventory.received_qty or 0) if inventory else 0.0
+            if not inventory:
+                inventory = WarehouseInventory.from_dict({
+                    'warehouse_id': warehouse_id,
+                    'delivery_id': str(pl.delivery_id or pl.packing_list_no),
+                    'material_id': pl_line.material_id,
+                    'item_code': pl_line.item_code,
+                    'material_description': pl_line.material_description,
+                    'material_category': pl_line.material.material_group if pl_line.material else None,
+                    'received_quantity': received_qty,
+                    'unit': pl_line.unit,
+                    'project_no': getattr(pl.order.project, 'project_no', None) if pl.order and pl.order.project else 'UNASSIGNED',
+                    'storage_location_id': line.storage_location_id,
+                    'remarks': data.get('remarks'),
+                }, current_user.company_name, current_user.id)
+                db.session.add(inventory)
+                db.session.flush()
+                after = received_qty
+            else:
+                if inventory.item_code != pl_line.item_code:
+                    raise ValidationError('Existing warehouse stock identity does not match the Packing List material.')
+                inventory.received_qty = before + received_qty
+                inventory.storage_location_id = line.storage_location_id or inventory.storage_location_id
+                inventory.delivery_id = str(pl.delivery_id or inventory.delivery_id)
+                after = float(inventory.received_qty)
+
+            tx = WarehouseTransaction(
+                transaction_no=generate_next_warehouse_transaction_no(current_user.company_name),
+                transaction_type='RECEIPT',
+                warehouse_id=warehouse_id,
+                material_id=pl_line.material_id,
+                item_code=pl_line.item_code,
+                material_description=pl_line.material_description,
+                quantity=received_qty,
+                unit=pl_line.unit,
+                project_no=getattr(pl.order.project, 'project_no', None) if pl.order and pl.order.project else None,
+                delivery_id=str(pl.delivery_id) if pl.delivery_id else None,
+                reference_no=receipt.receipt_no,
+                packing_list_no=pl.packing_list_no,
+                packing_list_date=pl.packing_list_date,
+                packing_list_document=pl.document_path,
+                supplier_name=pl.supplier.company_name if pl.supplier else None,
+                remarks=line.remarks or receipt.remarks,
+                company_name=current_user.company_name,
+                user_id=current_user.id,
+                balance_before=before,
+                balance_after=after,
+                goods_receipt_id=receipt.id,
+                receipt_line_id=line.id,
+                packing_list_id=pl.id,
+            )
+            db.session.add(tx)
+
+            if bool(data.get('final_receipt', True)) and abs(cumulative_qty - pl_line.quantity) > 1e-9:
+                osd_candidates.append((line, cumulative_qty - pl_line.quantity))
+
+        # Create one OS&D document for final receipts with remaining discrepancies.
+        osd = None
+        if osd_candidates:
+            osd = OSDReport(
+                osd_no=generate_next_osd_no(current_user.company_name),
+                goods_receipt_id=receipt.id,
+                packing_list_id=pl.id,
+                delivery_id=pl.delivery_id,
+                report_date=receipt.receipt_date,
+                status=OSDStatus.open,
+                supplier_id=pl.supplier_id,
+                remarks='Automatically generated from Goods Receipt quantity discrepancy.',
+                company_name=current_user.company_name,
+                created_by=current_user.id,
+            )
+            db.session.add(osd)
+            db.session.flush()
+            for line, variance in osd_candidates:
+                db.session.add(OSDReportLine(
+                    osd_report_id=osd.id,
+                    goods_receipt_line_id=line.id,
+                    material_id=line.material_id,
+                    discrepancy_type='OVER' if variance > 0 else 'SHORT',
+                    expected_qty=line.expected_qty,
+                    received_qty=line.expected_qty + variance,
+                    variance_qty=variance,
+                    details='Cumulative received quantity does not match the Packing List quantity.',
+                    action_required='Review with supplier/carrier and resolve discrepancy.',
+                ))
+
+        db.session.commit()
+        return jsonify({
+            'receipt': receipt.to_dict(),
+            'osd': osd.to_dict() if osd else None,
+        }), 201
+    except CSRFError:
+        db.session.rollback()
+        return jsonify({'error': 'Invalid CSRF token'}), 403
+    except (ValidationError, ValueError, TypeError) as exc:
+        db.session.rollback()
+        return jsonify({'error': str(exc)}), 400
+    except Exception as exc:
+        db.session.rollback()
+        logger.exception('Goods Receipt creation failed')
+        return jsonify({'error': 'Failed to create Goods Receipt', 'detail': str(exc)}), 500
+
+@warehouse_bp.route('/api/osd-reports', methods=['GET'])
+@login_required
+def api_list_osd_reports():
+    rows = OSDReport.query.filter_by(
+        company_name=current_user.company_name
+    ).order_by(OSDReport.created_at.desc()).limit(500).all()
+    return jsonify([row.to_dict() for row in rows]), 200
+
+@warehouse_bp.route('/api/osd-reports/<int:osd_id>', methods=['GET'])
+@login_required
+def api_get_osd_report(osd_id):
+    row = OSDReport.query.filter_by(
+        id=osd_id, company_name=current_user.company_name
+    ).first()
+    if not row:
+        return jsonify({'error': 'OS&D report not found'}), 404
+    return jsonify(row.to_dict()), 200
+
+@warehouse_bp.route('/api/osd-reports/<int:osd_id>', methods=['PATCH'])
+@login_required
+def api_update_osd_report(osd_id):
+    if not _receiving_user_allowed():
+        return jsonify({'error': 'Unauthorized'}), 403
+    try:
+        data = request.get_json() or {}
+        validate_csrf(data.get('csrf_token'))
+        row = OSDReport.query.filter_by(
+            id=osd_id, company_name=current_user.company_name
+        ).first()
+        if not row:
+            return jsonify({'error': 'OS&D report not found'}), 404
+        if data.get('status'):
+            row.status = OSDStatus(str(data['status']).lower())
+        if 'remarks' in data:
+            row.remarks = data.get('remarks')
+        for raw in data.get('lines') or []:
+            line = OSDReportLine.query.filter_by(
+                id=int(raw.get('id') or 0), osd_report_id=row.id
+            ).first()
+            if not line:
+                continue
+            if 'details' in raw:
+                line.details = raw.get('details')
+            if 'action_required' in raw:
+                line.action_required = raw.get('action_required')
+            if raw.get('discrepancy_type'):
+                line.discrepancy_type = str(raw['discrepancy_type']).upper()
+        db.session.commit()
+        return jsonify(row.to_dict()), 200
+    except (ValueError, TypeError):
+        db.session.rollback()
+        return jsonify({'error': 'Invalid OS&D update'}), 400
+    except CSRFError:
+        db.session.rollback()
+        return jsonify({'error': 'Invalid CSRF token'}), 403
 
 @warehouse_bp.route('/report/<warehouse_id>', methods=['GET'])
 @login_required
