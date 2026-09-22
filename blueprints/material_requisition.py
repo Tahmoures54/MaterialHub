@@ -2,7 +2,7 @@ from flask import (
     Blueprint, render_template, request, jsonify, abort, send_file
 )
 from flask_login import login_required, current_user
-from models import db, MaterialRequisition, ApprovalStatus
+from models import db, MaterialRequisition, MaterialMaster, ApprovalStatus
 from utils import generate_next_mr_no, parse_enum
 import csv
 import io
@@ -27,6 +27,15 @@ def material_requisitions():
         current_user=current_user,
         read_only=(current_user.access_level.name != 'engineering')
     )
+
+
+def _resolve_material(data):
+    material_id = data.get('material_id')
+    if material_id:
+        try: return MaterialMaster.query.filter_by(id=int(material_id), company_name=current_user.company_name, status='active').first()
+        except (TypeError, ValueError): return None
+    code = str(data.get('item_code') or '').strip()
+    return MaterialMaster.query.filter_by(material_code=code, company_name=current_user.company_name, status='active').first() if code else None
 
 @material_requisition_bp.route('/api/material_requisitions', methods=['GET'])
 @login_required
@@ -61,6 +70,14 @@ def api_create_material_requisitions():
             material_requisitions_data = [material_requisitions_data]
         new_mrs = []
         for row in material_requisitions_data:
+            material = _resolve_material(row)
+            if not material:
+                return jsonify({'error': 'Each MR line must select a valid Material Master item.'}), 400
+            row = dict(row)
+            row['material_id'] = material.id
+            row['item_code'] = material.material_code
+            row['material_description'] = material.description
+            row['unit'] = row.get('unit') or material.unit
             if not row.get('mr_no'):
                 row['mr_no'] = generate_next_mr_no(current_user.company_name)
             mr = MaterialRequisition.from_dict(row, current_user.company_name, user_id=current_user.id)
@@ -95,6 +112,14 @@ def api_update_material_requisition(mr_no):
             return jsonify({'error': 'No data provided'}), 400
         if isinstance(data, list):
             data = data[0]
+        material = _resolve_material(data)
+        if material:
+            data['material_id'] = material.id
+            data['item_code'] = material.material_code
+            data['material_description'] = material.description
+            data['unit_of_measure'] = data.get('unit_of_measure') or material.unit
+        elif data.get('material_id') or data.get('item_code'):
+            return jsonify({'error': 'Select a valid Material Master item.'}), 400
         mr.update_from_dict(data)
         mr.edited_by = current_user.full_name
         mr.updated_at = datetime.datetime.utcnow()
