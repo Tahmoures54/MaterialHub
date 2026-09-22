@@ -327,6 +327,13 @@ class MaterialRequisition(db.Model):
         user_id = user_id or payload.get('user_id')
         if not user_id:
             raise ValidationError('User is required to create a material requisition')
+        material_id = payload.get('material_id')
+        if not material_id:
+            raise ValidationError('Material Master item is required to create a material requisition')
+        try:
+            material_id = int(material_id)
+        except (TypeError, ValueError) as exc:
+            raise ValidationError('Invalid Material Master item') from exc
         return cls(
             mr_no=payload.get('mr_no'),
             subject=payload.get('subject') or payload.get('material_description') or payload.get('item_code'),
@@ -334,6 +341,7 @@ class MaterialRequisition(db.Model):
             drawing_revision=payload.get('drawing_revision'),
             drawing_page=payload.get('drawing_page'),
             material_type=payload.get('material_type') or payload.get('category'),
+            material_id=material_id,
             item_code=(payload.get('item_code') or '').strip(),
             material_description=(payload.get('material_description') or payload.get('subject') or '').strip(),
             category=payload.get('category'),
