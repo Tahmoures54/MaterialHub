@@ -88,6 +88,103 @@ def _number(kind, obj):
     return _value(obj, TYPES[kind][2])
 
 
+
+# Operational receiving / traceability print packs
+REPORT_TYPES = {
+    'PL': ('Packing List Register', PackingList, 'packing_list_no'),
+    'GR': ('Goods Receipt', GoodsReceipt, 'receipt_no'),
+    'OSD': ('OSD / OS&D Report', OSDReport, 'osd_no'),
+    'RR': ('Receiving Report', GoodsReceipt, 'receipt_no'),
+    'TRACE': ('Material Traceability', GoodsReceiptLine, 'id'),
+}
+
+def _operational_query(model):
+    return model.query.filter_by(company_name=current_user.company_name)
+
+def _operational_record(kind, record_id):
+    meta = REPORT_TYPES.get(kind)
+    if not meta:
+        abort(404)
+    return _operational_query(meta[1]).filter_by(id=record_id).first_or_404()
+
+def _operational_payload(kind, obj):
+    if kind == 'PL':
+        lines = list(getattr(obj, 'lines', []) or [])
+        return {
+            'number': obj.packing_list_no, 'subtitle': 'Packing List Register / Inbound Package Manifest',
+            'meta': [('Packing List Date', _value(obj.packing_list_date)), ('PO', getattr(obj.order, 'order_no', obj.order_id or '')),
+                     ('Delivery', getattr(obj.delivery, 'delivery_id', obj.delivery_id or '')), ('Supplier', getattr(obj.supplier, 'full_name', '') or getattr(obj.supplier, 'company_email', '')),
+                     ('Vehicle', obj.vehicle_no or ''), ('Packages', obj.package_count or ''), ('Gross Weight', obj.gross_weight or ''), ('Net Weight', obj.net_weight or ''), ('Status', obj.status)],
+            'headers': ['#','Item Code','Description','Qty','Unit','Package','Lot','Heat','Serial'],
+            'table': [[i+1,l.item_code,l.material_description,l.quantity,l.unit,l.package_no or '',l.lot_no or '',l.heat_no or '',l.serial_no or ''] for i,l in enumerate(lines)],
+            'notes': obj.remarks or ''
+        }
+    if kind in {'GR','RR'}:
+        lines = list(getattr(obj, 'lines', []) or [])
+        return {
+            'number': obj.receipt_no, 'subtitle': 'Inbound Material Receiving Record' if kind == 'RR' else 'Goods Receipt',
+            'meta': [('Receipt Date', _value(obj.receipt_date)), ('Packing List', getattr(obj.packing_list, 'packing_list_no', obj.packing_list_id or '')),
+                     ('PO', getattr(obj.order, 'order_no', obj.order_id or '')), ('Delivery', getattr(obj.delivery, 'delivery_id', obj.delivery_id or '')),
+                     ('Warehouse', obj.warehouse_id), ('Received By', getattr(obj.receiver, 'full_name', '') or getattr(obj.receiver, 'company_email', '')), ('Status', _value(obj.status))],
+            'headers': ['#','Item Code','Description','Expected','Received','Variance','Unit','Location','Inspection','Lot / Heat / Serial'],
+            'table': [[i+1,l.item_code,l.material_description,l.expected_qty,l.received_qty,l.received_qty-l.expected_qty,l.unit,l.storage_location_id or '',l.inspection_status, ' / '.join(x for x in [l.lot_no,l.heat_no,l.serial_no] if x)] for i,l in enumerate(lines)],
+            'notes': obj.remarks or ''
+        }
+    if kind == 'OSD':
+        lines = list(getattr(obj, 'lines', []) or [])
+        return {
+            'number': obj.osd_no, 'subtitle': 'Over / Short / Damaged Report',
+            'meta': [('Report Date', _value(obj.report_date)), ('Goods Receipt', getattr(obj.goods_receipt, 'receipt_no', obj.goods_receipt_id)),
+                     ('Packing List', getattr(obj.packing_list, 'packing_list_no', obj.packing_list_id)), ('Delivery', getattr(obj.delivery, 'delivery_id', obj.delivery_id or '')),
+                     ('Supplier', getattr(obj.supplier, 'full_name', '') or getattr(obj.supplier, 'company_email', '')), ('Status', _value(obj.status))],
+            'headers': ['#','Item Code','Discrepancy','Expected','Received','Variance','Details','Action Required'],
+            'table': [[i+1,getattr(l.material,'material_code', '') or '',l.discrepancy_type,l.expected_qty,l.received_qty,l.variance_qty,l.details or '',l.action_required or ''] for i,l in enumerate(lines)],
+            'notes': obj.remarks or ''
+        }
+    line = obj
+    gr = line.goods_receipt
+    pl = line.packing_list_line.packing_list if line.packing_list_line else None
+    inv = WarehouseInventory.query.filter_by(company_name=current_user.company_name, material_id=line.material_id, warehouse_id=gr.warehouse_id).first()
+    txs = WarehouseTransaction.query.filter_by(company_name=current_user.company_name, receipt_line_id=line.id).order_by(WarehouseTransaction.created_at.asc()).all()
+    return {
+        'number': f'TRACE-{line.id:06d}', 'subtitle': 'Material Traceability Record',
+        'meta': [('Item Code', line.item_code), ('Description', line.material_description), ('Material ID', line.material_id),
+                 ('Goods Receipt', gr.receipt_no), ('Packing List', getattr(pl, 'packing_list_no', '')), ('Warehouse', gr.warehouse_id),
+                 ('Receipt Date', _value(gr.receipt_date)), ('Inspection', line.inspection_status)],
+        'headers': ['Event','Transaction','Qty','Unit','Balance After','Reference','Date'],
+        'table': [[tx.transaction_type,tx.transaction_no,tx.quantity,tx.unit,tx.balance_after or '',tx.reference_no or tx.packing_list_no or '',_value(tx.created_at)] for tx in txs] or [['RECEIPT','—',line.received_qty,line.unit,(getattr(inv,'available_qty',0) or 0) + (getattr(inv,'quarantine_qty',0) or 0),gr.receipt_no,_value(gr.receipt_date)]],
+        'notes': f"Lot: {line.lot_no or '—'} | Heat: {line.heat_no or '—'} | Serial: {line.serial_no or '—'} | Location: {line.storage_location_id or '—'}"
+    }
+
+@reports_bp.get('/reports/operational')
+@login_required
+def operational_center():
+    counts = {k: _operational_query(m).count() for k,(_,m,_) in REPORT_TYPES.items()}
+    return render_template('reports/operational_center.html', report_types=REPORT_TYPES, counts=counts)
+
+@reports_bp.get('/reports/operational/<kind>')
+@login_required
+def operational_listing(kind):
+    if kind not in REPORT_TYPES: abort(404)
+    label, model, number_field = REPORT_TYPES[kind]
+    rows = _operational_query(model).order_by(model.id.desc()).limit(500).all()
+    return render_template('reports/operational_list.html', kind=kind, label=label, rows=rows, number_field=number_field)
+
+@reports_bp.get('/reports/operational/<kind>/<int:record_id>')
+@login_required
+def operational_report(kind, record_id):
+    obj = _operational_record(kind, record_id)
+    payload = _operational_payload(kind, obj)
+    return render_template('reports/print_document.html', kind=kind, title=REPORT_TYPES[kind][0], obj=obj, **payload)
+
+@reports_bp.get('/reports/operational/<kind>/print')
+@login_required
+def operational_print_register(kind):
+    if kind not in REPORT_TYPES: abort(404)
+    label, model, number_field = REPORT_TYPES[kind]
+    rows = _operational_query(model).order_by(model.id.desc()).limit(500).all()
+    return render_template('reports/operational_register.html', kind=kind, title=label, rows=rows, number_field=number_field)
+
 @reports_bp.get('/reports')
 @login_required
 def center():
