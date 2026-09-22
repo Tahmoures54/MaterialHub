@@ -105,7 +105,30 @@
                         <div class="mr-wizard-fields">
                             <label class="mr-wizard-field"><span>Material Description <em>*</em></span><input id="mrDescription" class="mh-input" autocomplete="off" placeholder="e.g. Carbon steel pipe"></label>
                             <label class="mr-wizard-field"><span>Item Code <em>*</em></span><input id="mrItemCode" class="mh-input" autocomplete="off" placeholder="e.g. PIPE-CS-001"></label>
-                            <label class="mr-wizard-field"><span>Discipline <em>*</em></span><select id="mrDiscipline" class="mh-select"><option value="">Select discipline</option><option>Civil</option><option>Mechanical</option><option>Piping</option><option>Electrical</option><option>Instrument</option><option>Structural</option><option>HVAC</option><option>Fire Fighting</option><option>Telecom</option><option>Process</option><option>HSE</option><option>Insulation</option><option>Paint & Coating</option><option>Commissioning</option><option>Other</option></select></label>
+                            <label class="mr-wizard-field"><span>Discipline <em>*</em></span><select id="mrDiscipline" class="mh-select" required>
+                                <option value="" selected disabled>Select discipline</option>
+                                <option value="Civil">Civil</option>
+                                <option value="Mechanical">Mechanical</option>
+                                <option value="Piping">Piping</option>
+                                <option value="Electrical">Electrical</option>
+                                <option value="Instrument">Instrument</option>
+                                <option value="Structural">Structural</option>
+                                <option value="HVAC">HVAC</option>
+                                <option value="Fire Fighting">Fire Fighting</option>
+                                <option value="Telecom">Telecom</option>
+                                <option value="Process">Process</option>
+                                <option value="HSE">HSE</option>
+                                <option value="Insulation">Insulation</option>
+                                <option value="Paint & Coating">Paint & Coating</option>
+                                <option value="Commissioning">Commissioning</option>
+                                <option value="Scaffolding">Scaffolding</option>
+                                <option value="Geotechnical">Geotechnical</option>
+                                <option value="Materials Engineering">Materials Engineering</option>
+                                <option value="Rotating Equipment">Rotating Equipment</option>
+                                <option value="Static Equipment">Static Equipment</option>
+                                <option value="Waste Water">Waste Water</option>
+                                <option value="Other">Other</option>
+                            </select></label>
                         </div>
                     </section>
                     <section class="mr-wizard-step-panel" data-panel="3">
