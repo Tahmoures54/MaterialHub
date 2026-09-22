@@ -98,14 +98,17 @@ def api_receive_inventory():
                 material_id=material.id,
                 company_name=current_user.company_name
             ).first()
+            receipt_qty = float(item.get('received_quantity') or item.get('received_qty') or 0)
+            before = float(inventory.received_qty or 0) if inventory else 0.0
             if inventory:
-                inventory.received_qty += float(item.get('received_quantity') or item.get('received_qty') or 0)
+                inventory.received_qty = before + receipt_qty
                 inventory.delivery_id = str(item.get('delivery_id') or inventory.delivery_id)
                 inventory.remarks = item.get('remarks') or inventory.remarks
             else:
                 inventory = WarehouseInventory.from_dict(item, current_user.company_name, current_user.id)
                 db.session.add(inventory)
             db.session.flush()
+            after = float(inventory.received_qty or 0)
             from utils import generate_next_warehouse_transaction_no
             tx = WarehouseTransaction(
                 transaction_no=generate_next_warehouse_transaction_no(current_user.company_name),
@@ -114,7 +117,7 @@ def api_receive_inventory():
                 material_id=material.id,
                 item_code=inventory.item_code,
                 material_description=inventory.material_description,
-                quantity=float(inventory.received_qty),
+                quantity=receipt_qty,
                 unit=inventory.unit,
                 project_no=inventory.project_no,
                 delivery_id=inventory.delivery_id,
@@ -123,6 +126,8 @@ def api_receive_inventory():
                 remarks=inventory.remarks,
                 company_name=current_user.company_name,
                 user_id=current_user.id,
+                balance_before=before,
+                balance_after=after,
             )
             db.session.add(tx)
         db.session.commit()
@@ -948,7 +953,7 @@ def api_create_goods_receipt():
             )
             db.session.add(tx)
 
-            if bool(data.get('final_receipt', True)) and abs(cumulative_qty - pl_line.quantity) > 1e-9:
+            if bool(data.get('final_receipt', False)) and abs(cumulative_qty - pl_line.quantity) > 1e-9:
                 osd_candidates.append((line, cumulative_qty - pl_line.quantity))
 
         # Create one OS&D document for final receipts with remaining discrepancies.
