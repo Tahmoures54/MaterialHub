@@ -366,6 +366,7 @@ def api_create_transaction():
             if inventory.material_id and inventory.material_id != material.id:
                 return jsonify({'error': 'Selected material does not match the stock record.'}), 409
             before = float(inventory.received_qty or 0)
+            available_before = float(inventory.available_qty or 0)
             destination = None
         if tx_type == 'TRANSFER':
             destination_id = str(data.get('destination_warehouse_id') or '').strip()
@@ -376,20 +377,26 @@ def api_create_transaction():
                 return jsonify({'error': 'Destination stock must already exist for this material.'}), 404
             if destination.material_id and destination.material_id != material.id:
                 return jsonify({'error': 'Destination stock belongs to a different material.'}), 409
-            if before < quantity:
-                return jsonify({'error': 'Insufficient stock'}), 400
+            if available_before < quantity:
+                return jsonify({'error': 'Insufficient available stock; quarantined material cannot be transferred.'}), 400
             destination_before = float(destination.received_qty or 0)
             inventory.received_qty = before - quantity
+            inventory.available_qty = max(0.0, available_before - quantity)
             destination.received_qty = destination_before + quantity
+            destination.available_qty = float(destination.available_qty or 0) + quantity
             destination.material_id = material.id
             destination.item_code = material.material_code
             destination.material_description = material.description
             destination.unit = material.unit
         elif tx_type != 'RECEIPT':
             signed = quantity if tx_type in {'RETURN', 'ADJUSTMENT_IN'} else -quantity
-            if signed < 0 and before < quantity:
-                return jsonify({'error': 'Insufficient stock'}), 400
+            if signed < 0 and available_before < quantity:
+                return jsonify({'error': 'Insufficient available stock; quarantined material cannot be issued.'}), 400
             inventory.received_qty = before + signed
+            if signed < 0:
+                inventory.available_qty = max(0.0, float(inventory.available_qty or 0) + signed)
+            else:
+                inventory.available_qty = float(inventory.available_qty or 0) + signed
             inventory.material_id = material.id
             inventory.item_code = material.material_code
             inventory.material_description = material.description
