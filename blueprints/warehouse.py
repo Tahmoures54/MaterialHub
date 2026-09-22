@@ -37,19 +37,18 @@ def warehouse_operations():
 
 
 def _resolve_material(data):
+    """Resolve a required Material Master identity; legacy free-text codes are rejected."""
     material_id = data.get('material_id')
-    if material_id:
-        try:
-            material = MaterialMaster.query.filter_by(id=int(material_id), company_name=current_user.company_name, status='active').first()
-        except (TypeError, ValueError):
-            material = None
-        if not material:
-            raise ValueError('Selected material is not available in Material Master.')
-        return material
-    item_code = str(data.get('item_code') or '').strip()
-    if item_code:
-        return MaterialMaster.query.filter_by(material_code=item_code, company_name=current_user.company_name, status='active').first()
-    return None
+    if not material_id:
+        return None
+    try:
+        return MaterialMaster.query.filter_by(
+            id=int(material_id),
+            company_name=current_user.company_name,
+            status='active'
+        ).first()
+    except (TypeError, ValueError):
+        return None
 
 @warehouse_bp.route('/api/inventory', methods=['GET'])
 @login_required
