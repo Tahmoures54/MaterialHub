@@ -239,6 +239,7 @@ class MaterialRequisition(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
     project = db.relationship('Project', backref=db.backref('requisitions', lazy='dynamic'))
+    material = db.relationship('MaterialMaster', foreign_keys=[material_id], backref=db.backref('requisitions', lazy=True))
     user = db.relationship('User', backref=db.backref('requisitions', lazy='dynamic'))
 
     def __init__(self, **kwargs):
@@ -266,6 +267,7 @@ class MaterialRequisition(db.Model):
             'drawing_revision': self.drawing_revision,
             'drawing_page': self.drawing_page,
             'material_type': self.material_type,
+            'material_id': self.material_id,
             'item_code': self.item_code,
             'material_description': self.material_description,
             'category': self.category,
