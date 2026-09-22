@@ -120,7 +120,7 @@ def update_receipt_inspection(receipt_line_id):
     except CSRFError:
         db.session.rollback()
         return jsonify({'error': 'Invalid CSRF token'}), 403
-    except Exception as exc:
+    except Exception:
         db.session.rollback()
         logger.exception('Receipt inspection update failed')
         return jsonify({'error': 'Failed to update receipt inspection'}), 500
