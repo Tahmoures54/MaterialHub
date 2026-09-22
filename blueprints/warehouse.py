@@ -4,7 +4,7 @@ from flask_wtf.csrf import validate_csrf, CSRFError
 from io import StringIO
 import csv
 import logging
-from datetime import datetime
+from datetime import datetime, date
 from models import db, WarehouseInventory, WarehouseTransaction, Delivery, MaterialMaster, WorkflowStatus, AccessLevel, ValidationError
 
 # Configure logging
@@ -304,7 +304,7 @@ def api_create_transaction():
         data = request.get_json() or {}
         validate_csrf(data.get('csrf_token'))
         tx_type = str(data.get('transaction_type') or '').upper()
-        allowed = {'RETURN', 'ADJUSTMENT_IN', 'ADJUSTMENT_OUT', 'TRANSFER'}
+        allowed = {'RECEIPT', 'RETURN', 'ADJUSTMENT_IN', 'ADJUSTMENT_OUT', 'TRANSFER'}
         if tx_type not in allowed:
             return jsonify({'error': 'Unsupported transaction type'}), 400
         warehouse_id = str(data.get('warehouse_id') or '').strip()
@@ -314,13 +314,39 @@ def api_create_transaction():
         material = _resolve_material(data)
         if not material:
             return jsonify({'error': 'Select a valid Material Master item.'}), 400
-        inventory = WarehouseInventory.query.filter_by(warehouse_id=warehouse_id, company_name=current_user.company_name).first()
-        if not inventory:
-            return jsonify({'error': 'Inventory stock not found'}), 404
-        if inventory.material_id and inventory.material_id != material.id:
-            return jsonify({'error': 'Selected material does not match the stock record.'}), 409
-        before = float(inventory.received_qty or 0)
-        destination = None
+        inventory = WarehouseInventory.query.filter_by(
+            warehouse_id=warehouse_id, company_name=current_user.company_name
+        ).first()
+        if tx_type == 'RECEIPT':
+            packing_list_no = str(data.get('packing_list_no') or '').strip()
+            if not packing_list_no:
+                return jsonify({'error': 'Packing List No. is required for a receipt.'}), 400
+            if inventory and inventory.material_id and inventory.material_id != material.id:
+                return jsonify({'error': 'Selected material does not match the stock record.'}), 409
+            before = float(inventory.received_qty or 0) if inventory else 0.0
+            if not inventory:
+                inventory = WarehouseInventory.from_dict({
+                    'warehouse_id': warehouse_id,
+                    'delivery_id': data.get('delivery_id') or data.get('reference_no') or packing_list_no,
+                    'item_code': material.material_code,
+                    'material_id': material.id,
+                    'material_description': material.description,
+                    'material_category': material.material_group,
+                    'received_quantity': 0,
+                    'unit': material.unit,
+                    'project_no': data.get('project_no'),
+                    'remarks': data.get('remarks'),
+                }, current_user.company_name, current_user.id)
+                db.session.add(inventory)
+                db.session.flush()
+            destination = None
+        else:
+            if not inventory:
+                return jsonify({'error': 'Inventory stock not found'}), 404
+            if inventory.material_id and inventory.material_id != material.id:
+                return jsonify({'error': 'Selected material does not match the stock record.'}), 409
+            before = float(inventory.received_qty or 0)
+            destination = None
         if tx_type == 'TRANSFER':
             destination_id = str(data.get('destination_warehouse_id') or '').strip()
             if not destination_id or destination_id == warehouse_id:
@@ -339,7 +365,7 @@ def api_create_transaction():
             destination.item_code = material.material_code
             destination.material_description = material.description
             destination.unit = material.unit
-        else:
+        elif tx_type != 'RECEIPT':
             signed = quantity if tx_type in {'RETURN', 'ADJUSTMENT_IN'} else -quantity
             if signed < 0 and before < quantity:
                 return jsonify({'error': 'Insufficient stock'}), 400
@@ -356,6 +382,15 @@ def api_create_transaction():
             quantity=quantity, unit=material.unit, project_no=data.get('project_no') or inventory.project_no,
             contractor=data.get('contractor'), storage_location_id=inventory.storage_location_id,
             reference_no=data.get('reference_no'), remarks=data.get('remarks'),
+            packing_list_no=str(data.get('packing_list_no') or '').strip() or None,
+            packing_list_date=(
+                datetime.strptime(str(data.get('packing_list_date')), '%Y-%m-%d').date()
+                if data.get('packing_list_date') else None
+            ),
+            packing_list_document=str(data.get('packing_list_document') or '').strip() or None,
+            supplier_name=str(data.get('supplier_name') or '').strip() or None,
+            discrepancy_type=str(data.get('discrepancy_type') or '').strip() or None,
+            discrepancy_details=str(data.get('discrepancy_details') or '').strip() or None,
             company_name=current_user.company_name, user_id=current_user.id,
             balance_before=before, balance_after=float(inventory.received_qty or 0),
             destination_warehouse_id=destination.warehouse_id if destination else None,
@@ -374,6 +409,42 @@ def api_create_transaction():
         db.session.rollback()
         logger.error(f'Error recording warehouse transaction: {e}')
         return jsonify({'error': 'Failed to record transaction'}), 500
+
+
+@warehouse_bp.route('/reports', methods=['GET'])
+@login_required
+def warehouse_reports():
+    """Warehouse print/report center for receiving and discrepancy documents."""
+    if current_user.access_level not in {AccessLevel.warehouse, AccessLevel.project_manager, AccessLevel.quality}:
+        return jsonify({'error': 'Unauthorized'}), 403
+    transactions = WarehouseTransaction.query.filter_by(
+        company_name=current_user.company_name
+    ).order_by(WarehouseTransaction.created_at.desc()).limit(200).all()
+    return render_template('warehouse/warehouse_reports.html', transactions=transactions)
+
+
+def _tenant_transaction(transaction_id):
+    return WarehouseTransaction.query.filter_by(
+        id=transaction_id, company_name=current_user.company_name
+    ).first()
+
+
+@warehouse_bp.route('/reports/receipt/<int:transaction_id>', methods=['GET'])
+@login_required
+def warehouse_receipt_report(transaction_id):
+    transaction = _tenant_transaction(transaction_id)
+    if not transaction:
+        return render_template('errors/404.html', error='Warehouse transaction not found'), 404
+    return render_template('warehouse/warehouse_receipt_report.html', transaction=transaction)
+
+
+@warehouse_bp.route('/reports/osid/<int:transaction_id>', methods=['GET'])
+@login_required
+def warehouse_osid_report(transaction_id):
+    transaction = _tenant_transaction(transaction_id)
+    if not transaction:
+        return render_template('errors/404.html', error='Warehouse transaction not found'), 404
+    return render_template('warehouse/warehouse_osid_report.html', transaction=transaction)
 
 
 @warehouse_bp.route('/api/approve', methods=['POST'])
