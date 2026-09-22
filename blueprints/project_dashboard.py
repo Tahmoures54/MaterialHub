@@ -93,7 +93,7 @@ def dashboard():
             flash('An unexpected error occurred. Please try again.', 'danger')
 
     return render_template(
-        'project_dashboard.html',
+        'dashboard/project_dashboard.html',
         add_user_form=add_user_form,
         company_team=company_team,
         has_project_manager=has_project_manager,
