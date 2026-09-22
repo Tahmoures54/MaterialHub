@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %} — Material Master{% endblock %}
+{% block content %}
+<div class="mm-page">
+  <header class="mm-hero">
+    <div>
+      <span class="mm-eyebrow">MATERIAL MASTER</span>
+      <h1>Material Catalog</h1>
+      <p>One stable material identity across requisitions, purchasing, delivery, QC and warehouse.</p>
+    </div>
+    <div class="mm-actions">
+      <button class="btn btn-light border" id="exportMaterials"><i class="fas fa-file-csv me-2"></i>Export</button>
+      {% if can_write %}<button class="btn btn-primary" id="newMaterial"><i class="fas fa-plus me-2"></i>New Material</button>{% endif %}
+    </div>
+  </header>
+
+  <section class="mm-stats">
+    <div><small>Total materials</small><strong id="statTotal">0</strong></div>
+    <div><small>Active</small><strong id="statActive">0</strong></div>
+    <div><small>Classified</small><strong id="statClassified">0</strong></div>
+    <div><small>Families</small><strong id="statFamilies">0</strong></div>
+  </section>
+
+  <section class="mm-card">
+    <div class="mm-toolbar">
+      <div class="mm-search"><i class="fas fa-search"></i><input id="materialSearch" placeholder="Search code, name, description or manufacturer part number…"></div>
+      <select id="familyFilter" class="form-select"><option value="">All families</option>{% for family in family_options %}<option value="{{ family[:3].upper() }}">{{ family }}</option>{% endfor %}</select>
+      <select id="statusFilter" class="form-select"><option value="">All status</option><option value="active">Active</option><option value="archived">Archived</option></select>
+      <button class="btn btn-light border" id="refreshMaterials"><i class="fas fa-sync-alt"></i></button>
+    </div>
+    <div class="mm-note"><i class="fas fa-shield-alt"></i><span><strong>How coding works:</strong> MaterialHub assigns a permanent <strong>MAT-######</strong> code. Project, vendor and warehouse are never embedded in the material code. UNSPSC, eCl@ss and ETIM are stored as optional industry mappings.</span></div>
+    <div class="table-responsive">
+      <table class="table mm-table align-middle">
+        <thead><tr><th>Material Code</th><th>Material</th><th>Family</th><th>Technical Identity</th><th>Classification</th><th>Status</th><th></th></tr></thead>
+        <tbody id="materialsBody"><tr><td colspan="7" class="text-center text-muted py-5">Loading material master…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+{% if can_write %}
+<div class="modal fade" id="materialModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content mm-modal">
+      <div class="modal-header">
+        <div><span class="mm-eyebrow">CONTROLLED MASTER DATA</span><h5 id="materialModalTitle" class="modal-title">Create Material</h5></div>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mm-steps"><span class="active">1 Identity</span><span>2 Technical</span><span>3 Review</span></div>
+        <form id="materialForm">
+          <input type="hidden" id="materialId">
+          <input type="hidden" id="csrfToken" value="{{ csrf_token() }}">
+          <div class="mm-step" data-step="1">
+            <div class="row g-3">
+              <div class="col-md-6"><label class="form-label">Material family *</label><select class="form-select" id="family" required><option value="">Select family</option>{% for family in family_options %}<option value="{{ family }}">{{ family }}</option>{% endfor %}</select></div>
+              <div class="col-md-6"><label class="form-label">Material name *</label><input class="form-control" id="materialName" required placeholder="e.g. Pipe, Carbon Steel"></div>
+              <div class="col-12"><label class="form-label">Standard description *</label><textarea class="form-control" id="description" rows="2" required placeholder="e.g. PIPE, CS, ASTM A106 GR.B, 4 IN, SCH 40"></textarea></div>
+              <div class="col-md-4"><label class="form-label">Unit *</label><select class="form-select" id="unit"><option>EA</option><option>m</option><option>kg</option><option>set</option><option>lot</option><option>roll</option><option>box</option></select></div>
+              <div class="col-md-8"><label class="form-label">Material group</label><input class="form-control" id="materialGroup" placeholder="e.g. Piping Materials"></div>
+              <div class="col-md-6"><label class="form-label">Discipline</label><select class="form-select" id="discipline"><option value="">General</option><option>Piping</option><option>Mechanical</option><option>Electrical</option><option>Instrument</option><option>Civil</option><option>Structural</option><option>HVAC</option><option>Process</option><option>HSE</option><option>Other</option></select></div>
+            </div>
+          </div>
+          <div class="mm-step d-none" data-step="2">
+            <div class="mm-section-title">Industrial classification <span>Optional — add codes when your organization has them.</span></div>
+            <div class="row g-3">
+              <div class="col-md-4"><label class="form-label">UNSPSC</label><input class="form-control" id="unspsc" placeholder="UNSPSC code"></div>
+              <div class="col-md-4"><label class="form-label">eCl@ss</label><input class="form-control" id="eclass" placeholder="eCl@ss code"></div>
+              <div class="col-md-4"><label class="form-label">ETIM class</label><input class="form-control" id="etim" placeholder="ETIM class"></div>
+            </div>
+            <div class="mm-section-title mt-4">Technical identity <span>Used for duplicate detection.</span></div>
+            <div class="row g-3">
+              <div class="col-md-6"><label class="form-label">Standard</label><input class="form-control" id="standard" placeholder="ASTM / ASME / IEC…"></div>
+              <div class="col-md-6"><label class="form-label">Grade</label><input class="form-control" id="grade" placeholder="A106 Gr.B / 316L…"></div>
+              <div class="col-md-6"><label class="form-label">Size</label><input class="form-control" id="size" placeholder="4 in / DN100 / M20…"></div>
+              <div class="col-md-6"><label class="form-label">Schedule / Rating</label><input class="form-control" id="schedule" placeholder="SCH 40 / CL150…"></div>
+              <div class="col-md-6"><label class="form-label">Manufacturer</label><input class="form-control" id="manufacturer"></div>
+              <div class="col-md-6"><label class="form-label">Manufacturer Part No.</label><input class="form-control" id="partNo"></div>
+            </div>
+          </div>
+          <div class="mm-step d-none" data-step="3">
+            <div id="duplicateBox" class="mm-duplicate d-none"></div>
+            <div class="mm-review" id="review"></div>
+            <div class="mm-code-preview"><span>System code</span><strong>MAT-######</strong><small>Assigned automatically after confirmation</small></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-light border d-none" id="prevStep">Back</button>
+        <button class="btn btn-primary" id="nextStep">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+.mm-page{max-width:1500px;margin:0 auto}.mm-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding:8px 0 22px}.mm-eyebrow{display:block;color:#0e7490;font-size:.7rem;font-weight:800;letter-spacing:.13em;margin-bottom:5px}.mm-hero h1{margin:0;font-size:1.85rem;font-weight:800;letter-spacing:-.03em}.mm-hero p{margin:7px 0 0;color:#64748b}.mm-actions{display:flex;gap:8px}.mm-actions .btn-primary{background:#0e7490;border-color:#0e7490}.mm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}.mm-stats>div{background:#fff;border:1px solid #e2e8f0;border-radius:15px;padding:16px 18px}.mm-stats small{display:block;color:#64748b;font-size:.75rem;font-weight:700}.mm-stats strong{font-size:1.55rem}.mm-card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 8px 30px rgba(15,23,42,.045);overflow:hidden}.mm-toolbar{display:grid;grid-template-columns:minmax(240px,1fr) 180px 160px 42px;gap:9px;padding:16px;border-bottom:1px solid #e2e8f0}.mm-search{position:relative}.mm-search i{position:absolute;left:13px;top:12px;color:#94a3b8}.mm-search input{padding-left:38px}.mm-note{margin:14px 16px;padding:11px 13px;border-radius:11px;background:#f0fdfa;color:#115e59;font-size:.82rem;display:flex;gap:9px;align-items:flex-start}.mm-table{margin:0}.mm-table th{background:#f8fafc;color:#64748b;text-transform:uppercase;letter-spacing:.05em;font-size:.7rem;white-space:nowrap}.mm-table td{padding:13px 12px;border-color:#eef2f7}.mm-code{font-weight:800;color:#0e7490}.mm-main-name{font-weight:700}.mm-desc{font-size:.78rem;color:#64748b;max-width:360px}.mm-badge{display:inline-flex;padding:4px 8px;border-radius:999px;background:#ecfeff;color:#0e7490;font-size:.68rem;font-weight:800}.mm-modal{border:0;border-radius:18px;overflow:hidden}.mm-steps{display:flex;gap:8px;margin-bottom:20px}.mm-steps span{padding:8px 12px;background:#f1f5f9;color:#64748b;border-radius:999px;font-size:.76rem;font-weight:800}.mm-steps span.active{background:#dff7f2;color:#0f766e}.mm-section-title{font-weight:800;color:#0f172a;margin-bottom:12px}.mm-section-title span{font-size:.75rem;color:#94a3b8;font-weight:500;margin-left:8px}.mm-review{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mm-review div{padding:11px 12px;border:1px solid #e2e8f0;border-radius:10px}.mm-review small{display:block;color:#64748b;font-size:.7rem}.mm-review strong{display:block;margin-top:2px}.mm-code-preview{margin-top:14px;text-align:center;padding:16px;border-radius:13px;background:#f8fafc}.mm-code-preview span,.mm-code-preview small{display:block;color:#64748b;font-size:.75rem}.mm-code-preview strong{display:block;font-size:1.45rem;color:#0e7490;margin:3px 0}.mm-duplicate{padding:13px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin-bottom:12px}.mm-duplicate a{font-weight:800;color:#0e7490}.mm-archive{color:#b45309}.mm-empty{padding:40px;text-align:center;color:#64748b}
+@media(max-width:900px){.mm-hero{align-items:flex-start;flex-direction:column}.mm-stats{grid-template-columns:repeat(2,1fr)}.mm-toolbar{grid-template-columns:1fr 1fr}.mm-search{grid-column:1/-1}.mm-review{grid-template-columns:1fr}}
+@media(max-width:560px){.mm-page{padding:0 2px}.mm-stats{gap:9px}.mm-stats>div{padding:13px}.mm-toolbar{grid-template-columns:1fr}.mm-actions{width:100%}.mm-actions .btn{flex:1}.mm-hero h1{font-size:1.5rem}}
+</style>
+
+<script>
+(function(){
+  const canWrite={{ can_write|tojson }};
+  const csrf={{ csrf_token()|tojson }};
+  const modalEl=document.getElementById('materialModal');
+  const modal=modalEl?bootstrap.Modal.getOrCreateInstance(modalEl):null;
+  let materials=[], step=1, editingId=null;
+
+  const $=id=>document.getElementById(id);
+  const val=id=>($(id)?.value||'').trim();
+  const set=(id,v)=>{if($(id))$(id).value=v??''};
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+
+  function refreshStats(){
+    $('statTotal').textContent=materials.length;
+    $('statActive').textContent=materials.filter(x=>x.status==='active').length;
+    $('statClassified').textContent=materials.filter(x=>x.unspsc_code||x.eclass_code||x.etim_class).length;
+    $('statFamilies').textContent=new Set(materials.map(x=>x.family_code)).size;
+  }
+  function render(){
+    const q=val('materialSearch').toLowerCase(), fam=val('familyFilter'), status=val('statusFilter');
+    const rows=materials.filter(x=>(!q||[x.material_code,x.material_name,x.description,x.manufacturer_part_no].some(v=>String(v||'').toLowerCase().includes(q)))&&(!fam||x.family_code===fam)&&(!status||x.status===status));
+    $('materialsBody').innerHTML=rows.length?rows.map(x=>`<tr>
+      <td><span class="mm-code">${esc(x.material_code)}</span></td>
+      <td><div class="mm-main-name">${esc(x.material_name)}</div><div class="mm-desc">${esc(x.description)}</div></td>
+      <td><span class="mm-badge">${esc(x.family_code)}</span></td>
+      <td><div>${esc([x.standard,x.grade].filter(Boolean).join(' · '))}</div><div class="small text-muted">${esc([x.size,x.schedule].filter(Boolean).join(' · '))}</div></td>
+      <td><div class="small">UNSPSC: ${esc(x.unspsc_code||'—')}</div><div class="small">eCl@ss: ${esc(x.eclass_code||'—')}</div><div class="small">ETIM: ${esc(x.etim_class||'—')}</div></td>
+      <td><span class="badge ${x.status==='active'?'bg-success':'bg-secondary'}">${esc(x.status)}</span></td>
+      <td class="text-end">{% if can_write %}<button class="btn btn-sm btn-light border me-1" data-edit="${x.id}"><i class="fas fa-pen"></i></button>${x.status==='active'?'<button class="btn btn-sm btn-light border mm-archive" data-archive="'+x.id+'"><i class="fas fa-box-archive"></i></button>':''}{% endif %}</td>
+    </tr>`).join(''):'<tr><td colspan="7"><div class="mm-empty">No materials match your search.</div></td></tr>';
+    refreshStats();
+  }
+  async function load(){
+    const p=new URLSearchParams({q:val('materialSearch'),family:val('familyFilter'),status:val('statusFilter')});
+    try{const r=await fetch('/api/material-master?'+p);materials=await r.json();if(!r.ok)throw new Error(materials.error||'Failed');render();}
+    catch(e){$('materialsBody').innerHTML='<tr><td colspan="7" class="text-danger text-center py-5">Could not load Material Master.</td></tr>';}
+  }
+  function reset(){
+    $('materialForm').reset();set('materialId','');editingId=null;step=1;
+    $('materialModalTitle').textContent='Create Material';showStep();
+    $('duplicateBox').classList.add('d-none');$('duplicateBox').innerHTML='';
+  }
+  function showStep(){
+    document.querySelectorAll('.mm-step').forEach(x=>x.classList.toggle('d-none',Number(x.dataset.step)!==step));
+    document.querySelectorAll('.mm-steps span').forEach((x,i)=>x.classList.toggle('active',i===step-1));
+    $('prevStep').classList.toggle('d-none',step===1);$('nextStep').textContent=step===3?(editingId?'Save Changes':'Create Material'):'Continue';
+    if(step===3)buildReview();
+  }
+  function buildReview(){
+    const pairs=[['Family',val('family')],['Material',val('materialName')],['Description',val('description')],['Unit',val('unit')],['Discipline',val('discipline')||'General'],['Standard',val('standard')||'—'],['Grade',val('grade')||'—'],['Size',val('size')||'—'],['Schedule / Rating',val('schedule')||'—'],['UNSPSC',val('unspsc')||'—'],['eCl@ss',val('eclass')||'—'],['ETIM',val('etim')||'—']];
+    $('review').innerHTML=pairs.map(p=>'<div><small>'+esc(p[0])+'</small><strong>'+esc(p[1])+'</strong></div>').join('');
+    checkDuplicate();
+  }
+  async function checkDuplicate(){
+    const box=$('duplicateBox');
+    if(!val('materialName')||!val('family'))return;
+    try{
+      const r=await fetch('/api/material-master/check-duplicate',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf},body:JSON.stringify(formData())});
+      const d=await r.json();
+      if(d.duplicate){box.classList.remove('d-none');box.innerHTML='<strong><i class="fas fa-triangle-exclamation me-1"></i>Possible duplicate</strong><div class="mt-1">A material with the same technical identity already exists: '+d.matches.map(x=>'<a href="#" data-use="'+x.material_code+'">'+esc(x.material_code)+'</a> — '+esc(x.description)).join('<br>')+'</div>';}
+      else{box.classList.add('d-none');box.innerHTML='';}
+    }catch(e){}
+  }
+  function formData(){
+    return {csrf_token:csrf,family:val('family'),material_name:val('materialName'),description:val('description'),unit:val('unit'),material_group:val('materialGroup'),discipline:val('discipline'),unspsc_code:val('unspsc'),eclass_code:val('eclass'),etim_class:val('etim'),standard:val('standard'),grade:val('grade'),size:val('size'),schedule:val('schedule'),manufacturer:val('manufacturer'),manufacturer_part_no:val('partNo'),exclude_id:editingId};
+  }
+  function edit(x){
+    editingId=x.id;set('materialId',x.id);set('family',x.family_code);set('materialName',x.material_name);set('description',x.description);set('unit',x.unit);set('materialGroup',x.material_group);set('discipline',x.discipline);set('unspsc',x.unspsc_code);set('eclass',x.eclass_code);set('etim',x.etim_class);set('standard',x.standard);set('grade',x.grade);set('size',x.size);set('schedule',x.schedule);set('manufacturer',x.manufacturer);set('partNo',x.manufacturer_part_no);step=1;$('materialModalTitle').textContent='Edit '+x.material_code;showStep();modal.show();
+  }
+  $('newMaterial')?.addEventListener('click',()=>{reset();modal.show()});
+  $('prevStep')?.addEventListener('click',()=>{if(step>1){step--;showStep()}});
+  $('nextStep')?.addEventListener('click',async()=>{
+    if(step===1&&!val('family')){alert('Select a material family.');return}
+    if(step===1&&!val('materialName')){alert('Enter the material name.');return}
+    if(step===1&&!val('description')){alert('Enter the standard description.');return}
+    if(step<3){step++;showStep();return}
+    const payload=formData(), url=editingId?'/api/material-master/'+editingId:'/api/material-master', method=editingId?'PUT':'POST';
+    const btn=$('nextStep');btn.disabled=true;
+    try{const r=await fetch(url,{method,headers:{'Content-Type':'application/json','X-CSRFToken':csrf},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok){if(d.duplicate)alert('This material already exists as '+d.duplicate.material_code+'.');else throw new Error(d.error||'Failed');return}modal.hide();load();alert(editingId?'Material updated.':'Material created: '+d.material.material_code);}
+    catch(e){alert(e.message)}finally{btn.disabled=false}
+  });
+  $('materialsBody').addEventListener('click',async e=>{
+    const editId=e.target.closest('[data-edit]')?.dataset.edit;if(editId){const x=materials.find(m=>m.id===Number(editId));if(x)edit(x);return}
+    const archiveId=e.target.closest('[data-archive]')?.dataset.archive;if(archiveId&&confirm('Archive this material? It will remain in history but will no longer be active.')){const r=await fetch('/api/material-master/'+archiveId,{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRFToken':csrf},body:JSON.stringify({csrf_token:csrf})});if(r.ok)load();else alert('Could not archive material.')}
+  });
+  $('exportMaterials').addEventListener('click',()=>{window.location='/api/material-master/export'});
+  $('refreshMaterials').addEventListener('click',load);$('familyFilter').addEventListener('change',load);$('statusFilter').addEventListener('change',load);
+  let timer; $('materialSearch').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(load,250)});
+  load();
+})();
+</script>
+{% endblock %}
