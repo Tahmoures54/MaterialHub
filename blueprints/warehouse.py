@@ -266,7 +266,7 @@ def api_get_transactions():
 @warehouse_bp.route('/api/transactions', methods=['POST'])
 @login_required
 def api_create_transaction():
-    """Record an adjustment/return/transfer movement and update stock."""
+    """Record a controlled warehouse movement against a Material Master identity."""
     if current_user.access_level != AccessLevel.warehouse:
         return jsonify({'error': 'Unauthorized'}), 403
     try:
@@ -279,45 +279,69 @@ def api_create_transaction():
         warehouse_id = str(data.get('warehouse_id') or '').strip()
         quantity = float(data.get('quantity') or 0)
         if not warehouse_id or quantity <= 0:
-            return jsonify({'error': 'Warehouse ID and positive quantity are required'}), 400
-        inventory = WarehouseInventory.query.filter_by(
-            warehouse_id=warehouse_id, company_name=current_user.company_name
-        ).first()
+            return jsonify({'error': 'Stock ID and positive quantity are required'}), 400
+        material = _resolve_material(data)
+        if not material:
+            return jsonify({'error': 'Select a valid Material Master item.'}), 400
+        inventory = WarehouseInventory.query.filter_by(warehouse_id=warehouse_id, company_name=current_user.company_name).first()
         if not inventory:
-            return jsonify({'error': 'Inventory not found'}), 404
-        signed = quantity if tx_type == 'RETURN' or tx_type == 'ADJUSTMENT_IN' else -quantity
-        if signed < 0 and inventory.received_qty < quantity:
-            return jsonify({'error': 'Insufficient stock'}), 400
-        inventory.received_qty += signed
+            return jsonify({'error': 'Inventory stock not found'}), 404
+        if inventory.material_id and inventory.material_id != material.id:
+            return jsonify({'error': 'Selected material does not match the stock record.'}), 409
+        before = float(inventory.received_qty or 0)
+        destination = None
+        if tx_type == 'TRANSFER':
+            destination_id = str(data.get('destination_warehouse_id') or '').strip()
+            if not destination_id or destination_id == warehouse_id:
+                return jsonify({'error': 'Select a different destination stock ID for a transfer.'}), 400
+            destination = WarehouseInventory.query.filter_by(warehouse_id=destination_id, company_name=current_user.company_name).first()
+            if not destination:
+                return jsonify({'error': 'Destination stock must already exist for this material.'}), 404
+            if destination.material_id and destination.material_id != material.id:
+                return jsonify({'error': 'Destination stock belongs to a different material.'}), 409
+            if before < quantity:
+                return jsonify({'error': 'Insufficient stock'}), 400
+            destination_before = float(destination.received_qty or 0)
+            inventory.received_qty = before - quantity
+            destination.received_qty = destination_before + quantity
+            destination.material_id = material.id
+            destination.item_code = material.material_code
+            destination.material_description = material.description
+            destination.unit = material.unit
+        else:
+            signed = quantity if tx_type in {'RETURN', 'ADJUSTMENT_IN'} else -quantity
+            if signed < 0 and before < quantity:
+                return jsonify({'error': 'Insufficient stock'}), 400
+            inventory.received_qty = before + signed
+            inventory.material_id = material.id
+            inventory.item_code = material.material_code
+            inventory.material_description = material.description
+            inventory.unit = inventory.unit or material.unit
         from utils import generate_next_warehouse_transaction_no
         tx = WarehouseTransaction(
             transaction_no=generate_next_warehouse_transaction_no(current_user.company_name),
-            transaction_type=tx_type,
-            warehouse_id=inventory.warehouse_id,
-            item_code=inventory.item_code,
-            material_description=inventory.material_description,
-            quantity=quantity,
-            unit=inventory.unit,
-            project_no=data.get('project_no') or inventory.project_no,
-            contractor=data.get('contractor'),
-            storage_location_id=inventory.storage_location_id,
-            reference_no=data.get('reference_no'),
-            remarks=data.get('remarks'),
-            company_name=current_user.company_name,
-            user_id=current_user.id,
+            transaction_type=tx_type, warehouse_id=inventory.warehouse_id, material_id=material.id,
+            item_code=material.material_code, material_description=material.description,
+            quantity=quantity, unit=material.unit, project_no=data.get('project_no') or inventory.project_no,
+            contractor=data.get('contractor'), storage_location_id=inventory.storage_location_id,
+            reference_no=data.get('reference_no'), remarks=data.get('remarks'),
+            company_name=current_user.company_name, user_id=current_user.id,
+            balance_before=before, balance_after=float(inventory.received_qty or 0),
+            destination_warehouse_id=destination.warehouse_id if destination else None,
         )
         db.session.add(tx)
         db.session.commit()
-        return jsonify({'message': 'Transaction recorded', 'transaction': tx.to_dict()}), 201
+        return jsonify({'message': 'Transaction recorded', 'transaction': tx.to_dict(),
+                        'destination_balance': float(destination.received_qty) if destination else None}), 201
     except CSRFError:
         db.session.rollback()
         return jsonify({'error': 'Invalid CSRF token'}), 403
-    except (TypeError, ValueError):
+    except (TypeError, ValueError) as exc:
         db.session.rollback()
-        return jsonify({'error': 'Invalid quantity'}), 400
+        return jsonify({'error': str(exc) or 'Invalid quantity'}), 400
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error recording warehouse transaction: {e}")
+        logger.error(f'Error recording warehouse transaction: {e}')
         return jsonify({'error': 'Failed to record transaction'}), 500
 
 
