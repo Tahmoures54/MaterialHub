@@ -21,6 +21,7 @@ It covers material requisitions, purchase orders, quality control, deliveries, w
 - **Quality Control** inspections  
 - **Delivery** tracking  
 - **Warehouse** inventory management  
+- **Inbound receiving**: Packing List → Goods Receipt → Receipt Lines → OS&D discrepancy workflow  
 - **Supplier Material Marketplace**  
 - **Tender & Bid** system  
 - **Two-factor authentication** (TOTP / Microsoft Authenticator)  
@@ -157,7 +158,7 @@ MaterialHub/
 
 The repository ships a complete Alembic chain
 (`20260901_0000` baseline → `20260920_0001` auth-secret hardening →
-`20260921_0002` tenant-scoped document numbers). A fresh database is ready
+`20260921_0002` tenant-scoped document numbers → `20260922_0003` inbound receiving documents). A fresh database is ready
 with:
 
 ```bash
