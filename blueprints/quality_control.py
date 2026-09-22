@@ -106,11 +106,13 @@ def update_receipt_inspection(receipt_line_id):
         ).first()
         if inventory:
             qty = float(line.received_qty or 0)
-            if result == 'passed':
+            previous_status = qc.status.value if qc.status else 'pending'
+            if result == 'passed' and previous_status != 'passed':
                 inventory.quarantine_qty = max(0.0, float(inventory.quarantine_qty or 0) - qty)
                 inventory.available_qty = float(inventory.available_qty or 0) + qty
             elif result == 'failed':
-                inventory.quarantine_qty = max(0.0, float(inventory.quarantine_qty or 0) - qty)
+                # Failed material remains quarantined until a controlled disposition.
+                inventory.quarantine_qty = float(inventory.quarantine_qty or 0)
         line.inspection_status = result
         db.session.commit()
         return jsonify({'quality_control': qc.to_dict(), 'receipt_line': line.to_dict(),
