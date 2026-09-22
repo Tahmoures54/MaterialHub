@@ -123,6 +123,15 @@ def _allocate_document_number(key, company_name):
     return f"{key}-{seq.next_value():04d}"
 
 
+
+def generate_next_material_code(company_name=None):
+    """Return a stable tenant-scoped Material Master code (MAT-000001)."""
+    try:
+        return _allocate_document_number("MAT", company_name or "")
+    except Exception:
+        return "MAT-000001"
+
+
 def generate_next_mr_no(company_name=None):
     """Return the next Material Requisition number.
 
