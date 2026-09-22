@@ -59,6 +59,25 @@
   @media (max-width:800px) { .lp-hero-grid{grid-template-columns:1fr}.lp-hero-visual{min-height:360px} }
   @media (max-width:600px) { .lp-hero-actions{flex-direction:column;align-items:stretch}.lp-hero-meta{gap:1rem}.lp-hero-visual{min-height:360px}.lp-visual-card{top:22%;width:min(86%,250px)} }
   @media (prefers-reduced-motion:reduce) { .lp-visual-card{transition:none!important} }
+  .lp-capabilities { margin-top:.25rem; }
+  .lp-cap-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem; }
+  .lp-cap { display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.9rem;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:1.05rem 1.1rem;text-decoration:none;transition:transform .16s,box-shadow .16s,border-color .16s; }
+  .lp-cap:hover { transform:translateY(-2px);border-color:#A5F3FC;box-shadow:0 9px 24px rgba(15,23,42,.07); }
+  .lp-cap-icon { width:42px;height:42px;border-radius:12px;background:#ECFEFF;color:#0E7490;display:grid;place-items:center;font-size:1rem; }
+  .lp-cap strong { display:block;color:#0F172A;font-size:.94rem;margin-bottom:.22rem; }
+  .lp-cap p { margin:0;color:#64748B;font-size:.78rem;line-height:1.5; }
+  .lp-cap-arrow { color:#0E7490;font-size:1.1rem;font-weight:800; }
+  .lp-control { display:grid;grid-template-columns:1.05fr .95fr;gap:1.5rem;background:linear-gradient(145deg,#F0FDFF,#FFFFFF);border:1px solid #CFFAFE;border-radius:16px;padding:1.5rem; }
+  .lp-kicker { display:inline-block;color:#0E7490;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem; }
+  .lp-control h2 { margin:0 0 .5rem;font-size:1.35rem;color:#0F172A; }
+  .lp-control p { margin:0;color:#64748B;line-height:1.65;font-size:.9rem; }
+  .lp-control-checks { display:grid;grid-template-columns:1fr 1fr;gap:.7rem; }
+  .lp-control-checks > div { display:flex;gap:.6rem;padding:.85rem;border:1px solid #E2E8F0;border-radius:11px;background:#fff; }
+  .lp-control-checks i { color:#0E7490;margin-top:.15rem; }
+  .lp-control-checks strong { display:block;font-size:.78rem;color:#0F172A; }
+  .lp-control-checks small { display:block;margin-top:.2rem;color:#64748B;font-size:.7rem;line-height:1.4; }
+  @media(max-width:800px){.lp-cap-grid,.lp-control{grid-template-columns:1fr}.lp-control-checks{grid-template-columns:1fr}}
+  @media(max-width:600px){.lp-cap{grid-template-columns:auto 1fr}.lp-cap-arrow{display:none}}
 </style>
 {% endblock %}
 {% block content %}
@@ -143,6 +162,39 @@
       </div>
     </div>
   </section>
+  <section class="lp-section lp-capabilities">
+    <div class="lp-section-head">
+      <h2>One platform, every material handoff</h2>
+      <p>MaterialHub brings the real operational modules together so teams can move from demand to site readiness without losing material identity or control.</p>
+    </div>
+    <div class="lp-cap-grid">
+      <a class="lp-cap" href="{{ url_for('material_requisitions.material_requisitions') }}"><span class="lp-cap-icon"><i class="fas fa-clipboard-list"></i></span><div><strong>Material Requisitions</strong><p>Create and track project demand, quantity, required date, priority and technical requirements.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('purchase_order.purchase_order') }}"><span class="lp-cap-icon"><i class="fas fa-file-invoice-dollar"></i></span><div><strong>Procurement</strong><p>Move approved demand into procurement and purchase orders while keeping the source request connected.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('delivery.delivery_order') }}"><span class="lp-cap-icon"><i class="fas fa-truck"></i></span><div><strong>Delivery Control</strong><p>Track inbound deliveries, references and timing before they affect project execution.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('warehouse.warehouse_operations') }}"><span class="lp-cap-icon"><i class="fas fa-warehouse"></i></span><div><strong>Warehouse</strong><p>Receive, issue, return and transfer material with controlled inventory transactions.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('quality_control.quality_control') }}"><span class="lp-cap-icon"><i class="fas fa-shield-alt"></i></span><div><strong>Quality Control</strong><p>Connect inspection and release status to the same material flow instead of separate records.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('intelligence.dashboard') }}"><span class="lp-cap-icon"><i class="fas fa-brain"></i></span><div><strong>Material Intelligence</strong><p>Surface readiness, risk signals, supplier intelligence and operational actions from live data.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('intelligence.traceability') }}"><span class="lp-cap-icon"><i class="fas fa-qrcode"></i></span><div><strong>Traceability</strong><p>Connect material identity with PO, delivery, warehouse, project and traceability references.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('intelligence.excel_import') }}"><span class="lp-cap-icon"><i class="fas fa-file-excel"></i></span><div><strong>Excel Import</strong><p>Bring structured project data into the system without rebuilding every record manually.</p></div><span class="lp-cap-arrow">→</span></a>
+    </div>
+  </section>
+
+  <section class="lp-section">
+    <div class="lp-control">
+      <div>
+        <span class="lp-kicker">Operational control</span>
+        <h2>From material identity to project readiness</h2>
+        <p>MaterialHub is not just a collection of forms. The workflow is built around a continuous chain: identify the material, request it, procure it, receive it, inspect it, store it and keep its traceability intact.</p>
+      </div>
+      <div class="lp-control-checks">
+        <div><i class="fas fa-check-circle"></i><span><strong>Stable Material Master</strong><small>One controlled identity for each material.</small></span></div>
+        <div><i class="fas fa-check-circle"></i><span><strong>Company-scoped data</strong><small>Operational records stay within the tenant boundary.</small></span></div>
+        <div><i class="fas fa-check-circle"></i><span><strong>Role-aware workspaces</strong><small>Each project function sees the work it owns.</small></span></div>
+        <div><i class="fas fa-check-circle"></i><span><strong>Traceable transactions</strong><small>Receipt, issue, return and transfer remain auditable.</small></span></div>
+      </div>
+    </div>
+  </section>
+
   <section class="lp-section">
     <div class="lp-flow">
       <div class="lp-section-head" style="margin-bottom:0;"><h2>How materials move</h2><p>A single operational chain — no disconnected spreadsheets.</p></div>
