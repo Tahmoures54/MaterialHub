@@ -9,7 +9,7 @@ import pytest
 
 from extensions import db
 from models import (
-    User, AccessLevel, Project, MaterialRequisition,
+    User, AccessLevel, Project, MaterialRequisition, MaterialMaster,
 )
 from utils import generate_next_mr_no
 from tests.test_app_integration import _persist_user
@@ -19,7 +19,19 @@ def _create_mr(client, user, item, project_no="PRJ-SHARED"):
     with client.session_transaction() as session:
         session["_user_id"] = str(user.id)
         session["_fresh"] = True
+    with client.application.app_context():
+        material = MaterialMaster(
+            material_code=item, family_code="PIP", material_name=item,
+            description=item, unit="EA", discipline="Piping",
+            fingerprint=(f"test:{user.company_name}:{item}").encode().hex().ljust(64, "0")[:64],
+            company_name=user.company_name, created_by=user.id,
+            status="active", lifecycle_status="active",
+        )
+        db.session.add(material)
+        db.session.commit()
+        material_id = material.id
     return client.post("/material_requisitions/api/material_requisitions", json={
+        "material_id": material_id,
         "item_code": item,
         "material_description": item,
         "quantity": 1,
@@ -87,8 +99,18 @@ def test_sequence_seeds_from_existing_documents(app):
         )
         db.session.add(user)
         db.session.commit()
+        material = MaterialMaster(
+            material_code="LEG-1", family_code="PIP", material_name="Legacy pipe",
+            description="Legacy pipe", unit="EA", discipline="Piping",
+            fingerprint=("test:Legacy Co:LEG-1").encode().hex().ljust(64, "0")[:64],
+            company_name="Legacy Co", created_by=user.id,
+            status="active", lifecycle_status="active",
+        )
+        db.session.add(material)
+        db.session.flush()
         db.session.add(MaterialRequisition.from_dict({
             "mr_no": "MR-0042",
+            "material_id": material.id,
             "item_code": "LEG-1",
             "material_description": "Legacy pipe",
             "quantity": 1,
