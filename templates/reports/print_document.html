@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · {{ number }}{% endblock %}
+{% block content %}
+<style>
+.print-page{max-width:1200px;margin:20px auto;background:#fff;padding:28px;color:#172b36;font-size:12px}.print-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.print-toolbar button,.print-toolbar a{padding:9px 13px;border:1px solid #ccd9df;border-radius:8px;background:#fff;color:#0b6179;text-decoration:none;font-weight:700}.print-toolbar .primary{background:#0b6179;color:#fff}.print-head{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid #0b6179;padding-bottom:14px}.print-head h1{margin:4px 0;font-size:25px}.print-number{font-size:18px;font-weight:800}.meta-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0}.meta-box{border:1px solid #d9e3e8;padding:8px;border-radius:6px}.meta-box small{display:block;color:#64748b;font-weight:700}.report-table{width:100%;border-collapse:collapse;margin-top:14px}.report-table th,.report-table td{border:1px solid #cbd5db;padding:6px 7px;vertical-align:top}.report-table th{background:#eef4f6;font-weight:800}.notes{border:1px solid #d9e3e8;padding:10px;margin-top:16px;min-height:50px}.signatures{display:grid;grid-template-columns:repeat(3,1fr);gap:25px;margin-top:45px}.sig{border-top:1px solid #53656e;padding-top:7px;text-align:center;min-height:45px}.footer-note{margin-top:25px;padding-top:8px;border-top:1px solid #d9e3e8;color:#64748b;font-size:10px}
+@media print{body{background:#fff!important}.print-page{margin:0;max-width:none;padding:10mm;box-shadow:none}.print-toolbar{display:none!important}.meta-grid{grid-template-columns:repeat(4,1fr)}.report-table{font-size:10px}.print-head{-webkit-print-color-adjust:exact;print-color-adjust:exact}.report-table th{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media(max-width:800px){.meta-grid{grid-template-columns:repeat(2,1fr)}.signatures{grid-template-columns:1fr}}
+</style>
+<div class="print-page">
+ <div class="print-toolbar"><button class="primary" onclick="window.print()">🖨 Print / Save PDF</button><a href="{{ url_for('reports.operational_listing',kind=kind) }}">← Back</a><a target="_blank" href="{{ url_for('reports.operational_print_register',kind=kind) }}">Register</a></div>
+ <header class="print-head"><div><div class="small text-muted fw-bold">{{ kind }} · MATERIALHUB CONTROLLED DOCUMENT</div><h1>{{ title }}</h1><div class="print-number">{{ number }}</div></div><div style="text-align:right"><strong>{{ current_user.company_name }}</strong><br>Generated: {{ now if now is defined else '' }}</div></header>
+ <section class="meta-grid">{% for label,value in meta %}<div class="meta-box"><small>{{ label }}</small>{{ value or '—' }}</div>{% endfor %}</section>
+ <table class="report-table"><thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead><tbody>{% for row in table %}<tr>{% for cell in row %}<td>{{ cell if cell is not none and cell != '' else '—' }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>
+ <div class="notes"><strong>Notes / Remarks</strong><br>{{ notes or '—' }}</div>
+ <div class="signatures"><div class="sig">Prepared / Received By</div><div class="sig">Warehouse / Quality</div><div class="sig">Reviewed / Approved</div></div>
+ <div class="footer-note">MaterialHub · Controlled printout · Tenant: {{ current_user.company_name }} · Record: {{ number }}</div>
+</div>
+{% endblock %}
