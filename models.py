@@ -742,6 +742,54 @@ class WarehouseInventory(db.Model):
     def __repr__(self):
         return f"<WarehouseInventory {self.warehouse_id}: {self.material_description}>"
 
+
+class WarehouseTransaction(db.Model):
+    """Immutable audit ledger for warehouse stock movements."""
+    __tablename__ = 'warehouse_transaction'
+    __table_args__ = (
+        db.UniqueConstraint('transaction_no', 'company_name', name='uq_warehouse_transaction_no_company'),
+        {"extend_existing": True},
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    transaction_no = db.Column(db.String(50), nullable=False, index=True)
+    transaction_type = db.Column(db.String(30), nullable=False, index=True)
+    warehouse_id = db.Column(db.String(50), nullable=False, index=True)
+    item_code = db.Column(db.String(50), nullable=False, index=True)
+    material_description = db.Column(db.Text, nullable=False)
+    quantity = db.Column(db.Float, nullable=False)
+    unit = db.Column(db.String(50), nullable=False)
+    project_no = db.Column(db.String(50), nullable=True, index=True)
+    delivery_id = db.Column(db.String(50), nullable=True, index=True)
+    contractor = db.Column(db.String(150), nullable=True)
+    storage_location_id = db.Column(db.String(100), nullable=True)
+    reference_no = db.Column(db.String(100), nullable=True, index=True)
+    remarks = db.Column(db.Text, nullable=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    user = db.relationship('User', backref=db.backref('warehouse_transactions', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'transaction_no': self.transaction_no,
+            'transaction_type': self.transaction_type,
+            'warehouse_id': self.warehouse_id,
+            'item_code': self.item_code,
+            'material_description': self.material_description,
+            'quantity': self.quantity,
+            'unit': self.unit,
+            'project_no': self.project_no,
+            'delivery_id': self.delivery_id,
+            'contractor': self.contractor,
+            'storage_location_id': self.storage_location_id,
+            'reference_no': self.reference_no,
+            'remarks': self.remarks,
+            'company_name': self.company_name,
+            'user_id': self.user_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
 class Approval(db.Model):
     __tablename__ = 'approval'
     id = db.Column(db.Integer, primary_key=True)
