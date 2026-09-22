@@ -420,6 +420,16 @@ class MaterialMaster(db.Model):
     schedule = db.Column(db.String(50), nullable=True)
     manufacturer = db.Column(db.String(150), nullable=True)
     manufacturer_part_no = db.Column(db.String(100), nullable=True)
+    supplier_material_no = db.Column(db.String(100), nullable=True, index=True)
+    revision = db.Column(db.String(30), nullable=True)
+    certificate_required = db.Column(db.Boolean, nullable=False, default=False)
+    inspection_required = db.Column(db.Boolean, nullable=False, default=False)
+    lot_control = db.Column(db.Boolean, nullable=False, default=False)
+    heat_control = db.Column(db.Boolean, nullable=False, default=False)
+    serial_control = db.Column(db.Boolean, nullable=False, default=False)
+    quarantine_allowed = db.Column(db.Boolean, nullable=False, default=True)
+    project_peg_required = db.Column(db.Boolean, nullable=False, default=False)
+    lifecycle_status = db.Column(db.String(20), nullable=False, default='active', index=True)
     attributes = db.Column(db.Text, nullable=True)
     fingerprint = db.Column(db.String(64), nullable=False, index=True)
     status = db.Column(db.String(20), nullable=False, default='active', index=True)
@@ -437,6 +447,11 @@ class MaterialMaster(db.Model):
             'unspsc_code': self.unspsc_code, 'eclass_code': self.eclass_code, 'etim_class': self.etim_class,
             'standard': self.standard, 'grade': self.grade, 'size': self.size, 'schedule': self.schedule,
             'manufacturer': self.manufacturer, 'manufacturer_part_no': self.manufacturer_part_no,
+            'supplier_material_no': self.supplier_material_no, 'revision': self.revision,
+            'certificate_required': self.certificate_required, 'inspection_required': self.inspection_required,
+            'lot_control': self.lot_control, 'heat_control': self.heat_control,
+            'serial_control': self.serial_control, 'quarantine_allowed': self.quarantine_allowed,
+            'project_peg_required': self.project_peg_required, 'lifecycle_status': self.lifecycle_status,
             'attributes': self.attributes, 'status': self.status, 'company_name': self.company_name,
             'created_by': self.created_by, 'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
