@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ label }} · MaterialHub{% endblock %}
+{% block content %}
+<div class="container py-4">
+ <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3"><div><div class="small text-muted">{{ kind }}</div><h1 class="h3 mb-0">{{ label }}</h1></div><div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="{{ url_for('reports.operational_center') }}">Report Center</a><a class="btn btn-primary" target="_blank" href="{{ url_for('reports.operational_print_register',kind=kind) }}">🖨 Print Register</a></div></div>
+ <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Document</th><th>Context</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody>
+ {% for row in rows %}
+ <tr><td><strong>{{ getattr(row,number_field,'') }}</strong></td><td>{% if kind=='PL' %}{{ row.vehicle_no or '' }}{% elif kind in ['GR','RR'] %}{{ row.warehouse_id }}{% elif kind=='OSD' %}{{ row.goods_receipt.receipt_no if row.goods_receipt else '' }}{% else %}{{ row.item_code }}{% endif %}</td><td>{% if kind=='PL' %}{{ row.packing_list_date }}{% elif kind in ['GR','RR'] %}{{ row.receipt_date }}{% elif kind=='OSD' %}{{ row.report_date }}{% endif %}</td><td>{% set st=getattr(row,'status','') %}{{ st.value if st is not string else st }}</td><td class="text-end"><a class="btn btn-sm btn-primary" target="_blank" href="{{ url_for('reports.operational_report',kind=kind,record_id=row.id) }}">View / Print</a></td></tr>
+ {% else %}<tr><td colspan="5" class="text-center text-muted py-4">No records found.</td></tr>{% endfor %}
+ </tbody></table></div>
+</div>
+{% endblock %}
