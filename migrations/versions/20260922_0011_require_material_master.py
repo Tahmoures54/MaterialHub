@@ -16,6 +16,30 @@ TABLES = ("material_requisition", "purchase_order_item", "delivery", "quality_co
 def upgrade():
     bind = op.get_bind()
     ins = sa.inspect(bind)
+    # Material Requisition was created before the Material Master linkage
+    # migration. Add its nullable identity column here before validating it.
+    # Keeping this in 0011 preserves the migration chain for fresh databases.
+    if ins.has_table("material_requisition"):
+        columns = {column["name"] for column in ins.get_columns("material_requisition")}
+        if "material_id" not in columns:
+            op.add_column(
+                "material_requisition",
+                sa.Column("material_id", sa.Integer(), nullable=True),
+            )
+            op.create_index(
+                "ix_material_requisition_material_id",
+                "material_requisition",
+                ["material_id"],
+            )
+            op.create_foreign_key(
+                "fk_material_requisition_material_id",
+                "material_requisition",
+                "material_master",
+                ["material_id"],
+                ["id"],
+            )
+        ins = sa.inspect(bind)
+
     # This release intentionally requires a clean database: all new workflow
     # records must have a Material Master identity.
     for table in TABLES:
