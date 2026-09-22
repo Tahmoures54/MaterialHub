@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from extensions import db
 from models import (
     ReportShare, MaterialRequest, MaterialRequisition, PurchaseOrder,
-    Delivery, WarehouseInventory, AccessLevel
+    Delivery, WarehouseInventory, AccessLevel, PackingList, GoodsReceipt, GoodsReceiptLine, OSDReport
 )
 import csv, io, secrets
 from datetime import datetime, timedelta
