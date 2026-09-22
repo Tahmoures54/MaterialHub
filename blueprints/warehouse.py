@@ -146,7 +146,7 @@ def api_update_inventory(warehouse_id):
         return jsonify({'error': 'Unauthorized'}), 403
     try:
         validate_csrf(request.json.get('csrf_token'))
-        inventory = WarehouseInventory.query.filter_by(warehouse_id=warehouse_id, company_name=current_user.company_name).first()
+        inventory = WarehouseInventory.query.filter_by(warehouse_id=warehouse_id, material_id=material.id, company_name=current_user.company_name).first()
         if not inventory:
             logger.warning(f"Inventory {warehouse_id} not found for user {current_user.id}")
             return jsonify({'error': 'Inventory not found'}), 404
@@ -213,7 +213,10 @@ def api_issue_inventory():
             if 'warehouse_id' not in item or 'issue_quantity' not in item:
                 logger.warning(f"Missing required fields in issue data for user {current_user.id}")
                 return jsonify({'error': 'Missing required fields'}), 400
-            inventory = WarehouseInventory.query.filter_by(warehouse_id=item['warehouse_id'], company_name=current_user.company_name).first()
+            material = _resolve_material(item)
+            if not material:
+                return jsonify({'error': 'Select a valid Material Master item.'}), 400
+            inventory = WarehouseInventory.query.filter_by(warehouse_id=item['warehouse_id'], material_id=material.id, company_name=current_user.company_name).first()
             if not inventory:
                 logger.warning(f"Inventory {item['warehouse_id']} not found for user {current_user.id}")
                 return jsonify({'error': f'Inventory {item["warehouse_id"]} not found'}), 404
