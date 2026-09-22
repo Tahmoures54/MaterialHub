@@ -953,6 +953,20 @@ def api_create_goods_receipt():
             )
             db.session.add(tx)
 
+            if inspection_required:
+                from models import QualityControl
+                db.session.add(QualityControl(
+                    order_id=pl.order_id,
+                    material_id=line.material_id,
+                    user_id=current_user.id,
+                    status=InspectionStatus.pending,
+                    goods_receipt_id=receipt.id,
+                    receipt_line_id=line.id,
+                    warehouse_id=warehouse_id,
+                    remarks='Inspection required by Material Master; stock placed in quarantine.',
+                    company_name=current_user.company_name,
+                ))
+
             if bool(data.get('final_receipt', False)) and abs(cumulative_qty - pl_line.quantity) > 1e-9:
                 osd_candidates.append((line, cumulative_qty - pl_line.quantity))
 
