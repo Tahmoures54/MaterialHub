@@ -1,7 +1,7 @@
 """add packing list, goods receipt, receipt line and OS&D workflow
 
 Revision ID: 20260922_0014
-Revises: 20260921_0002
+Revises: 20260922_0013
 Create Date: 2026-09-22
 """
 from alembic import op
