@@ -167,6 +167,27 @@ def generate_next_warehouse_transaction_no(company_name=None):
         return "WT-0001"
 
 
+def generate_next_packing_list_no(company_name=None):
+    try:
+        return _allocate_document_number("PL", company_name or "")
+    except Exception:
+        return "PL-0001"
+
+
+def generate_next_goods_receipt_no(company_name=None):
+    try:
+        return _allocate_document_number("GR", company_name or "")
+    except Exception:
+        return "GR-0001"
+
+
+def generate_next_osd_no(company_name=None):
+    try:
+        return _allocate_document_number("OSD", company_name or "")
+    except Exception:
+        return "OSD-0001"
+
+
 def generate_next_warehouse_id(company_name=None):
     try:
         return _allocate_document_number("WH", company_name or "")
