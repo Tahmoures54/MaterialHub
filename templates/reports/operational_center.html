@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Receiving & Traceability Reports · MaterialHub{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="mb-4"><div class="text-uppercase small text-muted fw-bold">Document Control</div><h1 class="fw-bold">Receiving & Traceability Reports</h1><p class="text-muted">Print controlled inbound records from Packing List through Goods Receipt, OS&D, receiving and material traceability.</p></div>
+  <div class="row g-3">
+  {% for kind,meta in report_types.items() %}
+    <div class="col-md-6 col-xl-4"><div class="card h-100 shadow-sm border-0"><div class="card-body">
+      <div class="d-flex justify-content-between"><span class="badge text-bg-light">{{ kind }}</span><strong>{{ counts[kind] }}</strong></div>
+      <h3 class="h5 mt-3">{{ meta[0] }}</h3>
+      <div class="d-flex gap-2 mt-3"><a class="btn btn-primary btn-sm" href="{{ url_for('reports.operational_listing',kind=kind) }}">Open records</a><a class="btn btn-outline-secondary btn-sm" target="_blank" href="{{ url_for('reports.operational_print_register',kind=kind) }}">Print register</a></div>
+    </div></div></div>
+  {% endfor %}
+  </div>
+</div>
+{% endblock %}
