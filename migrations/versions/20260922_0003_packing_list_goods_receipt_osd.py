@@ -1,6 +1,6 @@
 """add packing list, goods receipt, receipt line and OS&D workflow
 
-Revision ID: 20260922_0003
+Revision ID: 20260922_0014
 Revises: 20260921_0002
 Create Date: 2026-09-22
 """
@@ -8,8 +8,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "20260922_0003"
-down_revision = "20260921_0002"
+revision = "20260922_0014"
+down_revision = "20260922_0013"
 branch_labels = None
 depends_on = None
 
