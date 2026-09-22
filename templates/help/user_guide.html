@@ -1,54 +1,530 @@
 {% extends "base.html" %}
 {% block title %}User Guide{% endblock %}
+{% block meta_description %}MaterialHub user guide — practical steps for material requisitions, procurement, delivery, warehouse, reconciliation, traceability and reports.{% endblock %}
 {% block content %}
 <style>
-.guide-story{margin-bottom:24px;padding:30px;border-radius:22px;background:linear-gradient(135deg,#102a43,#167d9a);color:#fff}.guide-story h2{margin:8px 0 12px}.guide-story p{line-height:1.85;max-width:900px;opacity:.94}.guide-story .story-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}.guide-story .story-grid div{padding:12px;border-radius:12px;background:rgba(255,255,255,.11);line-height:1.5}.guide-content section{scroll-margin-top:90px}.guide-content h2{margin-top:30px}.guide-content h3{margin-top:22px}.guide-content p,.guide-content li{line-height:1.8}.guide-table{width:100%;border-collapse:collapse}.guide-table th,.guide-table td{padding:11px;border-bottom:1px solid #e5edf2;text-align:left;vertical-align:top;line-height:1.7}.guide-table th{color:#405563}.step-list{padding-left:22px}.tip{padding:14px 16px;margin:16px 0;background:#f4fafc;border-left:4px solid #167d9a;border-radius:10px}.guide-nav a{display:block;margin-bottom:8px}@media(max-width:700px){.guide-story .story-grid{grid-template-columns:repeat(2,1fr)}}
+.guide-hero {
+  background: linear-gradient(135deg, #0f766e, #134e4a);
+  color: #fff;
+  border-radius: 22px;
+  padding: 32px 28px;
+  margin-bottom: 22px;
+  box-shadow: 0 12px 30px rgba(15, 118, 110, 0.18);
+}
+.guide-hero .eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  font-weight: 800;
+  color: #99f6e4;
+}
+.guide-hero h1 { margin: 10px 0 12px; font-size: clamp(1.7rem, 3vw, 2.2rem); }
+.guide-hero p { max-width: 820px; line-height: 1.75; opacity: 0.95; margin: 0 0 18px; }
+.guide-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.guide-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  background: #fff;
+  color: #0f766e;
+}
+.guide-actions a.ghost {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.guide-story {
+  margin-bottom: 22px;
+  padding: 28px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #102a43, #167d9a);
+  color: #fff;
+}
+.guide-story h2 { margin: 8px 0 12px; line-height: 1.35; }
+.guide-story p { line-height: 1.85; max-width: 920px; opacity: 0.95; }
+.guide-story .story-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 18px 0;
+}
+.guide-story .story-grid div {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.11);
+  line-height: 1.5;
+  font-size: 0.92rem;
+}
+.guide-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.guide-nav {
+  position: sticky;
+  top: 90px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 10px;
+}
+.guide-nav a {
+  display: block;
+  padding: 9px 12px;
+  text-decoration: none;
+  color: #334155;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.guide-nav a:hover { background: #f0fdfa; color: #0f766e; }
+.guide-content section { scroll-margin-top: 96px; margin-bottom: 28px; }
+.guide-content h2 { margin: 0 0 12px; color: #0f172a; }
+.guide-content h3 { margin: 18px 0 8px; }
+.guide-content p, .guide-content li { line-height: 1.8; color: #334155; }
+.guide-table { width: 100%; border-collapse: collapse; }
+.guide-table th, .guide-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5edf2;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.7;
+}
+.guide-table th { color: #405563; font-weight: 700; }
+.step-list { padding-left: 22px; }
+.tip {
+  padding: 14px 16px;
+  margin: 14px 0 0;
+  background: #f4fafc;
+  border-left: 4px solid #167d9a;
+  border-radius: 10px;
+  line-height: 1.7;
+  color: #405563;
+}
+.guide-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0 16px;
+}
+.guide-flow span {
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #115e59;
+  font-size: 0.9rem;
+}
+.guide-flow b { color: #94a3b8; }
+.guide-cta {
+  margin-top: 8px;
+  padding: 24px 26px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ecfeff, #f0fdfa);
+  border: 1px solid #99f6e4;
+}
+.guide-cta h3 { margin: 0 0 8px; color: #0f766e; }
+.guide-cta p { margin: 0 0 14px; line-height: 1.75; color: #334155; }
+.guide-cta a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: #0e7490;
+  color: #fff !important;
+  text-decoration: none;
+  font-weight: 700;
+  margin-right: 8px;
+  margin-top: 4px;
+}
+.guide-cta a.secondary {
+  background: #fff;
+  color: #0e7490 !important;
+  border: 1px solid #99f6e4;
+}
+[data-theme="dark"] .guide-nav,
+[data-theme="dark"] .content-card {
+  background: #111827;
+  border-color: #1e293b;
+  color: #e2e8f0;
+}
+[data-theme="dark"] .guide-nav a { color: #cbd5e1; }
+[data-theme="dark"] .guide-nav a:hover { background: #164e63; color: #ecfeff; }
+[data-theme="dark"] .guide-content h2 { color: #f1f5f9; }
+[data-theme="dark"] .guide-content p,
+[data-theme="dark"] .guide-content li { color: #cbd5e1; }
+[data-theme="dark"] .guide-table th,
+[data-theme="dark"] .guide-table td { border-bottom-color: #1e293b; }
+[data-theme="dark"] .tip { background: #0f172a; color: #94a3b8; }
+[data-theme="dark"] .guide-cta { background: #0f172a; border-color: #164e63; }
+@media (max-width: 900px) {
+  .guide-layout { grid-template-columns: 1fr; }
+  .guide-nav { position: static; display: flex; flex-wrap: wrap; gap: 4px; }
+  .guide-story .story-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .guide-story .story-grid { grid-template-columns: 1fr; }
+  .guide-hero { padding: 24px 18px; }
+}
 </style>
 
-<section class="page-hero"><div><span class="eyebrow">MATERIALHUB USER GUIDE</span><h1>How to use MaterialHub</h1><p>A practical operating guide for Engineering, Procurement, Suppliers, Quality, Delivery, Warehouse and Project Management.</p></div><div style="display:flex;gap:10px;flex-wrap:wrap"><a class="primary-btn" href="{{ url_for('help.getting_started') }}">Quick Start</a><a class="primary-btn" href="{{ url_for('help.user_guide_fa') }}">راهنمای فارسی</a></div></section>
+<section class="guide-hero">
+  <div class="eyebrow">MATERIALHUB USER GUIDE</div>
+  <h1>How to use MaterialHub</h1>
+  <p>
+    A practical operating guide for Engineering, Procurement, Suppliers, Quality, Delivery, Warehouse and Project Management.
+    The goal is simple: keep material facts visible from requirement to receipt.
+  </p>
+  <div class="guide-actions">
+    <a href="{{ url_for('help.getting_started') }}"><i class="fas fa-rocket"></i> Quick Start</a>
+    <a class="ghost" href="{{ url_for('help.help') }}"><i class="fas fa-life-ring"></i> Help Center</a>
+    <a class="ghost" href="{{ url_for('help.user_guide_fa') }}"><i class="fas fa-language"></i> راهنمای فارسی</a>
+    {% if current_user.is_authenticated %}
+      <a class="ghost" href="{{ url_for('role_workspace.my_workspace') }}"><i class="fas fa-layer-group"></i> My Workspace</a>
+    {% else %}
+      <a class="ghost" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Create workspace</a>
+    {% endif %}
+  </div>
+</section>
 
 <section class="guide-story">
-  <span class="eyebrow" style="color:#c8f1ec">WHY THIS MATTERS</span>
+  <div class="eyebrow" style="color:#c8f1ec">WHY THIS MATTERS</div>
   <h2>The project was busy. The material information was not in one place.</h2>
-  <p>Picture a large construction site: the contractor is waiting, crews are ready, and a massive crane is standing idle because the next material has not arrived. Engineering has raised the requirement. Procurement is searching through spreadsheets and messages. The supplier wants to know which request is current. Warehouse has a delivery note, but connecting it to the correct PO takes time.</p>
-  <p>The problem is not always a lack of effort. It is fragmented information: scattered files, separate Excel sheets, messages, follow-up calls and knowledge that may live with one person. When that person is on leave, in another meeting or unavailable, the answer to “Where is the material?” becomes harder to find.</p>
-  <div class="story-grid"><div>📁 Scattered files</div><div>📊 Separate spreadsheets</div><div>📞 Endless follow-ups</div><div>👤 Single-person dependency</div></div>
-  <p><strong>MaterialHub turns that story into a visible chain:</strong> Engineering Need → MR → RFQ/PO → Delivery → Warehouse Receipt → Balance. It is designed to keep the facts available even when people are busy, moving between sites or away on leave.</p>
+  <p>
+    Picture a large construction site: the contractor is waiting, crews are ready, and a massive crane is standing idle because the next material has not arrived.
+    Engineering has raised the requirement. Procurement is searching through spreadsheets and messages.
+    The supplier wants to know which request is current. Warehouse has a delivery note, but connecting it to the correct PO takes time.
+  </p>
+  <p>
+    The problem is not always a lack of effort. It is fragmented information: scattered files, separate Excel sheets, messages, follow-up calls and knowledge that may live with one person.
+    When that person is on leave, in another meeting or unavailable, the answer to “Where is the material?” becomes harder to find.
+  </p>
+  <div class="story-grid">
+    <div>📁 Scattered files</div>
+    <div>📊 Separate spreadsheets</div>
+    <div>📞 Endless follow-ups</div>
+    <div>👤 Single-person dependency</div>
+  </div>
+  <p>
+    <strong>MaterialHub turns that story into a visible chain:</strong>
+    Engineering Need → MR → RFQ / PO → Delivery → Warehouse Receipt → Balance.
+    It is designed to keep the facts available even when people are busy, moving between sites or away on leave.
+  </p>
 </section>
 
 <div class="guide-layout">
-<aside class="guide-nav">
-<a href="#roles">Roles</a><a href="#control">Control Center</a><a href="#mr">Material Requisition</a><a href="#rfq">RFQ & Quotes</a><a href="#po">Purchase Orders</a><a href="#delivery">Delivery</a><a href="#reconcile">Reconciliation</a><a href="#reports">Reports & Sharing</a><a href="#trace">Traceability</a><a href="#quality">Quality Documents</a><a href="#warehouse">Warehouse</a><a href="#intelligence">Material Intelligence</a><a href="#copilot">AI Material Copilot</a><a href="#daily">Daily Routine</a>
-</aside>
-<article class="content-card guide-content">
+  <aside class="guide-nav" aria-label="Guide sections">
+    <a href="#flow">Core flow</a>
+    <a href="#roles">Roles</a>
+    <a href="#control">Control Center</a>
+    <a href="#mr">Material Requisition</a>
+    <a href="#rfq">RFQ & Quotes</a>
+    <a href="#po">Purchase Orders</a>
+    <a href="#delivery">Delivery</a>
+    <a href="#warehouse">Warehouse</a>
+    <a href="#reconcile">Reconciliation</a>
+    <a href="#reports">Reports & Sharing</a>
+    <a href="#trace">Traceability</a>
+    <a href="#quality">Quality Documents</a>
+    <a href="#intelligence">Material Intelligence</a>
+    <a href="#copilot">AI Copilot</a>
+    <a href="#daily">Daily routine</a>
+  </aside>
 
-<section id="roles"><h2>Roles & responsibilities</h2><table class="guide-table"><tr><th>Role</th><th>Primary responsibility</th><th>What good control looks like</th></tr><tr><td>Project Manager</td><td>Project health, priorities, schedule risk and escalations.</td><td>Can quickly see which material problems may affect execution.</td></tr><tr><td>Engineering</td><td>Material demand, specifications, required dates and technical documents.</td><td>Requirements are precise, dated and consistently coded.</td></tr><tr><td>Procurement</td><td>RFQs, supplier selection, quotes, POs, lead times and expediting.</td><td>Every important requirement can be traced to its purchasing status.</td></tr><tr><td>Supplier</td><td>Offers, availability, delivery commitments and supply information.</td><td>Commitments and changes are visible to the project team.</td></tr><tr><td>Quality</td><td>Inspection, MTC/CoC/datasheet completeness and acceptance.</td><td>Material status and mandatory evidence are explicit.</td></tr><tr><td>Delivery</td><td>Shipment planning, delivery receipt and logistics status.</td><td>Expected and actual deliveries are distinguishable.</td></tr><tr><td>Warehouse</td><td>Receiving, location, stock, traceability and material issue.</td><td>Received quantity and location reflect the physical material.</td></tr></table></section>
+  <article class="content-card guide-content">
 
-<section id="control"><h2>Control Center</h2><p>Start the working day here. Review open requisitions, purchasing activity, expected deliveries, warehouse exceptions and material risks. Do not try to inspect every record manually; use the control view to find exceptions first.</p><div class="tip"><strong>Control principle:</strong> ask “What needs attention today?” before asking “What exists in the database?”</div></section>
+    <section id="flow">
+      <h2>Core control flow</h2>
+      <div class="guide-flow">
+        <span>Engineering Need</span><b>→</b>
+        <span>MR</span><b>→</b>
+        <span>RFQ / PO</span><b>→</b>
+        <span>Delivery</span><b>→</b>
+        <span>Warehouse Receipt</span><b>→</b>
+        <span>Balance</span>
+      </div>
+      <p>
+        In MaterialHub this chain is meant to be visible as one operational story — not as disconnected pages that each show only part of the truth.
+      </p>
+      <div class="tip">
+        <strong>Control principle:</strong>
+        Ordered is not the same as Received. Keep Required, Ordered and Received side by side.
+      </div>
+    </section>
 
-<section id="mr"><h2>1. Material Requisition (MR)</h2><p>MR is the engineering-side statement of need. Create a clear requirement with project, item code, description/specification, quantity, unit, required date, priority and responsible discipline where applicable.</p><ol class="step-list"><li>Use a stable item code.</li><li>Write enough specification detail for Procurement to source the correct material.</li><li>Set a realistic required date.</li><li>Keep quantities and units consistent.</li><li>Use one coherent requirement rather than duplicating the same need across files.</li></ol><div class="tip"><strong>Common mistake:</strong> “Ordered” is not the same as “received.” Always verify the downstream receipt.</div></section>
+    <section id="roles">
+      <h2>Roles & responsibilities</h2>
+      <div class="table-responsive">
+        <table class="guide-table">
+          <tr>
+            <th>Role</th>
+            <th>Primary responsibility</th>
+            <th>What good control looks like</th>
+          </tr>
+          <tr>
+            <td>Project Manager</td>
+            <td>Project health, priorities, schedule risk and escalations.</td>
+            <td>Can quickly see which material problems may affect execution.</td>
+          </tr>
+          <tr>
+            <td>Engineering</td>
+            <td>Material demand, specifications, required dates and technical documents.</td>
+            <td>Requirements are precise, dated and consistently coded.</td>
+          </tr>
+          <tr>
+            <td>Procurement</td>
+            <td>RFQs, supplier selection, quotes, POs, lead times and expediting.</td>
+            <td>Every important requirement can be traced to its purchasing status.</td>
+          </tr>
+          <tr>
+            <td>Supplier</td>
+            <td>Offers, availability, delivery commitments and supply information.</td>
+            <td>Commitments and changes are visible to the project team.</td>
+          </tr>
+          <tr>
+            <td>Quality</td>
+            <td>Inspection, MTC / CoC / datasheet completeness and acceptance.</td>
+            <td>Material status and mandatory evidence are explicit.</td>
+          </tr>
+          <tr>
+            <td>Delivery</td>
+            <td>Shipment planning, delivery receipt and logistics status.</td>
+            <td>Expected and actual deliveries are distinguishable.</td>
+          </tr>
+          <tr>
+            <td>Warehouse</td>
+            <td>Receiving, location, stock, traceability and material issue.</td>
+            <td>Received quantity and location reflect the physical material.</td>
+          </tr>
+        </table>
+      </div>
+    </section>
 
-<section id="rfq"><h2>2. RFQ & Quote Comparison</h2><p>Move an approved requirement into sourcing. Invite appropriate suppliers and record commercial offers in a structured way.</p><ul><li>Compare price, lead time, availability and relevant supplier performance.</li><li>Check whether the offered specification actually matches the requirement.</li><li>Record clarifications rather than keeping important decisions only in email or chat.</li><li>Convert the selected offer into a PO while preserving the requirement relationship.</li></ul></section>
+    <section id="control">
+      <h2>Control Center</h2>
+      <p>
+        Start the working day here. Review open requisitions, purchasing activity, expected deliveries, warehouse exceptions and material risks.
+        Do not try to inspect every record manually; use the control view to find exceptions first.
+      </p>
+      <div class="tip">
+        <strong>Control principle:</strong>
+        ask “What needs attention today?” before asking “What exists in the database?”
+      </div>
+      <p style="margin-top:12px">
+        <a href="{{ url_for('control_center.dashboard') }}">Open Control Center →</a>
+      </p>
+    </section>
 
-<section id="po"><h2>3. Purchase Orders</h2><p>A PO is the purchasing commitment, not proof of physical receipt. Keep supplier, quantity, price, issue date and promised delivery information accurate.</p><ul><li>Update the existing PO when a commitment changes instead of creating duplicate records.</li><li>Watch promised dates for materials with near-term site impact.</li><li>Use the linked MR to understand why the PO exists.</li></ul></section>
+    <section id="mr">
+      <h2>1. Material Requisition (MR)</h2>
+      <p>
+        MR is the engineering-side statement of need.
+        Create a clear requirement with project, item code, description / specification, quantity, unit, required date, priority and responsible discipline where applicable.
+      </p>
+      <ol class="step-list">
+        <li>Use a stable item code.</li>
+        <li>Write enough specification detail for Procurement to source the correct material.</li>
+        <li>Set a realistic required date.</li>
+        <li>Keep quantities and units consistent.</li>
+        <li>Use one coherent requirement rather than duplicating the same need across files.</li>
+      </ol>
+      <div class="tip">
+        <strong>Common mistake:</strong>
+        “Ordered” is not the same as “received.” Always verify the downstream receipt.
+      </div>
+    </section>
 
-<section id="delivery"><h2>4. Delivery</h2><p>Delivery records represent logistics movement. They should be connected to the relevant PO wherever possible.</p><ul><li>Record delivery identity and date.</li><li>Track status changes clearly.</li><li>Do not treat a delivery notice as the final warehouse receipt.</li><li>Use Warehouse receipt quantity as the operational evidence of what was physically received.</li></ul></section>
+    <section id="rfq">
+      <h2>2. RFQ & Quote Comparison</h2>
+      <p>Move an approved requirement into sourcing. Invite appropriate suppliers and record commercial offers in a structured way.</p>
+      <ul>
+        <li>Compare price, lead time, availability and relevant supplier performance.</li>
+        <li>Check whether the offered specification actually matches the requirement.</li>
+        <li>Record clarifications rather than keeping important decisions only in email or chat.</li>
+        <li>Convert the selected offer into a PO while preserving the requirement relationship.</li>
+      </ul>
+      <p>The cheapest offer is not always the best option for the project.</p>
+    </section>
 
-<section id="reconcile"><h2>5. Material Reconciliation</h2><p>This is the simplest control view for the question: <strong>What did Engineering need, what did we order, what was delivered, and what did the warehouse actually receive?</strong></p><table class="guide-table"><tr><th>Signal</th><th>Meaning</th><th>Action</th></tr><tr><td>Not Ordered</td><td>Requirement exists but purchasing quantity is missing or incomplete.</td><td>Review procurement status.</td></tr><tr><td>Ordered / Awaiting Receipt</td><td>Purchasing exists but warehouse has not fully received it.</td><td>Check delivery commitment.</td></tr><tr><td>Partial Receipt / Shortage</td><td>Received quantity is below requirement.</td><td>Check outstanding quantity and expedite if necessary.</td></tr><tr><td>Surplus</td><td>Received quantity is above the requirement used by the reconciliation.</td><td>Verify the physical and document basis before treating it as available surplus.</td></tr></table><p>Use project, material, supplier and status filters. Open the detail view when you need the underlying MR, PO, delivery and warehouse records.</p></section>
+    <section id="po">
+      <h2>3. Purchase Orders</h2>
+      <p>
+        A PO is the purchasing commitment, not proof of physical receipt.
+        Keep supplier, quantity, price, issue date and promised delivery information accurate.
+      </p>
+      <ul>
+        <li>Update the existing PO when a commitment changes instead of creating duplicate records.</li>
+        <li>Watch promised dates for materials with near-term site impact.</li>
+        <li>Use the linked MR to understand why the PO exists.</li>
+      </ul>
+    </section>
 
-<section id="reports"><h2>6. Reports & Sharing</h2><p>Generate clean reports for MR, PO, Delivery and Warehouse records when a decision, approval or handover needs a clear document.</p><ul><li>Review the numbers before sharing.</li><li>Use the QR code for quick access where appropriate.</li><li>Shared reports are read-only and use a standalone page without site navigation, footer promotions or advertising.</li><li>Revoke a share when it should no longer be accessible.</li></ul></section>
+    <section id="delivery">
+      <h2>4. Delivery</h2>
+      <p>Delivery records represent logistics movement. They should be connected to the relevant PO wherever possible.</p>
+      <ul>
+        <li>Record delivery identity and date.</li>
+        <li>Track status changes clearly.</li>
+        <li>Do not treat a delivery notice as the final warehouse receipt.</li>
+        <li>Use warehouse receipt quantity as the operational evidence of what was physically received.</li>
+      </ul>
+    </section>
 
-<section id="trace"><h2>7. QR / Barcode Traceability</h2><p>For controlled materials, preserve identity across receipt, storage and issue. Capture heat, lot, serial or batch identifiers whenever applicable and keep the relationship to the material record clear.</p></section>
+    <section id="warehouse">
+      <h2>5. Warehouse</h2>
+      <p>Warehouse is where the digital record meets the physical material.</p>
+      <ol class="step-list">
+        <li>Identify the expected delivery.</li>
+        <li>Verify quantity and condition.</li>
+        <li>Record the actual received quantity.</li>
+        <li>Capture heat, lot, serial or batch identifiers when required.</li>
+        <li>Assign the correct warehouse / location information.</li>
+        <li>Keep stock status aligned with physical reality.</li>
+      </ol>
+    </section>
 
-<section id="quality"><h2>8. Quality Documents</h2><p>Keep MTC, CoC, datasheet and inspection evidence associated with the material. Make status explicit: Missing, Received, Under Review, Accepted or Rejected where the workflow supports it.</p><div class="tip"><strong>Rule:</strong> do not assume that a physically received item is automatically technically accepted.</div></section>
+    <section id="reconcile">
+      <h2>6. Material Reconciliation</h2>
+      <p>
+        This is the simplest control view for the question:
+        <strong>What did Engineering need, what did we order, what was delivered, and what did the warehouse actually receive?</strong>
+      </p>
+      <div class="table-responsive">
+        <table class="guide-table">
+          <tr>
+            <th>Signal</th>
+            <th>Meaning</th>
+            <th>Action</th>
+          </tr>
+          <tr>
+            <td>Not Ordered</td>
+            <td>Requirement exists but purchasing quantity is missing or incomplete.</td>
+            <td>Review procurement status.</td>
+          </tr>
+          <tr>
+            <td>Ordered / Awaiting Receipt</td>
+            <td>Purchasing exists but warehouse has not fully received it.</td>
+            <td>Check delivery commitment.</td>
+          </tr>
+          <tr>
+            <td>Partial Receipt / Shortage</td>
+            <td>Received quantity is below requirement.</td>
+            <td>Check outstanding quantity and expedite if necessary.</td>
+          </tr>
+          <tr>
+            <td>Surplus</td>
+            <td>Received quantity is above the requirement used by the reconciliation.</td>
+            <td>Verify the physical and document basis before treating it as available surplus.</td>
+          </tr>
+        </table>
+      </div>
+      <p style="margin-top:12px">
+        Use project, material, supplier and status filters. Open the detail view when you need the underlying MR, PO, delivery and warehouse records.
+        <a href="{{ url_for('material_reconciliation.dashboard') }}">Open Material Reconciliation →</a>
+      </p>
+    </section>
 
-<section id="warehouse"><h2>9. Warehouse</h2><p>Warehouse is where the digital record meets the physical material.</p><ol class="step-list"><li>Identify the expected delivery.</li><li>Verify quantity and condition.</li><li>Record the actual received quantity.</li><li>Capture trace identifiers when required.</li><li>Assign the correct warehouse/location information.</li><li>Keep stock status aligned with physical reality.</li></ol></section>
+    <section id="reports">
+      <h2>7. Reports & Sharing</h2>
+      <p>
+        Generate clean reports for MR, PO, Delivery and Warehouse records when a decision, approval or handover needs a clear document.
+        Review Required, Ordered and Received numbers before sharing.
+      </p>
+      <ul>
+        <li>Use the QR code for quick access where appropriate.</li>
+        <li>Shared reports are read-only and use a standalone page without site navigation, footer promotions or advertising.</li>
+        <li>Revoke a share when it should no longer be accessible.</li>
+      </ul>
+      <p>
+        <a href="{{ url_for('reports.center') }}">Open Reports →</a>
+      </p>
+    </section>
 
-<section id="intelligence"><h2>10. Material Intelligence</h2><p>Use readiness, lead-time and supplier signals to prioritize attention. These are operational signals, not automatic decisions. Validate unusual results against the source records.</p></section>
+    <section id="trace">
+      <h2>8. QR / Barcode Traceability</h2>
+      <p>
+        For controlled materials, preserve identity across receipt, storage and issue.
+        Capture heat, lot, serial or batch identifiers whenever applicable and keep the relationship to the material record clear.
+      </p>
+      <p>
+        <a href="{{ url_for('intelligence.traceability') }}">Open Traceability →</a>
+      </p>
+    </section>
 
-<section id="copilot"><h2>11. AI Material Copilot</h2><p>Where enabled, Copilot should summarize evidence already present in the system and point to a concrete action. A useful response identifies the material, current requirement, open purchasing position, receipt status, required date and risk driver.</p><div class="tip"><strong>Governance:</strong> AI is decision support. Procurement, Quality and Project Management remain responsible for technical, commercial and approval decisions.</div></section>
+    <section id="quality">
+      <h2>9. Quality Documents</h2>
+      <p>
+        Keep MTC, CoC, datasheet and inspection evidence associated with the material.
+        Make status explicit: Missing, Received, Under Review, Accepted or Rejected where the workflow supports it.
+      </p>
+      <div class="tip">
+        <strong>Rule:</strong>
+        do not assume that a physically received item is automatically technically accepted.
+      </div>
+    </section>
 
-<section id="daily"><h2>12. Recommended daily routine</h2><ol class="step-list"><li><strong>Morning:</strong> open Control Center and identify exceptions.</li><li><strong>Engineering:</strong> review urgent or changed requirements.</li><li><strong>Procurement:</strong> review unpurchased, late and partially supplied requirements.</li><li><strong>Delivery/Warehouse:</strong> reconcile expected deliveries with actual receipts.</li><li><strong>Project Management:</strong> review shortage and schedule-impacting items.</li><li><strong>End of day:</strong> update commitments so tomorrow’s view starts from current facts.</li></ol><div class="tip"><strong>Core habit:</strong> MaterialHub works best when teams update the record at the moment the fact changes—not days later from memory.</div></section>
+    <section id="intelligence">
+      <h2>10. Material Intelligence</h2>
+      <p>
+        Use readiness, lead-time and supplier signals to prioritize attention.
+        These are operational signals, not automatic decisions.
+        Validate unusual results against the source records.
+      </p>
+      <p>
+        <a href="{{ url_for('intelligence.dashboard') }}">Open Material Intelligence →</a>
+      </p>
+    </section>
 
-</article></div>
+    <section id="copilot">
+      <h2>11. AI Material Copilot</h2>
+      <p>
+        Where enabled, Copilot should summarize evidence already present in the system and point to a concrete action.
+        A useful response identifies the material, current requirement, open purchasing position, receipt status, required date and risk driver.
+      </p>
+      <div class="tip">
+        <strong>Governance:</strong>
+        AI is decision support. Procurement, Quality and Project Management remain responsible for technical, commercial and approval decisions.
+      </div>
+    </section>
+
+    <section id="daily">
+      <h2>12. Recommended daily routine</h2>
+      <ol class="step-list">
+        <li><strong>Morning:</strong> open Control Center and identify exceptions.</li>
+        <li><strong>Engineering:</strong> review urgent or changed requirements.</li>
+        <li><strong>Procurement:</strong> review unpurchased, late and partially supplied requirements.</li>
+        <li><strong>Delivery / Warehouse:</strong> reconcile expected deliveries with actual receipts.</li>
+        <li><strong>Project Management:</strong> review shortage and schedule-impacting items.</li>
+        <li><strong>End of day:</strong> update commitments so tomorrow’s view starts from current facts.</li>
+      </ol>
+      <div class="tip">
+        <strong>Core habit:</strong>
+        MaterialHub works best when teams update the record at the moment the fact changes — not days later from memory.
+      </div>
+    </section>
+
+    <div class="guide-cta">
+      <h3>Ready to keep material control in one place?</h3>
+      <p>
+        MaterialHub is built for engineering, procurement, warehouse and project teams that need a shared view from requirement to receipt —
+        instead of chasing status across files, chats and one person’s inbox.
+        Open your workspace, or create one if you are just getting started.
+      </p>
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('role_workspace.my_workspace') }}"><i class="fas fa-layer-group"></i> Go to workspace</a>
+        <a class="secondary" href="{{ url_for('control_center.dashboard') }}"><i class="fas fa-chart-pie"></i> Control Center</a>
+      {% else %}
+        <a href="{{ url_for('auth.register') }}"><i class="fas fa-rocket"></i> Get started free</a>
+        <a class="secondary" href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> Sign in</a>
+      {% endif %}
+    </div>
+
+  </article>
+</div>
 {% endblock %}
