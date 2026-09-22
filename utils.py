@@ -74,6 +74,7 @@ def _query_last_document(model, field_name, company_name=None):
 # this module stays importable without a database.
 _DOCUMENT_TYPES = {
     "MR": ("MaterialRequisition", "mr_no"),
+    "MAT": ("MaterialMaster", "material_code"),
     "PO": ("PurchaseOrder", "order_no"),
     "DLV": ("Delivery", "delivery_id"),
     "WH": ("WarehouseInventory", "warehouse_id"),
