@@ -32,16 +32,19 @@ def material_requisitions():
 def _resolve_material(data):
     """Resolve a required Material Master identity; no free-text legacy fallback."""
     material_id = data.get('material_id')
-    if not material_id:
-        return None
+    material_code = (data.get('material_code') or '').strip()
     try:
-        return MaterialMaster.query.filter_by(
-            id=int(material_id),
+        query = MaterialMaster.query.filter_by(
             company_name=current_user.company_name,
             status='active'
-        ).first()
+        )
+        if material_id:
+            return query.filter_by(id=int(material_id)).first()
+        if material_code:
+            return query.filter_by(material_code=material_code).first()
     except (TypeError, ValueError):
         return None
+    return None
 
 @material_requisition_bp.route('/api/material_requisitions', methods=['GET'])
 @login_required
@@ -188,6 +191,14 @@ def api_upload_csv():
         reader = csv.DictReader(stream)
         count = 0
         for row in reader:
+            material = _resolve_material(row)
+            if not material:
+                raise ValueError('Each CSV row must contain a valid Material Master ID or Material Code.')
+            row = dict(row)
+            row['material_id'] = material.id
+            row['item_code'] = material.material_code
+            row['material_description'] = material.description
+            row['unit'] = row.get('unit') or row.get('unit_of_measure') or material.unit
             if not row.get('mr_no'):
                 row['mr_no'] = generate_next_mr_no(current_user.company_name)
             mr = MaterialRequisition.from_dict(row, current_user.company_name, user_id=current_user.id)
