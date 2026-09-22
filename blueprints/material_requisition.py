@@ -30,12 +30,18 @@ def material_requisitions():
 
 
 def _resolve_material(data):
+    """Resolve a required Material Master identity; no free-text legacy fallback."""
     material_id = data.get('material_id')
-    if material_id:
-        try: return MaterialMaster.query.filter_by(id=int(material_id), company_name=current_user.company_name, status='active').first()
-        except (TypeError, ValueError): return None
-    code = str(data.get('item_code') or '').strip()
-    return MaterialMaster.query.filter_by(material_code=code, company_name=current_user.company_name, status='active').first() if code else None
+    if not material_id:
+        return None
+    try:
+        return MaterialMaster.query.filter_by(
+            id=int(material_id),
+            company_name=current_user.company_name,
+            status='active'
+        ).first()
+    except (TypeError, ValueError):
+        return None
 
 @material_requisition_bp.route('/api/material_requisitions', methods=['GET'])
 @login_required
