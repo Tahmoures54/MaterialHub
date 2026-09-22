@@ -664,6 +664,7 @@ class WarehouseInventory(db.Model):
     # Application-level reference to Delivery.delivery_id (tenant-scoped code).
     # Kept as a plain indexed string so delivery numbers stay unique per tenant.
     delivery_id = db.Column(db.String(50), nullable=False, index=True)
+    material_id = db.Column(db.Integer, db.ForeignKey('material_master.id'), nullable=True, index=True)
     item_code = db.Column(db.String(50), nullable=False, index=True)
     material_description = db.Column(db.Text, nullable=False)
     material_category = db.Column(db.String(50))
@@ -749,6 +750,7 @@ class WarehouseInventory(db.Model):
         return cls(
             warehouse_id=payload.get('warehouse_id'),
             delivery_id=str(payload.get('delivery_id') or ''),
+            material_id=payload.get('material_id'),
             item_code=(payload.get('item_code') or '').strip(),
             material_description=(payload.get('material_description') or '').strip(),
             material_category=payload.get('material_category') or payload.get('category'),
