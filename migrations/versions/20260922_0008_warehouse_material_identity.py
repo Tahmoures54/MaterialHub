@@ -65,13 +65,6 @@ def upgrade():
                 ["material_id"],
                 unique=False,
             )
-        if "ix_warehouse_transaction_destination_warehouse_id" not in _index_names(inspector, "warehouse_transaction"):
-            op.create_index(
-                "ix_warehouse_transaction_destination_warehouse_id",
-                "warehouse_transaction",
-                ["destination_warehouse_id"],
-                unique=False,
-            )
         if "balance_before" not in _columns(inspector, "warehouse_transaction"):
             op.add_column("warehouse_transaction", sa.Column("balance_before", sa.Float(), nullable=True))
         if "balance_after" not in _columns(inspector, "warehouse_transaction"):
