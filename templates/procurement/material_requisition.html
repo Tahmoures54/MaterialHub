@@ -104,7 +104,7 @@
                         <div class="mr-wizard-intro"><div class="mr-wizard-icon"><i class="fas fa-box-open"></i></div><div><h4>What material do you need?</h4><p>Only material identity is requested here. Technical details can be added later.</p></div></div>
                         <div class="mr-wizard-fields">
                             <label class="mr-wizard-field"><span>Material Description <em>*</em></span><input id="mrDescription" class="mh-input" autocomplete="off" placeholder="e.g. Carbon steel pipe"></label>
-                            <label class="mr-wizard-field"><span>Item Code <em>*</em></span><input id="mrItemCode" class="mh-input" autocomplete="off" placeholder="e.g. PIPE-CS-001"></label>
+                            <label class="mr-wizard-field"><span>Item Code <em>*</em></span><select id="mrItemCode" class="mh-select" required><option value="">Select Material Master item</option></select></label>
                             <label class="mr-wizard-field"><span>Discipline <em>*</em></span><select id="mrDiscipline" class="mh-select" required>
                                 <option value="" selected disabled>Select discipline</option>
                                 <option value="Civil">Civil</option>
@@ -820,6 +820,13 @@
                 if(mrWizardStep===4)renderWizardReview();
                 setTimeout(()=>$('.mr-wizard-step-panel.active').find('input,select,textarea').first().focus(),60);
             }
+            async function loadMRMaterialMaster(){
+                const sel=$('#mrItemCode'); if(!sel.length)return;
+                try{
+                    const rows=await $.getJSON('/api/material-master?status=active');
+                    sel.html('<option value="">Select Material Master item</option>'+rows.map(x=>'<option value="'+escapeHtml(x.material_code)+'" data-id="'+escapeHtml(x.id)+'" data-desc="'+escapeHtml(x.description||x.material_name)+'" data-unit="'+escapeHtml(x.unit||'EA')+'">'+escapeHtml(x.material_code)+' — '+escapeHtml(x.material_name)+'</option>').join(''));
+                }catch(e){sel.html('<option value="">Material Master unavailable</option>');}
+            }
             function wizardReset(){
                 simpleMrItems=[];mrWizardStep=1;
                 $('#mrSubject,#mrProjectNo,#mrItemCode,#mrDescription,#mrVendor,#mrRemarks').val('');
@@ -834,7 +841,7 @@
             }
             async function generateMrNo(){const response=await $.ajax({url:'/material_requisitions/api/generate_mr_no',type:'GET',headers:{'X-CSRFToken':csrfToken}});return response.mr_no;}
             async function buildWizardItem(){
-                const item={subject:$('#mrSubject').val().trim(),project_no:$('#mrProjectNo').val().trim(),item_code:$('#mrItemCode').val().trim(),material_description:$('#mrDescription').val().trim(),discipline:$('#mrDiscipline').val(),required_date:$('#mrRequiredDate').val(),unit_of_measure:$('#mrUnit').val(),quantity:Number($('#mrQuantity').val()),priority:$('#mrPriority').val(),suggested_vendor:$('#mrVendor').val().trim()||null,remarks:$('#mrRemarks').val().trim()||null,workflow_status:'Engineering',status:'Pending'};
+                const item={subject:$('#mrSubject').val().trim(),project_no:$('#mrProjectNo').val().trim(),item_code:$('#mrItemCode').val(),material_id:$('#mrItemCode option:selected').data('id')||null,material_description:$('#mrDescription').val().trim(),discipline:$('#mrDiscipline').val(),required_date:$('#mrRequiredDate').val(),unit_of_measure:$('#mrUnit').val(),quantity:Number($('#mrQuantity').val()),priority:$('#mrPriority').val(),suggested_vendor:$('#mrVendor').val().trim()||null,remarks:$('#mrRemarks').val().trim()||null,workflow_status:'Engineering',status:'Pending'};
                 item.mr_no=await generateMrNo();return item;
             }
             function renderWizardReview(){
@@ -843,7 +850,7 @@
                 box.html(simpleMrItems.map((item,index)=>`<div class="mr-review-card"><div class="mr-review-top"><div><div class="mr-review-title">${escapeHtml(item.material_description)}</div><div class="mr-review-code">${escapeHtml(item.item_code)} · ${escapeHtml(item.mr_no)} · ${escapeHtml(item.project_no)}</div></div><button type="button" class="mr-review-remove" data-index="${index}" title="Remove item"><i class="fas fa-trash"></i></button></div><div class="mr-review-grid"><div>Discipline<b>${escapeHtml(item.discipline)}</b></div><div>Quantity<b>${escapeHtml(item.quantity)} ${escapeHtml(item.unit_of_measure)}</b></div><div>Required<b>${escapeHtml(item.required_date)}</b></div><div>Priority<b>${escapeHtml(item.priority)}</b></div></div></div>`).join(''));
             }
             function clearMaterialFields(){$('#mrItemCode,#mrDescription,#mrVendor,#mrRemarks').val('');$('#mrDiscipline').val('');$('#mrQuantity').val('1');$('#mrUnit').val('Nos');$('#mrPriority').val('Medium');$('#mrRequiredDate').val(mrToday());}
-            $('#addMRModal').on('show.bs.modal',function(){wizardReset();});
+            $('#addMRModal').on('show.bs.modal',function(){wizardReset();loadMRMaterialMaster();});
             $('#mrWizardNext').on('click',async function(){
                 if(!wizardValidateStep(mrWizardStep))return;
                 const button=$(this);button.prop('disabled',true);
