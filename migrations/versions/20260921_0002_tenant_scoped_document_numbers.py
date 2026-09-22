@@ -38,7 +38,7 @@ def _ensure_tenant_unique(table_name, index_name, columns, constraint_name):
     if constraint_name not in uniques:
         op.create_unique_constraint(constraint_name, table_name, columns)
     # A non-unique lookup index is useful alongside the tenant unique constraint.
-    if not any(tuple(item.get("column_names") or []) == tuple(columns) for item in indexes.values()):
+    if not any(tuple(item.get("column_names") or []) == tuple(columns) for item in indexes):
         op.create_index(index_name, table_name, columns, unique=False)
 
 
