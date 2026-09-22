@@ -190,6 +190,13 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
     assert client.get("/warehouse/api/transactions").status_code == 200
     assert client.get(f"/warehouse/api/goods-receipts/{receipt['id']}").status_code == 200
     assert client.get(f"/warehouse/api/osd-reports/{gr_payload['osd']['id']}").status_code == 200
+    # Reconciliation must expose the complete inbound quantity chain.
+    reconciliation = client.get("/reports/reconciliation")
+    assert reconciliation.status_code == 200
+    body = reconciliation.get_data(as_text=True)
+    assert "Material Reconciliation" in body
+    assert "MR → PO → Delivery → Packing List → GRN → QC → Warehouse" in body
+    assert "MR Qty" in body and "QC Passed" in body and "WH Quarantine" in body
 
     with app.app_context():
         inventory = WarehouseInventory.query.filter_by(
