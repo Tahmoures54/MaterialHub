@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Register · MaterialHub{% endblock %}
+{% block content %}
+<style>
+.reg{max-width:1250px;margin:20px auto;background:#fff;padding:25px}.reg h1{margin:3px 0 4px}.toolbar{display:flex;gap:8px;margin-bottom:15px}.toolbar button,.toolbar a{padding:8px 12px;border:1px solid #ccd9df;border-radius:7px;background:#fff;text-decoration:none;color:#0b6179;font-weight:700}.reg table{width:100%;border-collapse:collapse;font-size:11px}.reg th,.reg td{border:1px solid #cbd5db;padding:6px}.reg th{background:#eef4f6}.muted{color:#64748b}@media print{.toolbar{display:none}.reg{margin:0;padding:8mm}.reg table{font-size:9px}} 
+</style>
+<div class="reg">
+ <div class="toolbar"><button onclick="window.print()">🖨 Print Register</button><a href="{{ url_for('reports.operational_center') }}">← Report Center</a></div>
+ <div class="muted">MATERIALHUB · {{ kind }} · TENANT: {{ current_user.company_name }}</div><h1>{{ title }}</h1><div class="muted">Generated register · {{ rows|length }} records</div>
+ <table><thead><tr>{% if kind=='PL' %}<th>PL No.</th><th>Date</th><th>PO</th><th>Delivery</th><th>Supplier</th><th>Vehicle</th><th>Packages</th><th>Status</th>
+ {% elif kind in ['GR','RR'] %}<th>Receipt No.</th><th>Date</th><th>Packing List</th><th>PO</th><th>Warehouse</th><th>Lines</th><th>Status</th>
+ {% elif kind=='OSD' %}<th>OSD No.</th><th>Date</th><th>Goods Receipt</th><th>Packing List</th><th>Delivery</th><th>Status</th>
+ {% else %}<th>Trace No.</th><th>Item Code</th><th>Description</th><th>Receipt</th><th>Inspection</th><th>Lot</th><th>Heat</th><th>Serial</th>{% endif %}</tr></thead><tbody>
+ {% for row in rows %}<tr>
+ {% if kind=='PL' %}<td>{{ row.packing_list_no }}</td><td>{{ row.packing_list_date }}</td><td>{{ row.order.order_no if row.order else '' }}</td><td>{{ row.delivery.delivery_id if row.delivery else '' }}</td><td>{{ row.supplier.full_name if row.supplier else '' }}</td><td>{{ row.vehicle_no or '' }}</td><td>{{ row.package_count or '' }}</td><td>{{ row.status }}</td>
+ {% elif kind in ['GR','RR'] %}<td>{{ row.receipt_no }}</td><td>{{ row.receipt_date }}</td><td>{{ row.packing_list.packing_list_no if row.packing_list else '' }}</td><td>{{ row.order.order_no if row.order else '' }}</td><td>{{ row.warehouse_id }}</td><td>{{ row.lines|length }}</td><td>{{ row.status.value }}</td>
+ {% elif kind=='OSD' %}<td>{{ row.osd_no }}</td><td>{{ row.report_date }}</td><td>{{ row.goods_receipt.receipt_no if row.goods_receipt else '' }}</td><td>{{ row.packing_list.packing_list_no if row.packing_list else '' }}</td><td>{{ row.delivery.delivery_id if row.delivery else '' }}</td><td>{{ row.status.value }}</td>
+ {% else %}<td>TRACE-{{ '%06d'|format(row.id) }}</td><td>{{ row.item_code }}</td><td>{{ row.material_description }}</td><td>{{ row.goods_receipt.receipt_no }}</td><td>{{ row.inspection_status }}</td><td>{{ row.lot_no or '' }}</td><td>{{ row.heat_no or '' }}</td><td>{{ row.serial_no or '' }}</td>{% endif %}
+ </tr>{% else %}<tr><td colspan="8" class="text-center">No records.</td></tr>{% endfor %}
+ </tbody></table>
+</div>
+{% endblock %}
