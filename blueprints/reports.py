@@ -156,6 +156,91 @@ def _operational_payload(kind, obj):
         'notes': f"Lot: {line.lot_no or '—'} | Heat: {line.heat_no or '—'} | Serial: {line.serial_no or '—'} | Location: {line.storage_location_id or '—'}"
     }
 
+def _reconciliation_rows():
+    company = current_user.company_name
+    mrs = MaterialRequisition.query.filter_by(company_name=company).order_by(
+        MaterialRequisition.project_no.asc(), MaterialRequisition.item_code.asc(), MaterialRequisition.id.asc()
+    ).all()
+    rows = []
+    for mr in mrs:
+        po_items = PurchaseOrderItem.query.join(PurchaseOrder).filter(
+            PurchaseOrderItem.material_requisition_id == mr.id,
+            PurchaseOrder.company_name == company,
+            PurchaseOrder.status != PurchaseOrderStatus.cancelled,
+        ).all()
+        po_ids = [x.purchase_order_id for x in po_items]
+        po_qty = sum(float(x.quantity or 0) for x in po_items)
+
+        deliveries = Delivery.query.filter(
+            Delivery.company_name == company,
+            Delivery.material_id == mr.material_id,
+        ).filter(Delivery.order_id.in_(po_ids) if po_ids else db.text('1=0')).all()
+        delivery_qty = po_qty if deliveries else 0.0
+
+        pls = PackingList.query.filter_by(company_name=company).filter(
+            PackingList.order_id.in_(po_ids) if po_ids else db.text('1=0')
+        ).all()
+        pl_ids = [x.id for x in pls]
+        pl_lines = PackingListLine.query.filter(
+            PackingListLine.packing_list_id.in_(pl_ids),
+            PackingListLine.material_id == mr.material_id,
+        ).all() if pl_ids else []
+        pl_qty = sum(float(x.quantity or 0) for x in pl_lines)
+
+        grs = GoodsReceipt.query.filter_by(company_name=company, status=ReceivingStatus.posted).filter(
+            GoodsReceipt.packing_list_id.in_(pl_ids) if pl_ids else db.text('1=0')
+        ).all()
+        gr_ids = [x.id for x in grs]
+        gr_lines = GoodsReceiptLine.query.filter(
+            GoodsReceiptLine.goods_receipt_id.in_(gr_ids),
+            GoodsReceiptLine.material_id == mr.material_id,
+        ).all() if gr_ids else []
+        grn_qty = sum(float(x.received_qty or 0) for x in gr_lines)
+
+        qc_passed_qty = sum(float(x.received_qty or 0) for x in gr_lines if str(x.inspection_status).lower() == 'passed')
+        qc_pending_qty = sum(float(x.received_qty or 0) for x in gr_lines if str(x.inspection_status).lower() == 'pending')
+        qc_failed_qty = sum(float(x.received_qty or 0) for x in gr_lines if str(x.inspection_status).lower() == 'failed')
+
+        invs = WarehouseInventory.query.filter_by(
+            company_name=company, material_id=mr.material_id, project_no=mr.project_no
+        ).all()
+        wh_received = sum(float(x.received_qty or 0) for x in invs)
+        wh_available = sum(float(x.available_qty or 0) for x in invs)
+        wh_quarantine = sum(float(x.quarantine_qty or 0) for x in invs)
+
+        rows.append({
+            'mr': mr, 'mr_qty': float(mr.quantity or 0), 'po_qty': po_qty,
+            'delivery_qty': delivery_qty, 'pl_qty': pl_qty, 'grn_qty': grn_qty,
+            'qc_passed_qty': qc_passed_qty, 'qc_pending_qty': qc_pending_qty,
+            'qc_failed_qty': qc_failed_qty, 'warehouse_received_qty': wh_received,
+            'warehouse_available_qty': wh_available, 'warehouse_quarantine_qty': wh_quarantine,
+            'variance_mr_po': po_qty - float(mr.quantity or 0),
+            'variance_po_delivery': delivery_qty - po_qty,
+            'variance_delivery_pl': pl_qty - delivery_qty,
+            'variance_pl_grn': grn_qty - pl_qty,
+            'variance_grn_qc': qc_passed_qty - grn_qty,
+            'variance_qc_warehouse': wh_available - qc_passed_qty,
+            'po_count': len(po_ids), 'delivery_count': len(deliveries),
+            'pl_count': len(pl_ids), 'gr_count': len(gr_ids),
+        })
+    return rows
+
+@reports_bp.get('/reports/reconciliation')
+@login_required
+def reconciliation():
+    rows = _reconciliation_rows()
+    keys = ('mr_qty','po_qty','delivery_qty','pl_qty','grn_qty','qc_passed_qty','qc_pending_qty','qc_failed_qty','warehouse_received_qty','warehouse_available_qty','warehouse_quarantine_qty','variance_mr_po','variance_po_delivery','variance_delivery_pl','variance_pl_grn','variance_grn_qc','variance_qc_warehouse')
+    totals = {k: sum(r[k] for r in rows) for k in keys}
+    return render_template('reports/reconciliation.html', rows=rows, totals=totals)
+
+@reports_bp.get('/reports/reconciliation/print')
+@login_required
+def reconciliation_print():
+    rows = _reconciliation_rows()
+    keys = ('mr_qty','po_qty','delivery_qty','pl_qty','grn_qty','qc_passed_qty','qc_pending_qty','qc_failed_qty','warehouse_received_qty','warehouse_available_qty','warehouse_quarantine_qty','variance_mr_po','variance_po_delivery','variance_delivery_pl','variance_pl_grn','variance_grn_qc','variance_qc_warehouse')
+    totals = {k: sum(r[k] for r in rows) for k in keys}
+    return render_template('reports/reconciliation_print.html', rows=rows, totals=totals)
+
 @reports_bp.get('/reports/operational')
 @login_required
 def operational_center():
