@@ -57,7 +57,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
         db.session.flush()
 
         mr = MaterialRequisition.from_dict({
-            "mr_no": "MR-FLOW-0001",
+            "mr_no": "MR-9001",
             "material_id": material.id,
             "item_code": material.material_code,
             "material_description": material.description,
