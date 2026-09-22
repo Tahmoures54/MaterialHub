@@ -6,7 +6,7 @@ import csv
 import logging
 from datetime import datetime
 from models import (db, WarehouseInventory, WarehouseTransaction, Delivery, MaterialMaster,
-                    WorkflowStatus, AccessLevel, ValidationError, PurchaseOrder,
+                    WorkflowStatus, AccessLevel, ValidationError, PurchaseOrder, InspectionStatus,
                     PackingList, PackingListLine, GoodsReceipt, GoodsReceiptLine,
                     OSDReport, OSDReportLine, ReceivingStatus, OSDStatus)
 
@@ -332,6 +332,7 @@ def api_create_transaction():
             if inventory and inventory.material_id and inventory.material_id != material.id:
                 return jsonify({'error': 'Selected material does not match the stock record.'}), 409
             before = float(inventory.received_qty or 0) if inventory else 0.0
+            inspection_required = bool(pl_line.material and pl_line.material.inspection_required)
             if not inventory:
                 inventory = WarehouseInventory.from_dict({
                     'warehouse_id': warehouse_id,
@@ -915,6 +916,8 @@ def api_create_goods_receipt():
                     'storage_location_id': line.storage_location_id,
                     'remarks': data.get('remarks'),
                 }, current_user.company_name, current_user.id)
+                inventory.available_qty = 0.0 if inspection_required else received_qty
+                inventory.quarantine_qty = received_qty if inspection_required else 0.0
                 db.session.add(inventory)
                 db.session.flush()
                 after = received_qty
@@ -922,6 +925,10 @@ def api_create_goods_receipt():
                 if inventory.item_code != pl_line.item_code:
                     raise ValidationError('Existing warehouse stock identity does not match the Packing List material.')
                 inventory.received_qty = before + received_qty
+                if inspection_required:
+                    inventory.quarantine_qty = float(inventory.quarantine_qty or 0) + received_qty
+                else:
+                    inventory.available_qty = float(inventory.available_qty or 0) + received_qty
                 inventory.storage_location_id = line.storage_location_id or inventory.storage_location_id
                 inventory.delivery_id = str(pl.delivery_id or inventory.delivery_id)
                 after = float(inventory.received_qty)
