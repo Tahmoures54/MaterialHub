@@ -145,11 +145,17 @@ def api_update_inventory(warehouse_id):
         return jsonify({'error': 'Unauthorized'}), 403
     try:
         validate_csrf(request.json.get('csrf_token'))
+        data = request.get_json() or {}
+        material_id = data.get('material_id')
+        if not material_id:
+            return jsonify({'error': 'Material Master item is required'}), 400
+        material = _resolve_material(data)
+        if not material:
+            return jsonify({'error': 'Select a valid Material Master item.'}), 400
         inventory = WarehouseInventory.query.filter_by(warehouse_id=warehouse_id, material_id=material.id, company_name=current_user.company_name).first()
         if not inventory:
             logger.warning(f"Inventory {warehouse_id} not found for user {current_user.id}")
             return jsonify({'error': 'Inventory not found'}), 404
-        data = request.get_json()
         if not data:
             logger.warning(f"No data provided in inventory update request by user {current_user.id}")
             return jsonify({'error': 'No data provided'}), 400
