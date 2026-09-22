@@ -1,13 +1,13 @@
 """connect goods receipts to QC and split stock into available/quarantine
 
-Revision ID: 20260922_0004
-Revises: 20260922_0003
+Revision ID: 20260922_0015
+Revises: 20260922_0014
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = "20260922_0004"
-down_revision = "20260922_0003"
+revision = "20260922_0015"
+down_revision = "20260922_0014"
 branch_labels = None
 depends_on = None
 
