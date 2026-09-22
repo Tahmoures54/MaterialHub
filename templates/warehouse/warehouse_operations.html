@@ -9,15 +9,6 @@
     <!-- Notifications Container -->
     <div id="notifications" class="notifications-container"></div>
 
-    <!-- Debug Info -->
-    <div class="alert alert-info">
-        <strong>Debug Info:</strong><br>
-        User: {{ current_user.full_name or 'Not set' }}<br>
-        Access Level: {{ current_user.access_level or 'Not set' }}<br>
-        Read Only: {{ read_only|default('Not set', true) }}<br>
-        Authenticated: {{ current_user.is_authenticated }}
-    </div>
-
     <section class="warehouse-operations">
         <h2>Warehouse Dashboard</h2>
         <p>Oversee material receipt, inventory, and issuance to contractors.</p>
@@ -26,10 +17,13 @@
         <div class="button-group mb-3 d-flex align-items-center">
             {% if current_user.is_authenticated and current_user.access_level.name == 'warehouse' and not read_only %}
             <button class="btn btn-custom me-2" data-bs-toggle="modal" data-bs-target="#receiveMaterialModal" id="receiveMaterial">
-                <i class="fas fa-download me-2"></i>Receive Material
+                <i class="fas fa-arrow-down me-2"></i>Receive
             </button>
             <button class="btn btn-custom me-2" data-bs-toggle="modal" data-bs-target="#issueMaterialModal" id="issueMaterial">
-                <i class="fas fa-truck-loading me-2"></i>Issue to Contractor
+                <i class="fas fa-arrow-up me-2"></i>Issue
+            </button>
+            <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#transactionModal" id="recordTransaction">
+                <i class="fas fa-exchange-alt me-2"></i>Record Movement
             </button>
             {% endif %}
             <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#helpModal" id="showHelp">
@@ -82,6 +76,65 @@
             <div id="inventoryList" class="row"></div>
         </div>
     </section>
+
+    <section class="movement-ledger mt-4">
+        <div class="section-head d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <span class="eyebrow">TRACEABILITY</span>
+                <h2 class="mb-1">Warehouse Movement Ledger</h2>
+                <p class="text-muted mb-0">Every receipt, issue, return and adjustment gets its own traceable transaction number.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <select id="transactionTypeFilter" class="form-select">
+                    <option value="">All movements</option>
+                    <option value="RECEIPT">Receipt</option>
+                    <option value="ISSUE">Issue</option>
+                    <option value="RETURN">Return</option>
+                    <option value="ADJUSTMENT_IN">Adjustment In</option>
+                    <option value="ADJUSTMENT_OUT">Adjustment Out</option>
+                    <option value="TRANSFER">Transfer</option>
+                </select>
+                <button class="btn btn-light border" id="refreshTransactions"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
+            </div>
+        </div>
+        <div class="table-responsive mt-3">
+            <table class="table align-middle movement-table">
+                <thead><tr><th>Transaction</th><th>Type</th><th>Stock</th><th>Item</th><th>Quantity</th><th>Project</th><th>Reference</th><th>Date</th></tr></thead>
+                <tbody id="transactionLedgerBody"><tr><td colspan="8" class="text-center text-muted py-4">Loading movements…</td></tr></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Transaction wizard -->
+    <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content transaction-modal">
+          <div class="modal-header">
+            <div><span class="eyebrow">WAREHOUSE CONTROL</span><h5 class="modal-title" id="transactionModalLabel">Record Stock Movement</h5></div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="transaction-steps"><span class="active">1 Movement</span><span>2 Details</span><span>3 Confirm</span></div>
+            <form id="transaction-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Movement type</label><select class="form-select" id="txType" required>
+                  <option value="">Select movement</option><option value="RETURN">Return to Stock</option><option value="ADJUSTMENT_IN">Stock Adjustment In</option><option value="ADJUSTMENT_OUT">Stock Adjustment Out</option><option value="TRANSFER">Internal Transfer</option>
+                </select></div>
+                <div class="col-md-6"><label class="form-label">Stock ID</label><select class="form-select" id="txWarehouse" required><option value="">Select stock</option></select></div>
+                <div class="col-md-6"><label class="form-label">Quantity</label><input class="form-control" id="txQuantity" type="number" min="0.0001" step="any" required></div>
+                <div class="col-md-6"><label class="form-label">Reference No.</label><input class="form-control" id="txReference" placeholder="Return / transfer / document no."></div>
+                <div class="col-md-6"><label class="form-label">Project No.</label><input class="form-control" id="txProject"></div>
+                <div class="col-md-6"><label class="form-label">Contractor / Destination</label><input class="form-control" id="txContractor"></div>
+                <div class="col-12"><label class="form-label">Remarks</label><textarea class="form-control" id="txRemarks" rows="3"></textarea></div>
+              </div>
+            </form>
+            <div class="transaction-note mt-3"><i class="fas fa-shield-alt me-2"></i>The system assigns a tenant-scoped <strong>WT-####</strong> transaction number automatically. Stock is updated atomically with the movement record.</div>
+          </div>
+          <div class="modal-footer"><button class="btn btn-light border" data-bs-dismiss="modal">Cancel</button><button class="btn btn-custom" id="submitTransaction"><i class="fas fa-check me-1"></i>Record Movement</button></div>
+        </div>
+      </div>
+    </div>
 
     <!-- Navigation -->
     <section class="navigation">
@@ -1231,4 +1284,47 @@
             });
         });
     </script>
+<style>
+.warehouse-container .dashboard-header{display:flex;align-items:end;justify-content:space-between;gap:20px;padding:24px 0 18px}
+.warehouse-container .dashboard-header h1{font-weight:800;margin:0}.warehouse-container .dashboard-header p{margin:5px 0 0;color:#64748b}
+.eyebrow{font-size:.72rem;letter-spacing:.12em;font-weight:800;color:#0f766e}
+.movement-ledger{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:22px;box-shadow:0 8px 30px rgba(15,23,42,.05)}
+.movement-table thead th{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:#64748b;background:#f8fafc}
+.movement-table tbody tr:hover{background:#f8fafc}.transaction-modal{border:0;border-radius:18px;overflow:hidden}
+.transaction-steps{display:flex;gap:8px;margin-bottom:20px}.transaction-steps span{padding:8px 12px;border-radius:999px;background:#f1f5f9;color:#64748b;font-size:.8rem;font-weight:700}.transaction-steps .active{background:#dff7f2;color:#0f766e}
+.transaction-note{padding:12px 14px;border-radius:12px;background:#f0fdfa;color:#115e59;font-size:.86rem}
+</style>
+<script>
+(function(){
+ const csrfToken={{ csrf_token()|tojson }};
+ const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+ async function loadTransactions(){
+   const type=document.getElementById('transactionTypeFilter')?.value||'';
+   const body=document.getElementById('transactionLedgerBody'); if(!body)return;
+   body.innerHTML='<tr><td colspan="8" class="text-center text-muted py-4">Loading movements…</td></tr>';
+   try{
+     const res=await fetch('/warehouse/api/transactions?limit=100'+(type?'&type='+encodeURIComponent(type):''));
+     const rows=await res.json(); if(!res.ok) throw new Error(rows.error||'Failed');
+     body.innerHTML=rows.length?rows.map(x=>'<tr><td><strong>'+escapeHtml(x.transaction_no)+'</strong></td><td><span class="badge bg-light text-dark">'+escapeHtml(x.transaction_type)+'</span></td><td>'+escapeHtml(x.warehouse_id)+'</td><td>'+escapeHtml(x.item_code)+'<div class="small text-muted">'+escapeHtml(x.material_description)+'</div></td><td>'+escapeHtml(x.quantity)+' '+escapeHtml(x.unit)+'</td><td>'+escapeHtml(x.project_no)+'</td><td>'+escapeHtml(x.reference_no)+'</td><td>'+escapeHtml(x.created_at?new Date(x.created_at).toLocaleString(): '')+'</td></tr>').join(''):'<tr><td colspan="8" class="text-center text-muted py-4">No movements recorded yet.</td></tr>';
+   }catch(e){body.innerHTML='<tr><td colspan="8" class="text-center text-danger py-4">Could not load movement history.</td></tr>';}
+ }
+ async function loadStockOptions(){
+   const sel=document.getElementById('txWarehouse'); if(!sel)return;
+   try{const res=await fetch('/warehouse/api/inventory');const rows=await res.json();sel.innerHTML='<option value="">Select stock</option>'+rows.map(x=>'<option value="'+escapeHtml(x.warehouse_id)+'">'+escapeHtml(x.warehouse_id)+' — '+escapeHtml(x.item_code)+' — '+escapeHtml(x.material_description)+'</option>').join('');}catch(e){}
+ }
+ document.addEventListener('DOMContentLoaded',()=>{
+   loadTransactions(); loadStockOptions();
+   document.getElementById('refreshTransactions')?.addEventListener('click',loadTransactions);
+   document.getElementById('transactionTypeFilter')?.addEventListener('change',loadTransactions);
+   document.getElementById('transactionModal')?.addEventListener('show.bs.modal',loadStockOptions);
+   document.getElementById('submitTransaction')?.addEventListener('click',async()=>{
+     const type=document.getElementById('txType').value, warehouse_id=document.getElementById('txWarehouse').value, quantity=document.getElementById('txQuantity').value;
+     if(!type||!warehouse_id||!(Number(quantity)>0)){alert('Select movement, stock and a positive quantity.');return;}
+     const payload={csrf_token:csrfToken,transaction_type:type,warehouse_id,quantity:Number(quantity),reference_no:document.getElementById('txReference').value,project_no:document.getElementById('txProject').value,contractor:document.getElementById('txContractor').value,remarks:document.getElementById('txRemarks').value};
+     const btn=document.getElementById('submitTransaction');btn.disabled=true;
+     try{const res=await fetch('/warehouse/api/transactions',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrfToken},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||'Failed');bootstrap.Modal.getOrCreateInstance(document.getElementById('transactionModal')).hide();document.getElementById('transaction-form').reset();loadTransactions();loadInventory();alert('Movement recorded: '+data.transaction.transaction_no);}catch(e){alert(e.message);}finally{btn.disabled=false;}
+   });
+ });
+})();
+</script>
 {% endblock %}
