@@ -56,7 +56,11 @@
   .lp-cta .btn:hover { background:#0E7490;border-color:#0E7490; }
   .lp-cta-secondary { margin-left:.5rem;background:transparent!important;border:1px solid rgba(148,163,184,.45)!important;color:#E2E8F0!important; }
   .lp-cta-secondary:hover { background:rgba(255,255,255,.06)!important;border-color:#94A3B8!important; }
-  @media (max-width:800px) { .lp-hero-grid{grid-template-columns:1fr}.lp-hero-visual{min-height:360px} }
+  @media (max-width:800px) {
+    .lp-hero-grid{grid-template-columns:1fr}
+    .lp-hero-grid > :first-child{order:2}
+    .lp-hero-visual{order:1;min-height:360px;margin-bottom:.25rem}
+  }
   @media (max-width:600px) { .lp-hero-actions{flex-direction:column;align-items:stretch}.lp-hero-meta{gap:1rem}.lp-hero-visual{min-height:360px}.lp-visual-card{top:22%;width:min(86%,250px)} }
   @media (prefers-reduced-motion:reduce) { .lp-visual-card{transition:none!important} }
   .lp-capabilities { margin-top:.25rem; }
@@ -192,132 +196,5 @@
       </div>
     </div>
   </section>
-  <section class="lp-section lp-capabilities">
-    <div class="lp-section-head">
-      <h2>One platform, every material handoff</h2>
-      <p>MaterialHub brings the real operational modules together so teams can move from demand to site readiness without losing material identity or control.</p>
-    </div>
-    <div class="lp-cap-grid">
-      <a class="lp-cap" href="{{ url_for('material_requisitions.material_requisitions') }}"><span class="lp-cap-icon"><i class="fas fa-clipboard-list"></i></span><div><strong>Material Requisitions</strong><p>Create and track project demand, quantity, required date, priority and technical requirements.</p></div><span class="lp-cap-arrow">→</span></a>
-      <a class="lp-cap" href="{{ url_for('purchase_order.purchase_order') }}"><span class="lp-cap-icon"><i class="fas fa-file-invoice-dollar"></i></span><div><strong>Procurement</strong><p>Move approved demand into procurement and purchase orders while keeping the source request connected.</p></div><span class="lp-cap-arrow">→</span></a>
-      <a class="lp-cap" href="{{ url_for('delivery.delivery_order') }}"><span class="lp-cap-icon"><i class="fas fa-truck"></i></span><div><strong>Delivery Control</strong><p>Track inbound deliveries, references and timing before they affect project execution.</p></div><span class="lp-cap-arrow">→</span></a>
-      <a class="lp-cap" href="{{ url_for('warehouse.warehouse_operations') }}"><span class="lp-cap-icon"><i class="fas fa-warehouse"></i></span><div><strong>Warehouse</strong><p>Receive, issue, return and transfer material with controlled inventory transactions.</p></div><span class="lp-cap-arrow">→</span></a>
-      <a class="lp-cap" href="{{ url_for('quality_control.quality_control') }}"><span class="lp-cap-icon"><i class="fas fa-shield-alt"></i></span><div><strong>Quality Control</strong><p>Connect inspection and release status to the same material flow instead of separate records.</p></div><span class="lp-cap-arrow">→</span></a>
-      <a class="lp-cap" href="{{ url_for('intelligence.dashboard') }}"><span class="lp-cap-icon"><i class="fas fa-brain"></i></span><div><strong>Material Intelligence</strong><p>Surface readiness, risk signals, supplier intelligence and operational actions from live data.</p></div><span class="lp-cap-arrow">→</span></a>
-      <a class="lp-cap" href="{{ url_for('intelligence.traceability') }}"><span class="lp-cap-icon"><i class="fas fa-qrcode"></i></span><div><strong>Traceability</strong><p>Connect material identity with PO, delivery, warehouse, project and traceability references.</p></div><span class="lp-cap-arrow">→</span></a>
-      <a class="lp-cap" href="{{ url_for('intelligence.excel_import') }}"><span class="lp-cap-icon"><i class="fas fa-file-excel"></i></span><div><strong>Excel Import</strong><p>Bring structured project data into the system without rebuilding every record manually.</p></div><span class="lp-cap-arrow">→</span></a>
-    </div>
-  </section>
-
-  <section class="lp-section">
-    <div class="lp-coding">
-      <div class="lp-coding-copy">
-        <span class="lp-kicker">Material Intelligence · Coding System</span>
-        <h2>Every material gets one controlled identity.</h2>
-        <p>Stop managing industrial materials by inconsistent descriptions and scattered supplier part numbers. MaterialHub gives each material a stable <strong>Material Code</strong> and keeps technical identity, classification and traceability connected.</p>
-        <div class="lp-code-example"><span>MAT-000247</span><small>Stable Material Code</small></div>
-        <div class="lp-coding-points">
-          <div><i class="fas fa-layer-group"></i><span><strong>Structured identity</strong><small>Family, discipline, group, standard, grade and size.</small></span></div>
-          <div><i class="fas fa-barcode"></i><span><strong>Industry classifications</strong><small>UNSPSC · eCl@ss · ETIM when required.</small></span></div>
-          <div><i class="fas fa-fingerprint"></i><span><strong>Duplicate protection</strong><small>Detect similar material identities before creating another record.</small></span></div>
-          <div><i class="fas fa-link"></i><span><strong>Traceability ready</strong><small>Supplier part, revision, certificate, lot, heat and serial controls stay with the material.</small></span></div>
-        </div>
-        <a class="lp-code-link" href="{{ url_for('material_master.catalog') }}">Explore Material Master <i class="fas fa-arrow-right"></i></a>
-      </div>
-      <div class="lp-coding-visual">
-        <div class="lp-code-window">
-          <div class="lp-code-top"><span></span><span></span><span></span><b>Material Master</b></div>
-          <div class="lp-code-row lp-code-main"><label>Material Code</label><strong>MAT-000247</strong></div>
-          <div class="lp-code-row"><label>Family</label><span>PIP · Piping</span></div>
-          <div class="lp-code-row"><label>Standard</label><span>ASTM A106</span></div>
-          <div class="lp-code-row"><label>Grade</label><span>Gr. B</span></div>
-          <div class="lp-code-row"><label>Size / Schedule</label><span>6" · SCH 40</span></div>
-          <div class="lp-code-row"><label>Controls</label><span>Certificate · Inspection · Heat</span></div>
-          <div class="lp-code-row"><label>Lifecycle</label><em>ACTIVE</em></div>
-          <div class="lp-code-footer"><i class="fas fa-shield-alt"></i> One identity · many transactions · full traceability</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="lp-section">
-    <div class="lp-control">
-      <div>
-        <span class="lp-kicker">Operational control</span>
-        <h2>From material identity to project readiness</h2>
-        <p>MaterialHub is not just a collection of forms. The workflow is built around a continuous chain: identify the material, request it, procure it, receive it, inspect it, store it and keep its traceability intact.</p>
-      </div>
-      <div class="lp-control-checks">
-        <div><i class="fas fa-check-circle"></i><span><strong>Stable Material Master</strong><small>One controlled identity for each material.</small></span></div>
-        <div><i class="fas fa-check-circle"></i><span><strong>Company-scoped data</strong><small>Operational records stay within the tenant boundary.</small></span></div>
-        <div><i class="fas fa-check-circle"></i><span><strong>Role-aware workspaces</strong><small>Each project function sees the work it owns.</small></span></div>
-        <div><i class="fas fa-check-circle"></i><span><strong>Traceable transactions</strong><small>Receipt, issue, return and transfer remain auditable.</small></span></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="lp-section">
-    <div class="lp-flow">
-      <div class="lp-section-head" style="margin-bottom:0;"><h2>How materials move</h2><p>A single operational chain — no disconnected spreadsheets.</p></div>
-      <div class="lp-flow-steps">
-        <div class="lp-step"><div class="lp-step-num">1</div><strong>Demand</strong><span>Requisition</span></div>
-        <div class="lp-step"><div class="lp-step-num">2</div><strong>Source</strong><span>RFQ → PO</span></div>
-        <div class="lp-step"><div class="lp-step-num">3</div><strong>Deliver</strong><span>Inbound logistics</span></div>
-        <div class="lp-step"><div class="lp-step-num">4</div><strong>Receive</strong><span>QC & stock</span></div>
-        <div class="lp-step"><div class="lp-step-num">5</div><strong>Issue</strong><span>To site / job</span></div>
-      </div>
-    </div>
-  </section>
-  <section class="lp-section">
-    <div class="lp-section-head"><h2>Built for the people who move projects</h2><p>Role-based workspaces keep every function focused on what matters.</p></div>
-    <div class="lp-roles">
-      <div class="lp-role"><strong>Project Manager</strong><p>Schedule exposure, readiness and recovery actions in one view.</p></div>
-      <div class="lp-role"><strong>Procurement</strong><p>RFQ → Quote → PO → supplier recovery without losing context.</p></div>
-      <div class="lp-role"><strong>Warehouse</strong><p>Receive → locate → issue with full material identity.</p></div>
-      <div class="lp-role"><strong>Quality</strong><p>Inspect → document → release against the same record.</p></div>
-    </div>
-  </section>
-  <section class="lp-cta">
-    <h2>Ready to run materials with control?</h2><p>Start free. Scale when your projects demand it.</p>
-    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}">Create account</a>
-    <a class="btn btn-lg lp-cta-secondary" href="{{ url_for('growth.demo') }}">View demo</a>
-  </section>
 </div>
-{% endblock %}
-{% block scripts %}
-<script>
-(function () {
-  const root = document.querySelector('.lp-hero-visual');
-  if (!root || root.dataset.cardsReady === '1') return;
-  root.dataset.cardsReady = '1';
-  const cards = Array.from(root.querySelectorAll('.lp-visual-card'));
-  const dots = Array.from(root.querySelectorAll('.lp-visual-dot'));
-  if (!cards.length) return;
-  let index = 0, timer;
-  function showCard(next) {
-    const previous = index;
-    index = (next + cards.length) % cards.length;
-    cards.forEach((card, i) => {
-      card.classList.toggle('active', i === index);
-      card.classList.toggle('exit', i === previous && i !== index);
-    });
-    dots.forEach((dot, i) => {
-      dot.classList.toggle('active', i === index);
-      dot.setAttribute('aria-pressed', i === index ? 'true' : 'false');
-    });
-    window.setTimeout(() => cards.forEach(card => card.classList.remove('exit')), 900);
-  }
-  function start() {
-    clearInterval(timer);
-    timer = setInterval(() => showCard(index + 1), 3000);
-  }
-  dots.forEach((dot, i) => dot.addEventListener('click', () => { showCard(i); start(); }));
-  root.addEventListener('mouseenter', () => clearInterval(timer));
-  root.addEventListener('mouseleave', start);
-  root.addEventListener('focusin', () => clearInterval(timer));
-  root.addEventListener('focusout', e => { if (!root.contains(e.relatedTarget)) start(); });
-  showCard(0);
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) start();
-})();
-</script>
 {% endblock %}
