@@ -237,13 +237,14 @@ def api_issue_inventory():
             if issue_quantity <= 0:
                 logger.warning(f"Invalid issue quantity for {item['warehouse_id']} by user {current_user.id}")
                 return jsonify({'error': 'Issue quantity must be positive'}), 400
-            if inventory.received_quantity < issue_quantity:
+            if float(inventory.available_qty or 0) < issue_quantity:
                 logger.warning(f"Insufficient stock for {item['warehouse_id']} by user {current_user.id}")
                 return jsonify({'error': f'Insufficient stock for {item["warehouse_id"]}'}), 400
             material = _resolve_material(item)
             if material and inventory.item_code != material.material_code:
                 return jsonify({'error': 'Selected material does not match the stock record.'}), 409
             inventory.received_quantity -= issue_quantity
+            inventory.available_qty = max(0.0, float(inventory.available_qty or 0) - issue_quantity)
             from utils import generate_next_warehouse_transaction_no
             tx = WarehouseTransaction(
                 transaction_no=generate_next_warehouse_transaction_no(current_user.company_name),
@@ -613,7 +614,7 @@ def api_check_stock():
             if issue_quantity <= 0:
                 logger.warning(f"Invalid issue quantity for {item['warehouse_id']} by user {current_user.id}")
                 return jsonify({'error': 'Issue quantity must be positive'}), 400
-            if inventory.received_quantity < issue_quantity:
+            if float(inventory.available_qty or 0) < issue_quantity:
                 logger.warning(f"Insufficient stock for {item['warehouse_id']} by user {current_user.id}")
                 return jsonify({'error': f'Insufficient stock for {item["warehouse_id"]}'}), 400
         logger.info(f"User {current_user.id} checked stock for {len(data)} items")
