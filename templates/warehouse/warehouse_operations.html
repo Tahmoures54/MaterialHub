@@ -26,6 +26,7 @@
                 <i class="fas fa-exchange-alt me-2"></i>Record Movement
             </button>
             {% endif %}
+            <a class="btn btn-outline-primary" href="{{ url_for('warehouse.warehouse_reports') }}"><i class="fas fa-print me-2"></i>Warehouse Reports</a>
             <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#helpModal" id="showHelp">
                 <i class="fas fa-question-circle me-2"></i>Help
             </button>
@@ -75,7 +76,7 @@
         </div>
         <div class="table-responsive mt-3">
             <table class="table align-middle movement-table">
-                <thead><tr><th>Transaction</th><th>Type</th><th>Stock</th><th>Item</th><th>Quantity</th><th>Project</th><th>Reference</th><th>Date</th></tr></thead>
+                <thead><tr><th>Transaction</th><th>Type</th><th>Stock</th><th>Item</th><th>Quantity</th><th>Packing List</th><th>Reference</th><th>Date</th><th>Print</th></tr></thead>
                 <tbody id="transactionLedgerBody"><tr><td colspan="8" class="text-center text-muted py-4">Loading movements…</td></tr></tbody>
             </table>
         </div>
@@ -103,6 +104,7 @@
                   <label class="form-label">Movement type</label>
                   <select class="form-select" id="txType" required>
                     <option value="">Select movement</option>
+                    <option value="RECEIPT">Receipt / Goods In</option>
                     <option value="RETURN">Return to Stock</option>
                     <option value="ADJUSTMENT_IN">Stock Adjustment In</option>
                     <option value="ADJUSTMENT_OUT">Stock Adjustment Out</option>
@@ -124,7 +126,37 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Reference No.</label>
-                  <input class="form-control" id="txReference" placeholder="Document / return / transfer no.">
+                  <input class="form-control" id="txReference" placeholder="PO / Delivery / return / transfer no.">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Packing List No. <span class="text-danger" id="packingRequired">*</span></label>
+                  <input class="form-control" id="txPackingList" placeholder="PL-2026-00481">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Packing List Date</label>
+                  <input class="form-control" id="txPackingListDate" type="date">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Packing List Document / File Ref.</label>
+                  <input class="form-control" id="txPackingListDocument" placeholder="Document ID, filename or DMS reference">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Supplier</label>
+                  <input class="form-control" id="txSupplier" placeholder="Supplier / Vendor">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Discrepancy</label>
+                  <select class="form-select" id="txDiscrepancy">
+                    <option value="">No discrepancy</option>
+                    <option value="OVERAGE">Overage</option>
+                    <option value="SHORTAGE">Shortage</option>
+                    <option value="INCORRECTNESS">Incorrectness</option>
+                    <option value="DAMAGE">Damage</option>
+                  </select>
+                </div>
+                <div class="col-12" id="txDiscrepancyWrap" style="display:none">
+                  <label class="form-label">Discrepancy Details</label>
+                  <textarea class="form-control" id="txDiscrepancyDetails" rows="2" placeholder="Describe the variance, damaged package, wrong material, heat/lot mismatch, etc."></textarea>
                 </div>
                 <div class="col-md-6"><label class="form-label">Project No.</label><input class="form-control" id="txProject"></div>
                 <div class="col-md-6"><label class="form-label">Contractor / Note</label><input class="form-control" id="txContractor"></div>
@@ -1303,11 +1335,11 @@
  async function loadTransactions(){
    const type=document.getElementById('transactionTypeFilter')?.value||'';
    const body=document.getElementById('transactionLedgerBody'); if(!body)return;
-   body.innerHTML='<tr><td colspan="8" class="text-center text-muted py-4">Loading movements…</td></tr>';
+   body.innerHTML='<tr><td colspan="9" class="text-center text-muted py-4">Loading movements…</td></tr>';
    try{
      const res=await fetch('/warehouse/api/transactions?limit=100'+(type?'&type='+encodeURIComponent(type):''));
      const rows=await res.json(); if(!res.ok) throw new Error(rows.error||'Failed');
-     body.innerHTML=rows.length?rows.map(x=>'<tr><td><strong>'+escapeHtml(x.transaction_no)+'</strong></td><td><span class="badge bg-light text-dark">'+escapeHtml(x.transaction_type)+'</span></td><td>'+escapeHtml(x.warehouse_id)+'</td><td>'+escapeHtml(x.item_code)+'<div class="small text-muted">'+escapeHtml(x.material_description)+'</div></td><td>'+escapeHtml(x.quantity)+' '+escapeHtml(x.unit)+'</td><td>'+escapeHtml(x.project_no)+'</td><td>'+escapeHtml(x.reference_no)+'</td><td>'+escapeHtml(x.created_at?new Date(x.created_at).toLocaleString(): '')+'</td></tr>').join(''):'<tr><td colspan="8" class="text-center text-muted py-4">No movements recorded yet.</td></tr>';
+     body.innerHTML=rows.length?rows.map(x=>'<tr><td><strong>'+escapeHtml(x.transaction_no)+'</strong></td><td><span class="badge bg-light text-dark">'+escapeHtml(x.transaction_type)+'</span></td><td>'+escapeHtml(x.warehouse_id)+'</td><td>'+escapeHtml(x.item_code)+'<div class="small text-muted">'+escapeHtml(x.material_description)+'</div></td><td>'+escapeHtml(x.quantity)+' '+escapeHtml(x.unit)+'</td><td>'+escapeHtml(x.packing_list_no||'—')+'</td><td>'+escapeHtml(x.reference_no||'—')+'</td><td>'+escapeHtml(x.created_at?new Date(x.created_at).toLocaleString(): '')+'</td><td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" target="_blank" href="/warehouse/reports/receipt/'+encodeURIComponent(x.id)+'">Receipt</a>'+(x.discrepancy_type?' <a class="btn btn-sm btn-outline-danger" target="_blank" href="/warehouse/reports/osid/'+encodeURIComponent(x.id)+'">OSID</a>':'')+'</td></tr>').join(''):'<tr><td colspan="9" class="text-center text-muted py-4">No movements recorded yet.</td></tr>';
    }catch(e){body.innerHTML='<tr><td colspan="8" class="text-center text-danger py-4">Could not load movement history.</td></tr>';}
  }
  async function loadStockOptions(){
@@ -1342,8 +1374,14 @@
      await loadStocksForMaterial();
    });
    document.getElementById('txType')?.addEventListener('change',()=>{
-     const transfer=document.getElementById('txType').value==='TRANSFER';
+     const type=document.getElementById('txType').value;
+     const transfer=type==='TRANSFER';
+     const receipt=type==='RECEIPT';
      document.getElementById('txDestinationWrap').style.display=transfer?'block':'none';
+     document.getElementById('packingRequired').style.display=receipt?'inline':'none';
+   });
+   document.getElementById('txDiscrepancy')?.addEventListener('change',()=>{
+     document.getElementById('txDiscrepancyWrap').style.display=document.getElementById('txDiscrepancy').value?'block':'none';
    });
    document.getElementById('txWarehouse')?.addEventListener('change',()=>{
      const opt=document.querySelector('#txWarehouse option:checked');
@@ -1356,10 +1394,12 @@
    document.getElementById('submitTransaction')?.addEventListener('click',async()=>{
      const type=document.getElementById('txType').value, material_id=document.getElementById('txMaterial').value, warehouse_id=document.getElementById('txWarehouse').value, quantity=document.getElementById('txQuantity').value;
      const destination_warehouse_id=document.getElementById('txDestination')?.value||'';
+     const packing_list_no=document.getElementById('txPackingList').value.trim();
      if(!type||!material_id||!warehouse_id||!(Number(quantity)>0)){alert('Select material, movement, source stock and a positive quantity.');return;}
+     if(type==='RECEIPT'&&!packing_list_no){alert('Packing List No. is required for a receipt.');return;}
      if(type==='TRANSFER'&&!destination_warehouse_id){alert('Select a destination stock.');return;}
      if(type==='TRANSFER'&&destination_warehouse_id===warehouse_id){alert('Source and destination must be different.');return;}
-     const payload={csrf_token:csrfToken,transaction_type:type,material_id,warehouse_id,destination_warehouse_id,quantity:Number(quantity),reference_no:document.getElementById('txReference').value,project_no:document.getElementById('txProject').value,contractor:document.getElementById('txContractor').value,remarks:document.getElementById('txRemarks').value};
+     const payload={csrf_token:csrfToken,transaction_type:type,material_id,warehouse_id,destination_warehouse_id,quantity:Number(quantity),reference_no:document.getElementById('txReference').value,packing_list_no,packing_list_date:document.getElementById('txPackingListDate').value,packing_list_document:document.getElementById('txPackingListDocument').value,supplier_name:document.getElementById('txSupplier').value,discrepancy_type:document.getElementById('txDiscrepancy').value,discrepancy_details:document.getElementById('txDiscrepancyDetails').value,project_no:document.getElementById('txProject').value,contractor:document.getElementById('txContractor').value,remarks:document.getElementById('txRemarks').value};
      const btn=document.getElementById('submitTransaction');btn.disabled=true;
      try{const res=await fetch('/warehouse/api/transactions',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrfToken},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||'Failed');bootstrap.Modal.getOrCreateInstance(document.getElementById('transactionModal')).hide();document.getElementById('transaction-form').reset();loadTransactions();loadInventory();alert('Movement recorded: '+data.transaction.transaction_no);}catch(e){alert(e.message);}finally{btn.disabled=false;}
    });
