@@ -141,7 +141,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
     assert pl_payload["packing_list_no"] == "PL-FLOW-0001"
 
     _authenticate_session(client, warehouse)
-    csrf = _csrf(client)
+    csrf = _csrf(client, app)
     gr_response = client.post("/warehouse/api/goods-receipts", json={
         "csrf_token": csrf,
         "packing_list_id": pl_id,
@@ -176,7 +176,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
         assert OSDReport.query.filter_by(goods_receipt_id=receipt["id"], company_name=company).count() == 1
 
     _authenticate_session(client, quality)
-    csrf = _csrf(client)
+    csrf = _csrf(client, app)
     qc_response = client.patch(
         f"/quality_control/api/receipt-inspections/{receipt['lines'][0]['id']}",
         json={"csrf_token": csrf, "status": "passed", "remarks": "E2E accepted"},
@@ -189,7 +189,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
     assert qc_payload["inventory"]["available_qty"] == 8
 
     # A second pass must not release the same stock twice.
-    csrf = _csrf(client)
+    csrf = _csrf(client, app)
     repeat = client.patch(
         f"/quality_control/api/receipt-inspections/{receipt['lines'][0]['id']}",
         json={"csrf_token": csrf, "status": "passed"},
