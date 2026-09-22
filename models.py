@@ -391,6 +391,54 @@ class MaterialRequisition(db.Model):
     def __repr__(self):
         return f"<MaterialRequisition {self.mr_no}: {self.project_no}>"
 
+
+class MaterialMaster(db.Model):
+    """Tenant-scoped material master with stable internal identity and standards mapping."""
+    __tablename__ = 'material_master'
+    __table_args__ = (
+        db.UniqueConstraint('material_code', 'company_name', name='uq_material_master_code_company'),
+        db.UniqueConstraint('fingerprint', 'company_name', name='uq_material_master_fingerprint_company'),
+        {"extend_existing": True},
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    material_code = db.Column(db.String(50), nullable=False, index=True)
+    family_code = db.Column(db.String(20), nullable=False, index=True)
+    material_name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    unit = db.Column(db.String(20), nullable=False, default='EA')
+    material_group = db.Column(db.String(100), nullable=True, index=True)
+    discipline = db.Column(db.String(50), nullable=True, index=True)
+    unspsc_code = db.Column(db.String(20), nullable=True, index=True)
+    eclass_code = db.Column(db.String(50), nullable=True, index=True)
+    etim_class = db.Column(db.String(50), nullable=True, index=True)
+    standard = db.Column(db.String(100), nullable=True)
+    grade = db.Column(db.String(100), nullable=True)
+    size = db.Column(db.String(50), nullable=True)
+    schedule = db.Column(db.String(50), nullable=True)
+    manufacturer = db.Column(db.String(150), nullable=True)
+    manufacturer_part_no = db.Column(db.String(100), nullable=True)
+    attributes = db.Column(db.Text, nullable=True)
+    fingerprint = db.Column(db.String(64), nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=False, default='active', index=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    creator = db.relationship('User', foreign_keys=[created_by])
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'material_code': self.material_code, 'family_code': self.family_code,
+            'material_name': self.material_name, 'description': self.description, 'unit': self.unit,
+            'material_group': self.material_group, 'discipline': self.discipline,
+            'unspsc_code': self.unspsc_code, 'eclass_code': self.eclass_code, 'etim_class': self.etim_class,
+            'standard': self.standard, 'grade': self.grade, 'size': self.size, 'schedule': self.schedule,
+            'manufacturer': self.manufacturer, 'manufacturer_part_no': self.manufacturer_part_no,
+            'attributes': self.attributes, 'status': self.status, 'company_name': self.company_name,
+            'created_by': self.created_by, 'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
 class SupplierMaterial(db.Model):
     __tablename__ = 'supplier_material'
     id = db.Column(db.Integer, primary_key=True)
