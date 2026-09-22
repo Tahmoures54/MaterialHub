@@ -83,6 +83,14 @@ def api_receive_inventory():
             if not all(key in item for key in required) or not (item.get('received_quantity') or item.get('received_qty')):
                 logger.warning(f"Missing required fields in inventory data for user {current_user.id}")
                 return jsonify({'error': 'Missing required fields'}), 400
+            material = _resolve_material(item)
+            if not material:
+                return jsonify({'error': 'Select a valid Material Master item.'}), 400
+            item = dict(item)
+            item['material_id'] = material.id
+            item['item_code'] = material.material_code
+            item['material_description'] = material.description
+            item['unit'] = item.get('unit') or material.unit
             inventory = WarehouseInventory.from_dict(item, current_user.company_name, current_user.id)
             db.session.add(inventory)
             db.session.flush()
@@ -91,6 +99,7 @@ def api_receive_inventory():
                 transaction_no=generate_next_warehouse_transaction_no(current_user.company_name),
                 transaction_type='RECEIPT',
                 warehouse_id=inventory.warehouse_id,
+                material_id=material.id,
                 item_code=inventory.item_code,
                 material_description=inventory.material_description,
                 quantity=float(inventory.received_qty),
@@ -205,12 +214,16 @@ def api_issue_inventory():
             if inventory.received_quantity < issue_quantity:
                 logger.warning(f"Insufficient stock for {item['warehouse_id']} by user {current_user.id}")
                 return jsonify({'error': f'Insufficient stock for {item["warehouse_id"]}'}), 400
+            material = _resolve_material(item)
+            if material and inventory.item_code != material.material_code:
+                return jsonify({'error': 'Selected material does not match the stock record.'}), 409
             inventory.received_quantity -= issue_quantity
             from utils import generate_next_warehouse_transaction_no
             tx = WarehouseTransaction(
                 transaction_no=generate_next_warehouse_transaction_no(current_user.company_name),
                 transaction_type='ISSUE',
                 warehouse_id=inventory.warehouse_id,
+                material_id=inventory.material_id,
                 item_code=inventory.item_code,
                 material_description=inventory.material_description,
                 quantity=issue_quantity,
