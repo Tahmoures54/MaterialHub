@@ -138,7 +138,7 @@ def _operational_payload(kind, obj):
                      ('Packing List', getattr(obj.packing_list, 'packing_list_no', obj.packing_list_id)), ('Delivery', getattr(obj.delivery, 'delivery_id', obj.delivery_id or '')),
                      ('Supplier', getattr(obj.supplier, 'full_name', '') or getattr(obj.supplier, 'company_email', '')), ('Status', _value(obj.status))],
             'headers': ['#','Item Code','Discrepancy','Expected','Received','Variance','Details','Action Required'],
-            'table': [[i+1,getattr(l.material,'material_code', '') or '',l.discrepancy_type,l.expected_qty,l.received_qty,l.variance_qty,l.details or '',l.action_required or ''] for i,l in enumerate(lines)],
+            'table': [[i+1,getattr(line.material,'material_code', '') or '',line.discrepancy_type,line.expected_qty,line.received_qty,line.variance_qty,line.details or '',line.action_required or ''] for i,line in enumerate(lines)],
             'notes': obj.remarks or ''
         }
     line = obj
