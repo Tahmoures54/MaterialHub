@@ -70,78 +70,130 @@
     </section>
 </div>
 
-    <!-- Modal for Creating MR -->
+    <!-- Simple MR creation -->
     <div class="modal fade" id="addMRModal" tabindex="-1" aria-labelledby="addMRModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="addMRModalLabel">Create New Material Requisition</h5>
-                    <div class="modal-controls">
-                        <button type="button" class="btn btn-sm btn-custom minimize-modal" title="Minimize" aria-label="Minimize Modal">
-                            <i class="fas fa-minus" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-custom maximize-modal" title="Maximize/Restore" aria-label="Maximize/Restore Modal">
-                            <i class="fas fa-expand" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div>
+                        <h5 class="modal-title mb-1" id="addMRModalLabel">New Material Requisition</h5>
+                        <small class="opacity-75">Enter one item, confirm it, then add another if needed.</small>
                     </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+
                 <div class="modal-body">
-                    <!-- Display Logged-in User -->
-                    <div class="mb-3">
-                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
-                    </div>
-                    <form id="add-mr-form">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="table-responsive">
-                            <table class="table table-bordered datasheet" id="add-mr-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 150px; background-color: #e6e6fa;">MR No</th>
-                                        <th style="width: 200px;">Subject</th>
-                                        <th style="width: 120px;">Item Code</th>
-                                        <th style="width: 200px;">Material Description</th>
-                                        <th style="width: 150px;">Discipline</th>
-                                        <th style="width: 120px;">Required Date</th>
-                                        <th style="width: 120px;">Unit of Measure</th>
-                                        <th style="width: 100px;">Quantity</th>
-                                        <th style="width: 120px;">Priority</th>
-                                        <th style="width: 120px;">Project No</th>
-                                        <th style="width: 150px;">Category</th>
-                                        <th style="width: 100px;">Size (Inches)</th>
-                                        <th style="width: 100px;">Thickness (mm)</th>
-                                        <th style="width: 100px;">Length (mm)</th>
-                                        <th style="width: 150px;">Material Type</th>
-                                        <th style="width: 150px;">Drawing No</th>
-                                        <th style="width: 120px;">Drawing Revision</th>
-                                        <th style="width: 120px;">Drawing Page</th>
-                                        <th style="width: 150px;">Added By</th>
-                                        <th style="width: 150px;">Edited By</th>
-                                        <th style="width: 150px;">Standard/Specification</th>
-                                        <th style="width: 120px;">Estimated Cost</th>
-                                        <th style="width: 120px;">Status</th>
-                                        <th style="width: 200px;">Remarks</th>
-                                        <th style="width: 200px;">Link Documents</th>
-                                        <th style="width: 150px;">Suggested Vendor</th>
-                                        <th style="width: 80px;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Rows populated dynamically -->
-                                </tbody>
-                            </table>
-                            <button type="button" class="btn btn-custom mt-2" id="add-row" aria-label="Add New Row">Add Row</button>
+                    <div class="mr-step">
+                        <div class="mr-step-number">1</div>
+                        <div>
+                            <strong>Enter the material</strong>
+                            <div class="text-muted small">Only the essential information is required. Everything else can be added later.</div>
                         </div>
-                        <div class="import-csv mt-3">
-                            <label for="csvFile" class="form-label">Import from CSV</label>
-                            <input type="file" class="form-control" id="csvFile" name="file" accept=".csv" aria-describedby="csvHelp">
-                            <div id="csvHelp" class="form-text">Upload a CSV file with the required columns to import requisitions.</div>
+                    </div>
+
+                    <form id="simple-mr-form" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mh-grid mh-grid-2">
+                            <label class="mh-form">
+                                <span>Subject <b>*</b></span>
+                                <input id="mrSubject" class="mh-input" required placeholder="e.g. Piping materials for Area A">
+                            </label>
+                            <label class="mh-form">
+                                <span>Project No. <b>*</b></span>
+                                <input id="mrProjectNo" class="mh-input" required placeholder="e.g. PRJ-001">
+                            </label>
+                            <label class="mh-form">
+                                <span>Item Code <b>*</b></span>
+                                <input id="mrItemCode" class="mh-input" required placeholder="e.g. PIPE-CS-001">
+                            </label>
+                            <label class="mh-form">
+                                <span>Material Description <b>*</b></span>
+                                <input id="mrDescription" class="mh-input" required placeholder="e.g. Carbon steel pipe">
+                            </label>
+                            <label class="mh-form">
+                                <span>Discipline <b>*</b></span>
+                                <select id="mrDiscipline" class="mh-select" required>
+                                    <option value="">Select discipline</option>
+                                    <option>Civil</option><option>Mechanical</option><option>Piping</option>
+                                    <option>Electrical</option><option>Instrument</option><option>Structural</option>
+                                    <option>HVAC</option><option>Fire Fighting</option><option>Telecom</option>
+                                    <option>Process</option><option>HSE</option><option>Insulation</option>
+                                    <option>Paint & Coating</option><option>Commissioning</option><option>Other</option>
+                                </select>
+                            </label>
+                            <label class="mh-form">
+                                <span>Required Date <b>*</b></span>
+                                <input id="mrRequiredDate" type="date" class="mh-input" required>
+                            </label>
+                            <label class="mh-form">
+                                <span>Unit <b>*</b></span>
+                                <select id="mrUnit" class="mh-select" required>
+                                    <option value="Nos">Nos</option><option value="Meters">Meters</option>
+                                    <option value="Kilograms">Kilograms</option><option value="Tonnes">Tonnes</option>
+                                    <option value="Litres">Litres</option><option value="Sets">Sets</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </label>
+                            <label class="mh-form">
+                                <span>Quantity <b>*</b></span>
+                                <input id="mrQuantity" type="number" min="0.01" step="0.01" class="mh-input" required value="1">
+                            </label>
+                            <label class="mh-form">
+                                <span>Priority <b>*</b></span>
+                                <select id="mrPriority" class="mh-select" required>
+                                    <option>Medium</option><option>High</option><option>Low</option>
+                                </select>
+                            </label>
+                            <label class="mh-form">
+                                <span>Suggested Vendor</span>
+                                <input id="mrVendor" class="mh-input" placeholder="Optional">
+                            </label>
+                            <label class="mh-form" style="grid-column:1/-1;">
+                                <span>Remarks</span>
+                                <textarea id="mrRemarks" class="mh-input" rows="2" placeholder="Optional note"></textarea>
+                            </label>
+                        </div>
+
+                        <div class="mr-add-actions">
+                            <button type="button" class="mh-btn mh-btn-primary" id="addSimpleMr">
+                                <i class="fas fa-plus" aria-hidden="true"></i> Add Item to Request
+                            </button>
+                            <span class="text-muted small">You can add several items before confirming.</span>
                         </div>
                     </form>
+
+                    <div class="mr-step mt-4">
+                        <div class="mr-step-number">2</div>
+                        <div>
+                            <strong>Confirm items</strong>
+                            <div class="text-muted small">Review the items below, remove mistakes, then create the MR.</div>
+                        </div>
+                    </div>
+
+                    <div id="simpleMrPreview" class="mr-preview">
+                        <div class="empty-state">No items added yet.</div>
+                    </div>
+
+                    <div class="mr-step mt-4">
+                        <div class="mr-step-number">3</div>
+                        <div>
+                            <strong>Or import from Excel</strong>
+                            <div class="text-muted small">Use the template columns: Subject, Project No, Item Code, Material Description, Discipline, Required Date, Unit, Quantity, Priority, Suggested Vendor, Remarks.</div>
+                        </div>
+                    </div>
+                    <div class="mr-import-box">
+                        <input type="file" id="mrExcelFile" class="form-control" accept=".xlsx,.xls,.csv">
+                        <button type="button" class="mh-btn mh-btn-secondary mt-2" id="downloadMrTemplate">
+                            <i class="fas fa-file-excel" aria-hidden="true"></i> Download Excel Template
+                        </button>
+                    </div>
                 </div>
+
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
-                    <button type="button" class="btn btn-custom" id="submit-mr" aria-label="Submit Material Requisition">Submit</button>
+                    <button type="button" class="mh-btn mh-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="mh-btn mh-btn-primary" id="submitSimpleMr" disabled>
+                        <i class="fas fa-check" aria-hidden="true"></i> Confirm & Create MR
+                    </button>
                 </div>
             </div>
         </div>
@@ -481,6 +533,23 @@
         #loadingIndicator {
             color: #007bff;
         }
+        .mr-step { display:flex; align-items:flex-start; gap:12px; padding:12px 14px; margin-bottom:16px; background:var(--mh-surface-subtle, #f7f9fc); border:1px solid var(--mh-border, #e5e7eb); border-radius:12px; }
+        .mr-step-number { width:28px; height:28px; min-width:28px; display:grid; place-items:center; border-radius:50%; background:var(--mh-primary, #2563eb); color:#fff; font-weight:700; }
+        .mr-step strong { display:block; margin-bottom:2px; }
+        .mr-add-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:8px; padding-top:14px; border-top:1px solid #e5e7eb; }
+        .mr-preview { display:flex; flex-direction:column; gap:8px; }
+        .mr-preview-item { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 14px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; }
+        .mr-preview-main { display:flex; flex-direction:column; gap:3px; min-width:0; }
+        .mr-preview-main strong { overflow-wrap:anywhere; }
+        .mr-preview-main span { color:#6b7280; font-size:.88rem; }
+        .mr-preview-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; color:#6b7280; font-size:.85rem; white-space:nowrap; }
+        .mr-remove-item { border:0; background:transparent; color:#dc3545; cursor:pointer; padding:6px; }
+        .mr-import-box { padding:14px; border:1px dashed #cbd5e1; border-radius:10px; background:#fafafa; }
+        .empty-state { padding:18px; text-align:center; color:#6b7280; border:1px dashed #d1d5db; border-radius:10px; }
+        @media (max-width: 768px) {
+            .mr-preview-item { align-items:flex-start; flex-direction:column; gap:8px; }
+            .mr-preview-meta { width:100%; white-space:normal; }
+        }
         @media (max-width: 768px) {
             .button-group {
                 flex-direction: column;
@@ -498,6 +567,7 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js" integrity="sha512-JWejQEHkXb+BaqhXzB+gmiM7V3vKnG7xNXyDXZh/D5a2M/V/0K7EBQ1T6zT3Y2AfS6xJ7i4AAMj/2G2F86l/udg==" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
     <script>
@@ -755,26 +825,205 @@
                 $(`#${tableId} tbody`).append(row);
             }
 
-            // Handle modal for create
-            $('#addMRModal').on('show.bs.modal', function () {
-                const modal = $(this);
-                modal.find('.modal-title').text('Create New Material Requisition');
-                $('#add-mr-form')[0].reset();
-                $('#add-mr-table tbody').empty();
-                showLoading(true);
-                $.ajax({
+            // Simple MR creation flow: one item at a time + Excel import
+            let simpleMrItems = [];
+
+            function mrToday() {
+                return new Date().toISOString().split('T')[0];
+            }
+
+            function escapeHtml(value) {
+                return $('<div>').text(value == null ? '' : String(value)).html();
+            }
+
+            function renderSimpleMrPreview() {
+                const box = $('#simpleMrPreview');
+                const submit = $('#submitSimpleMr');
+                if (!simpleMrItems.length) {
+                    box.html('<div class="empty-state">No items added yet. Fill the short form above and click <strong>Add Item to Request</strong>.</div>');
+                    submit.prop('disabled', true);
+                    return;
+                }
+                submit.prop('disabled', false);
+                box.html(simpleMrItems.map((item, index) => `
+                    <div class="mr-preview-item">
+                        <div class="mr-preview-main">
+                            <strong>${escapeHtml(item.material_description)}</strong>
+                            <span>${escapeHtml(item.item_code)} · ${escapeHtml(item.quantity)} ${escapeHtml(item.unit)}</span>
+                        </div>
+                        <div class="mr-preview-meta">
+                            <span>${escapeHtml(item.discipline)}</span>
+                            <span>${escapeHtml(item.priority)}</span>
+                            <span>${escapeHtml(item.required_date)}</span>
+                            <button type="button" class="mr-remove-item" data-index="${index}" title="Remove item" aria-label="Remove item">
+                                <i class="fas fa-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join(''));
+            }
+
+            function clearSimpleMrForm() {
+                $('#mrItemCode,#mrDescription,#mrVendor,#mrRemarks').val('');
+                $('#mrQuantity').val('1');
+                $('#mrPriority').val('Medium');
+                $('#mrDiscipline').val('');
+                $('#mrRequiredDate').val(mrToday());
+            }
+
+            function readSimpleMrForm() {
+                const item = {
+                    subject: $('#mrSubject').val().trim(),
+                    project_no: $('#mrProjectNo').val().trim(),
+                    item_code: $('#mrItemCode').val().trim(),
+                    material_description: $('#mrDescription').val().trim(),
+                    discipline: $('#mrDiscipline').val(),
+                    required_date: $('#mrRequiredDate').val(),
+                    unit_of_measure: $('#mrUnit').val(),
+                    quantity: parseFloat($('#mrQuantity').val()),
+                    priority: $('#mrPriority').val(),
+                    suggested_vendor: $('#mrVendor').val().trim() || null,
+                    remarks: $('#mrRemarks').val().trim() || null
+                };
+                if (!item.subject || !item.project_no || !item.item_code || !item.material_description ||
+                    !item.discipline || !item.required_date || !item.unit_of_measure ||
+                    !Number.isFinite(item.quantity) || item.quantity <= 0 || !item.priority) {
+                    alert('Please complete all fields marked with *.');
+                    return null;
+                }
+                return item;
+            }
+
+            async function generateMrNo() {
+                const response = await $.ajax({
                     url: '/material_requisitions/api/generate_mr_no',
                     type: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken }
+                });
+                return response.mr_no;
+            }
+
+            $('#addMRModal').on('show.bs.modal', function () {
+                simpleMrItems = [];
+                $('#mrSubject,#mrProjectNo').val('');
+                $('#mrRequiredDate').val(mrToday());
+                clearSimpleMrForm();
+                renderSimpleMrPreview();
+            });
+
+            $('#addSimpleMr').on('click', async function () {
+                const item = readSimpleMrForm();
+                if (!item) return;
+                const button = $(this);
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding…');
+                try {
+                    item.mr_no = await generateMrNo();
+                    item.workflow_status = 'Engineering';
+                    item.status = 'Pending';
+                    simpleMrItems.push(item);
+                    renderSimpleMrPreview();
+                    clearSimpleMrForm();
+                    $('#mrItemCode').focus();
+                } catch (error) {
+                    console.error('Error generating MR No:', error);
+                    alert('Could not generate an MR number. Please try again.');
+                } finally {
+                    button.prop('disabled', false).html('<i class="fas fa-plus"></i> Add Item to Request');
+                }
+            });
+
+            $(document).on('click', '.mr-remove-item', function () {
+                simpleMrItems.splice(Number($(this).data('index')), 1);
+                renderSimpleMrPreview();
+            });
+
+            $('#mrExcelFile').on('change', async function (e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    showLoading(true);
+                    const buffer = await file.arrayBuffer();
+                    const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                    if (!rows.length) throw new Error('The selected file has no data rows.');
+
+                    const key = (row, names) => {
+                        const found = Object.keys(row).find(k => names.includes(k.trim().toLowerCase()));
+                        return found ? row[found] : '';
+                    };
+                    const imported = [];
+                    for (const row of rows) {
+                        const item = {
+                            subject: String(key(row,['subject'])).trim(),
+                            project_no: String(key(row,['project no','project number','project_no'])).trim(),
+                            item_code: String(key(row,['item code','item_code'])).trim(),
+                            material_description: String(key(row,['material description','description','material_description'])).trim(),
+                            discipline: String(key(row,['discipline'])).trim(),
+                            required_date: row['Required Date'] instanceof Date ? row['Required Date'].toISOString().split('T')[0] : String(key(row,['required date','required_date'])).trim(),
+                            unit_of_measure: String(key(row,['unit','unit of measure','unit_of_measure'])).trim() || 'Nos',
+                            quantity: Number(key(row,['quantity'])),
+                            priority: String(key(row,['priority'])).trim() || 'Medium',
+                            suggested_vendor: String(key(row,['suggested vendor','suggested_vendor','vendor'])).trim() || null,
+                            remarks: String(key(row,['remarks','remark'])).trim() || null
+                        };
+                        if (!item.subject || !item.project_no || !item.item_code || !item.material_description ||
+                            !item.discipline || !item.required_date || !Number.isFinite(item.quantity) || item.quantity <= 0) {
+                            throw new Error('Every Excel row must include Subject, Project No, Item Code, Material Description, Discipline, Required Date and a positive Quantity.');
+                        }
+                        item.mr_no = await generateMrNo();
+                        item.workflow_status = 'Engineering';
+                        item.status = 'Pending';
+                        imported.push(item);
+                    }
+                    simpleMrItems = simpleMrItems.concat(imported);
+                    renderSimpleMrPreview();
+                    alert(`${imported.length} item(s) imported. Review them below, then click Confirm & Create MR.`);
+                } catch (error) {
+                    console.error('Excel import error:', error);
+                    alert(error.message || 'Could not read the Excel file.');
+                } finally {
+                    showLoading(false);
+                    $(this).val('');
+                }
+            });
+
+            $('#downloadMrTemplate').on('click', function () {
+                const headers = ['Subject','Project No','Item Code','Material Description','Discipline','Required Date','Unit','Quantity','Priority','Suggested Vendor','Remarks'];
+                const ws = XLSX.utils.aoa_to_sheet([
+                    headers,
+                    ['Piping materials','PRJ-001','PIPE-001','Carbon steel pipe','Piping',mrToday(),'Nos',10,'Medium','','']
+                ]);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Material Requisitions');
+                XLSX.writeFile(wb, 'MaterialHub_MR_Template.xlsx');
+            });
+
+            $('#submitSimpleMr').on('click', function () {
+                if (!simpleMrItems.length) return;
+                const button = $(this);
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating…');
+                showLoading(true);
+                $.ajax({
+                    url: '/material_requisitions/api/material_requisitions',
+                    type: 'POST',
+                    contentType: 'application/json',
                     headers: { 'X-CSRFToken': csrfToken },
-                    success: function (data) {
-                        addNewRow('add-mr-table', { mr_no: data.mr_no });
+                    data: JSON.stringify(simpleMrItems),
+                    success: function (response) {
+                        loadRequisitions();
+                        $('#addMRModal').modal('hide');
+                        simpleMrItems = [];
+                        renderSimpleMrPreview();
+                        alert(response.message || 'Material Requisition created successfully.');
                     },
                     error: function (xhr) {
-                        console.error('Error generating MR No:', xhr);
-                        alert('Failed to generate MR No: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
+                        console.error('Error creating MR:', xhr);
+                        alert('Failed to create Material Requisition: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later.'));
                     },
                     complete: function () {
                         showLoading(false);
+                        button.prop('disabled', false).html('<i class="fas fa-check"></i> Confirm & Create MR');
                     }
                 });
             });
