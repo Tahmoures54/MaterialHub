@@ -444,7 +444,8 @@
           </nav>
           <div class="mh-nav-label">Materials & Data</div>
           <nav class="mh-nav">
-            <a href="{{ url_for('materials') }}"><i class="fas fa-boxes"></i> Materials</a>
+            <a href="{{ url_for('material_master.catalog') }}"><i class="fas fa-barcode"></i> Material Master</a>
+            <a href="{{ url_for('materials') }}"><i class="fas fa-boxes"></i> Supplier Materials</a>
             <a href="{{ url_for('material_marketplace') }}"><i class="fas fa-store"></i> Marketplace</a>
             <a href="{{ url_for('intelligence.traceability') }}"><i class="fas fa-qrcode"></i> Traceability</a>
             <a href="{{ url_for('intelligence.excel_import') }}"><i class="fas fa-file-excel"></i> Excel Import</a>
