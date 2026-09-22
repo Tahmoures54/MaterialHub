@@ -64,6 +64,77 @@ print(f"[vercel_migrate] sys.path[0] : {sys.path[0]}")
 # ---------------------------------------------------------------------------
 try:
     from flask_migrate import upgrade
+
+from flask import current_app
+from flask_migrate import stamp
+from sqlalchemy import inspect, text
+import re
+
+BASELINE_REVISION = "20260901_0000"
+BASELINE_MIGRATION = (
+    PROJECT_ROOT
+    / "migrations"
+    / "versions"
+    / "20260901_0000_baseline_initial_materialhub_schema.py"
+)
+
+
+def _baseline_tables() -> set[str]:
+    """Read the baseline migration and return every table it creates."""
+    if not BASELINE_MIGRATION.is_file():
+        raise RuntimeError(f"Baseline migration not found: {BASELINE_MIGRATION}")
+
+    content = BASELINE_MIGRATION.read_text(encoding="utf-8")
+    tables = set(re.findall(r"op\.create_table\(\s*['\"]([^'\"]+)['\"]", content))
+    if not tables:
+        raise RuntimeError(
+            f"Could not determine baseline tables from {BASELINE_MIGRATION}"
+        )
+    return tables
+
+
+def _reconcile_existing_baseline() -> bool:
+    """Stamp an already-provisioned baseline database instead of recreating it.
+
+    Some existing production databases were created before the baseline Alembic
+    revision was introduced. In that case the schema exists but alembic_version
+    is empty/missing. We only stamp when *every* table declared by the baseline
+    migration already exists, preventing a partial database from being marked
+    as migrated.
+    """
+    engine = current_app.extensions["sqlalchemy"].engine
+    inspector = inspect(engine)
+    existing_tables = set(inspector.get_table_names())
+    baseline_tables = _baseline_tables()
+
+    version_rows = []
+    if "alembic_version" in existing_tables:
+        with engine.connect() as conn:
+            version_rows = conn.execute(
+                text("SELECT version_num FROM alembic_version")
+            ).scalars().all()
+
+    if version_rows:
+        return False
+
+    missing = sorted(baseline_tables - existing_tables)
+    if missing:
+        # No version is recorded and the schema is incomplete. Let Alembic
+        # fail normally rather than silently stamping an unsafe database.
+        print(
+            "[vercel_migrate] Alembic history is empty and the existing schema "
+            "is incomplete; missing baseline tables: "
+            + ", ".join(missing)
+        )
+        return False
+
+    print(
+        "[vercel_migrate] Existing production schema already contains the "
+        f"complete baseline ({len(baseline_tables)} tables); stamping "
+        f"{BASELINE_REVISION} instead of recreating it."
+    )
+    stamp(BASELINE_REVISION)
+    return True
 except ModuleNotFoundError as exc:  # pragma: no cover
     raise SystemExit(
         "flask_migrate is not installed. Add `Flask-Migrate` to "
@@ -122,8 +193,9 @@ def main() -> None:
     app = create_app("production")
 
     with app.app_context():
-        print("[vercel_migrate] running Alembic upgrade()...")
-        upgrade()
+        if not _reconcile_existing_baseline():
+            print("[vercel_migrate] running Alembic upgrade()...")
+            upgrade()
         print("[vercel_migrate] database migrations completed successfully.")
 
 
