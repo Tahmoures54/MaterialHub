@@ -63,12 +63,16 @@ print(f"[vercel_migrate] sys.path[0] : {sys.path[0]}")
 # 3) Third-party imports (after sys.path is fixed).
 # ---------------------------------------------------------------------------
 try:
-    from flask_migrate import upgrade
+    from flask import current_app
+    from flask_migrate import stamp, upgrade
+    from sqlalchemy import inspect, text
+    import re
+except ModuleNotFoundError as exc:  # pragma: no cover
+    raise SystemExit(
+        "Required migration dependencies are not installed. "
+        "Check requirements.txt and redeploy."
+    ) from exc
 
-from flask import current_app
-from flask_migrate import stamp
-from sqlalchemy import inspect, text
-import re
 
 BASELINE_REVISION = "20260901_0000"
 BASELINE_MIGRATION = (
@@ -80,32 +84,30 @@ BASELINE_MIGRATION = (
 
 
 def _baseline_tables() -> set[str]:
-    """Read the baseline migration and return every table it creates."""
+    """Return every table declared by the baseline migration."""
     if not BASELINE_MIGRATION.is_file():
         raise RuntimeError(f"Baseline migration not found: {BASELINE_MIGRATION}")
 
     content = BASELINE_MIGRATION.read_text(encoding="utf-8")
-    tables = set(re.findall(r"op\.create_table\(\s*['\"]([^'\"]+)['\"]", content))
+    tables = set(
+        re.findall(r"op\.create_table\(\s*['\"]([^'\"]+)['\"]", content)
+    )
     if not tables:
-        raise RuntimeError(
-            f"Could not determine baseline tables from {BASELINE_MIGRATION}"
-        )
+        raise RuntimeError(f"Could not determine baseline tables from {BASELINE_MIGRATION}")
     return tables
 
 
 def _reconcile_existing_baseline() -> bool:
-    """Stamp an already-provisioned baseline database instead of recreating it.
+    """Stamp a complete pre-Alembic baseline instead of recreating its tables.
 
-    Some existing production databases were created before the baseline Alembic
-    revision was introduced. In that case the schema exists but alembic_version
-    is empty/missing. We only stamp when *every* table declared by the baseline
-    migration already exists, preventing a partial database from being marked
-    as migrated.
+    This is intentionally conservative: stamping is allowed only when no
+    Alembic revision is recorded and every table declared by the baseline
+    migration already exists. A partial schema is left to Alembic so missing
+    objects are not silently hidden.
     """
     engine = current_app.extensions["sqlalchemy"].engine
     inspector = inspect(engine)
     existing_tables = set(inspector.get_table_names())
-    baseline_tables = _baseline_tables()
 
     version_rows = []
     if "alembic_version" in existing_tables:
@@ -117,29 +119,23 @@ def _reconcile_existing_baseline() -> bool:
     if version_rows:
         return False
 
+    baseline_tables = _baseline_tables()
     missing = sorted(baseline_tables - existing_tables)
+
     if missing:
-        # No version is recorded and the schema is incomplete. Let Alembic
-        # fail normally rather than silently stamping an unsafe database.
         print(
-            "[vercel_migrate] Alembic history is empty and the existing schema "
-            "is incomplete; missing baseline tables: "
+            "[vercel_migrate] Existing schema is incomplete; "
+            "Alembic will run normally. Missing baseline tables: "
             + ", ".join(missing)
         )
         return False
 
     print(
-        "[vercel_migrate] Existing production schema already contains the "
-        f"complete baseline ({len(baseline_tables)} tables); stamping "
-        f"{BASELINE_REVISION} instead of recreating it."
+        "[vercel_migrate] Existing schema contains the complete baseline "
+        f"({len(baseline_tables)} tables); stamping {BASELINE_REVISION}."
     )
     stamp(BASELINE_REVISION)
     return True
-except ModuleNotFoundError as exc:  # pragma: no cover
-    raise SystemExit(
-        "flask_migrate is not installed. Add `Flask-Migrate` to "
-        "requirements.txt and redeploy."
-    ) from exc
 
 
 def _resolve_database_url() -> str:
