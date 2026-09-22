@@ -102,7 +102,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
         )
         db.session.add(delivery)
         db.session.commit()
-        po_id, delivery_id, material_id = po.id, delivery.id, material.id
+        delivery_id, material_id = delivery.id, material.id
 
     _authenticate_session(client, buyer)
     csrf = _csrf(client)
