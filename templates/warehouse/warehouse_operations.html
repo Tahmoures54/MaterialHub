@@ -39,37 +39,13 @@
                 <i class="fas fa-spinner fa-spin"></i> Loading...
             </div>
         </div>
-
-        <!-- OPI Dashboard -->
-        <div class="opi-dashboard mb-4">
-            <h5>Operational Performance Indicators (OPI)</h5>
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h6>Inventory Accuracy</h6>
-                            <canvas id="inventoryAccuracyChart" height="100"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h6>Stock Turnover Rate</h6>
-                            <canvas id="stockTurnoverChart" height="100"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h6>Low Stock Alerts</h6>
-                            <canvas id="lowStockChart" height="100"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Warehouse Summary -->
+        <section class="warehouse-summary" aria-label="Warehouse summary">
+            <div class="warehouse-stat"><span><i class="fas fa-boxes-stacked"></i></span><div><small>Inventory Items</small><strong id="warehouseTotal">0</strong></div></div>
+            <div class="warehouse-stat"><span><i class="fas fa-triangle-exclamation"></i></span><div><small>Low Stock</small><strong id="warehouseLow">0</strong></div></div>
+            <div class="warehouse-stat"><span><i class="fas fa-arrow-down"></i></span><div><small>Receipts</small><strong id="warehouseReceipts">0</strong></div></div>
+            <div class="warehouse-stat"><span><i class="fas fa-arrow-up"></i></span><div><small>Issues</small><strong id="warehouseIssues">0</strong></div></div>
+        </section>
 
         <!-- Warehouse Inventory Cards -->
         <div class="inventory-container">
@@ -1327,4 +1303,36 @@
  });
 })();
 </script>
+
+<style>
+/* Warehouse workspace cleanup */
+.warehouse-container{max-width:1500px;margin:0 auto;padding:0 24px 36px}
+.warehouse-container .dashboard-header{padding:28px 0 16px}
+.warehouse-container .warehouse-operations>h2{font-size:1.15rem;font-weight:800;margin:0 0 4px}
+.warehouse-container .warehouse-operations>p{color:#64748b;margin:0 0 16px}
+.warehouse-container .button-group{padding:12px 0 4px;gap:8px;flex-wrap:wrap}
+.warehouse-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0}
+.warehouse-stat{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:17px;display:flex;align-items:center;gap:13px;box-shadow:0 6px 22px rgba(15,23,42,.045)}
+.warehouse-stat>span{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#eef7f5;color:#0f766e}
+.warehouse-stat small{display:block;color:#64748b;font-size:.75rem;font-weight:700}.warehouse-stat strong{display:block;font-size:1.45rem;line-height:1.15}
+.movement-ledger{margin-top:18px!important}
+.movement-ledger .section-head{padding-bottom:14px}
+.movement-ledger .section-head h2{font-size:1.1rem;font-weight:800}
+.movement-ledger .section-head p{font-size:.84rem}
+#transactionTypeFilter{min-width:150px}
+.inventory-container{margin-top:18px}
+.notifications-container{position:fixed;top:18px;right:18px;z-index:2050;max-width:380px}
+/* Legacy workflows stay available, but never occupy the page until opened. */
+.warehouse-container .modal:not(.show){display:none!important}
+.warehouse-container .modal.show{display:block}
+.warehouse-container .modal-backdrop{z-index:1040}
+.warehouse-container .modal{z-index:1050}
+.warehouse-container .modal .modal-content{border:0;border-radius:18px;overflow:hidden}
+.warehouse-container .modal .modal-body{max-height:72vh;overflow:auto}
+.warehouse-container .modal .mb-3:has(> strong:first-child){font-size:.8rem;color:#64748b;background:#f8fafc;border-radius:10px;padding:10px 12px}
+/* Keep legacy datasheets usable when an Edit/Receive dialog is explicitly opened. */
+.warehouse-container .datasheet{min-width:1050px}
+@media(max-width:900px){.warehouse-summary{grid-template-columns:repeat(2,1fr)}.warehouse-container{padding:0 14px 28px}.warehouse-container .dashboard-header{align-items:flex-start;flex-direction:column}.warehouse-container .button-group{align-items:stretch!important}.warehouse-container .button-group .btn{margin-right:0!important}.movement-ledger .section-head{align-items:flex-start!important}.movement-ledger .section-head>div:last-child{width:100%}.movement-ledger .section-head select{flex:1}}
+@media(max-width:560px){.warehouse-summary{grid-template-columns:1fr 1fr;gap:10px}.warehouse-stat{padding:13px}.warehouse-stat>span{width:36px;height:36px}.warehouse-stat strong{font-size:1.2rem}}
+</style>
 {% endblock %}
