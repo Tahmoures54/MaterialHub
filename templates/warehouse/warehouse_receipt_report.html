@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Material Receipt {{ transaction.transaction_no }}{% endblock %}
+{% block content %}
+<div class="print-sheet">
+  <div class="print-actions"><button onclick="window.print()">Print</button><button onclick="window.close()">Close</button></div>
+  <header class="doc-header">
+    <div><div class="eyebrow">MATERIAL CONTROL · WAREHOUSE</div><h1>Material Receiving Report</h1><p>Goods Receipt / Warehouse Receipt</p></div>
+    <div class="doc-number"><strong>{{ transaction.transaction_no }}</strong><span>{{ transaction.created_at.strftime('%Y-%m-%d %H:%M') if transaction.created_at else '' }}</span></div>
+  </header>
+  <div class="meta-grid">
+    <div><label>Material Code</label><strong>{{ transaction.item_code }}</strong></div>
+    <div><label>Description</label><strong>{{ transaction.material_description }}</strong></div>
+    <div><label>Warehouse / Stock</label><strong>{{ transaction.warehouse_id }}</strong></div>
+    <div><label>Project</label><strong>{{ transaction.project_no or '—' }}</strong></div>
+    <div><label>Supplier</label><strong>{{ transaction.supplier_name or '—' }}</strong></div>
+    <div><label>Delivery / Reference</label><strong>{{ transaction.delivery_id or transaction.reference_no or '—' }}</strong></div>
+    <div><label>Packing List No.</label><strong>{{ transaction.packing_list_no or '—' }}</strong></div>
+    <div><label>Packing List Date</label><strong>{{ transaction.packing_list_date or '—' }}</strong></div>
+    <div><label>Packing List Document</label><strong>{{ transaction.packing_list_document or '—' }}</strong></div>
+    <div><label>Received Quantity</label><strong>{{ transaction.quantity }} {{ transaction.unit }}</strong></div>
+    <div><label>Balance Before</label><strong>{{ transaction.balance_before if transaction.balance_before is not none else '—' }}</strong></div>
+    <div><label>Balance After</label><strong>{{ transaction.balance_after if transaction.balance_after is not none else '—' }}</strong></div>
+  </div>
+  <h2>Receiving Verification</h2>
+  <table class="check-table"><tr><th>Check</th><th>Status / Remarks</th></tr>
+    <tr><td>Material identity matches Material Master</td><td>Verified: {{ transaction.item_code }}</td></tr>
+    <tr><td>Packing List reference recorded</td><td>{{ 'Yes' if transaction.packing_list_no else 'No' }}</td></tr>
+    <tr><td>Quantity physically received</td><td>{{ transaction.quantity }} {{ transaction.unit }}</td></tr>
+    <tr><td>Discrepancy</td><td>{{ transaction.discrepancy_type or 'None reported' }}{% if transaction.discrepancy_details %} — {{ transaction.discrepancy_details }}{% endif %}</td></tr>
+    <tr><td>Remarks</td><td>{{ transaction.remarks or '—' }}</td></tr>
+  </table>
+  <div class="signatures"><div>Received by<br><br>________________________</div><div>Warehouse Supervisor<br><br>________________________</div><div>QC / Inspection<br><br>________________________</div></div>
+  <footer>MaterialHub · Controlled warehouse record · Transaction {{ transaction.transaction_no }}</footer>
+</div>
+<style>
+.print-sheet{max-width:1050px;margin:20px auto;padding:30px;background:#fff;color:#172033}.print-actions{display:flex;gap:8px;justify-content:flex-end;margin-bottom:20px}.print-actions button{border:1px solid #cbd5e1;background:#fff;padding:8px 14px;border-radius:8px}.doc-header{display:flex;justify-content:space-between;border-bottom:3px solid #0f766e;padding-bottom:18px}.doc-header h1{margin:6px 0}.doc-number{text-align:right;font-size:18px}.doc-number span{display:block;font-size:12px;color:#64748b;margin-top:5px}.meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#dbe3ea;margin:22px 0}.meta-grid>div{background:#fff;padding:12px}.meta-grid label{display:block;font-size:11px;text-transform:uppercase;color:#64748b}.meta-grid strong{display:block;margin-top:4px}.check-table{width:100%;border-collapse:collapse}.check-table th,.check-table td{border:1px solid #cbd5e1;padding:10px;text-align:left}.signatures{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;margin-top:55px;text-align:center}.print-sheet footer{margin-top:45px;border-top:1px solid #cbd5e1;padding-top:10px;color:#64748b;font-size:11px}@media print{body{background:#fff}.print-actions{display:none}.print-sheet{margin:0;box-shadow:none;padding:0}.print-sheet footer{position:fixed;bottom:0}@media(max-width:700px){.meta-grid,.signatures{grid-template-columns:1fr}.doc-header{display:block}.doc-number{text-align:left;margin-top:12px}}
+</style>
+{% endblock %}
