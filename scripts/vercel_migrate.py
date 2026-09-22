@@ -134,7 +134,7 @@ def _reconcile_existing_baseline() -> bool:
         "[vercel_migrate] Existing schema contains the complete baseline "
         f"({len(baseline_tables)} tables); stamping {BASELINE_REVISION}."
     )
-    stamp(BASELINE_REVISION)
+    stamp(revision=BASELINE_REVISION)
     return True
 
 
