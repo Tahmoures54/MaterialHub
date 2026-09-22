@@ -1,47 +1,49 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="purchase-order-container">
-    <div class="dashboard-header">
-        <h1><i class="fas fa-shopping-cart me-2" aria-hidden="true"></i>Purchase Orders</h1>
-        <p>Manage purchase orders for {{ company_name }}</p>
+    <div class="po-hero">
+        <div>
+            <span class="po-eyebrow">PROCUREMENT · PURCHASE CONTROL</span>
+            <h1><i class="fas fa-file-invoice-dollar me-2" aria-hidden="true"></i>Purchase Orders</h1>
+            <p>Create, track and control purchase orders from one workspace.</p>
+        </div>
+        <div class="po-user">
+            <i class="fas fa-user-circle" aria-hidden="true"></i>
+            <span>{{ current_user.full_name or 'User' }}</span>
+        </div>
     </div>
 
-    <!-- Notifications Container -->
     <div id="notifications" class="notifications-container" role="alert" aria-live="polite"></div>
 
-    <!-- Debug Info -->
-    <div class="alert alert-info" role="alert">
-        <strong>Debug Info:</strong><br>
-        User: {{ current_user.full_name or 'Not set' }}<br>
-        Access Level: {{ current_user.access_level or 'Not set' }}<br>
-        Read Only: {{ read_only|default('Not set', true) }}<br>
-        Authenticated: {{ current_user.is_authenticated }}
-    </div>
-
     <section class="purchase-orders" aria-labelledby="orders-heading">
+
         <h2 id="orders-heading">Current Purchase Orders</h2>
 
-        <!-- Buttons and Filters Group -->
-        <div class="button-group mb-3 d-flex align-items-center flex-wrap">
-            {% if current_user.is_authenticated and current_user.access_level.name == 'purchase' and not read_only %}
-            <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#addPOModal" id="createNewPO" aria-label="Create New Purchase Order">
-                <i class="fas fa-plus me-2" aria-hidden="true"></i>Create New PO
-            </button>
-            {% endif %}
-            <button class="btn btn-custom ms-2" data-bs-toggle="modal" data-bs-target="#helpModal" id="showHelp" aria-label="Show Help">
-                <i class="fas fa-question-circle me-2" aria-hidden="true"></i>Help
-            </button>
-            {% if current_user.is_authenticated %}
-            <button id="exportCSV" class="btn btn-custom ms-2" aria-label="Export to CSV">
-                <i class="fas fa-file-csv me-2" aria-hidden="true"></i>Export to CSV
-            </button>
-            {% endif %}
-            <!-- Search Bar -->
-            <input type="text" id="searchBar" class="form-control ms-2" style="width: 200px;" placeholder="Search POs..." aria-label="Search Purchase Orders">
-            <!-- Loading Indicator -->
-            <div id="loadingIndicator" class="ms-2 d-none" aria-live="polite">
-                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading...
+        <div class="po-toolbar">
+            <div class="po-actions">
+                {% if current_user.is_authenticated and current_user.access_level.name == 'purchase' and not read_only %}
+                <button class="btn btn-primary btn-po" data-bs-toggle="modal" data-bs-target="#addPOModal" id="createNewPO">
+                    <i class="fas fa-plus me-2"></i>New Purchase Order
+                </button>
+                {% endif %}
+                <button class="btn btn-light btn-po" data-bs-toggle="modal" data-bs-target="#helpModal" id="showHelp">
+                    <i class="fas fa-circle-question me-2"></i>How it works
+                </button>
+                {% if current_user.is_authenticated %}
+                <button id="exportCSV" class="btn btn-light btn-po"><i class="fas fa-file-export me-2"></i>Export</button>
+                {% endif %}
             </div>
+            <div class="po-search">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="text" id="searchBar" placeholder="Search PO, vendor, project or material..." aria-label="Search Purchase Orders">
+                <div id="loadingIndicator" class="d-none" aria-live="polite"><i class="fas fa-spinner fa-spin"></i></div>
+            </div>
+        </div>
+        <div class="po-summary">
+            <div><strong id="poTotalCount">0</strong><span>Total Orders</span></div>
+            <div><strong id="poPendingCount">0</strong><span>Pending</span></div>
+            <div><strong id="poApprovedCount">0</strong><span>Approved</span></div>
+            <div><strong id="poDeliveredCount">0</strong><span>Delivered</span></div>
         </div>
 
         <!-- Purchase Orders Cards -->
@@ -63,66 +65,70 @@
         {% endif %}
     </section>
 
-    <!-- Modal for Creating PO -->
+    <!-- Professional PO creation wizard -->
     <div class="modal fade" id="addPOModal" tabindex="-1" aria-labelledby="addPOModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addPOModalLabel">Create New Purchase Order</h5>
-                    <div class="modal-controls">
-                        <button type="button" class="btn btn-sm btn-custom minimize-modal" title="Minimize" aria-label="Minimize Modal">
-                            <i class="fas fa-minus" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-custom maximize-modal" title="Maximize/Restore" aria-label="Maximize/Restore Modal">
-                            <i class="fas fa-expand" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content po-wizard-modal">
+                <div class="modal-header po-wizard-header">
+                    <div>
+                        <span class="po-eyebrow">NEW PURCHASE ORDER</span>
+                        <h5 class="modal-title" id="addPOModalLabel">Create Purchase Order</h5>
+                        <p class="mb-0">Enter the essential information first. Technical details can be refined later.</p>
                     </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="po-steps">
+                    <div class="po-step active" data-step="1"><span>1</span><b>Request</b></div>
+                    <div class="po-step" data-step="2"><span>2</span><b>Item</b></div>
+                    <div class="po-step" data-step="3"><span>3</span><b>Commercial</b></div>
+                    <div class="po-step" data-step="4"><span>4</span><b>Review</b></div>
                 </div>
                 <div class="modal-body">
-                    <!-- Display Logged-in User -->
-                    <div class="mb-3">
-                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
-                    </div>
                     <form id="add-po-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="table-responsive">
-                            <table class="table table-bordered datasheet" id="add-po-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 150px; background-color: #e6e6fa;">PO No</th>
-                                        <th style="width: 120px;">Item Code</th>
-                                        <th style="width: 200px;">Description</th>
-                                        <th style="width: 150px;">Category</th>
-                                        <th style="width: 120px;">Purchase Quantity</th>
-                                        <th style="width: 120px;">Unit Cost</th>
-                                        <th style="width: 120px;">Total Cost</th>
-                                        <th style="width: 150px;">Vendor</th>
-                                        <th style="width: 120px;">Delivery Deadline</th>
-                                        <th style="width: 120px;">Project No</th>
-                                        <th style="width: 120px;">MR No</th>
-                                        <th style="width: 120px;">Status</th>
-                                        <th style="width: 150px;">Invoice No</th>
-                                        <th style="width: 200px;">Remarks</th>
-                                        <th style="width: 80px;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Rows populated dynamically -->
-                                </tbody>
-                            </table>
-                            <button type="button" class="btn btn-custom mt-2" id="add-row" aria-label="Add New Row">Add Row</button>
+                        <div class="po-wizard-pane active" data-pane="1">
+                            <div class="po-pane-title">Start with the request</div>
+                            <div class="po-field-grid">
+                                <div><label>PO Number</label><input id="wizPoNo" class="form-control" readonly placeholder="Generating..."></div>
+                                <div><label>Project Number *</label><input id="wizProjectNo" class="form-control" required placeholder="e.g. PRJ-001"></div>
+                                <div><label>MR Number *</label><input id="wizMrNo" class="form-control" required placeholder="e.g. MR-001"></div>
+                            </div>
+                            <div class="po-tip"><i class="fas fa-circle-info"></i> A PO can contain one or more materials. Add additional items after the first item is confirmed.</div>
                         </div>
-                        <div class="import-csv mt-3">
-                            <label for="csvFile" class="form-label">Import from CSV</label>
-                            <input type="file" class="form-control" id="csvFile" name="file" accept=".csv" aria-describedby="csvHelp">
-                            <div id="csvHelp" class="form-text">Upload a CSV file with the required columns to import purchase orders.</div>
+                        <div class="po-wizard-pane" data-pane="2">
+                            <div class="po-pane-title">What are you purchasing?</div>
+                            <div class="po-field-grid">
+                                <div><label>Item Code *</label><input id="wizItemCode" class="form-control" required placeholder="Material / item code"></div>
+                                <div class="span-2"><label>Description *</label><textarea id="wizDescription" class="form-control" rows="3" required placeholder="Clear material description"></textarea></div>
+                                <div><label>Category</label><select id="wizCategory" class="form-select"><option value="">Select category</option><option>Valve</option><option>Gasket</option><option>Pipe</option><option>Fitting</option><option>Equipment</option><option>Electrical</option><option>Instrument</option><option>Other</option></select></div>
+                            </div>
+                        </div>
+                        <div class="po-wizard-pane" data-pane="3">
+                            <div class="po-pane-title">Commercial & delivery</div>
+                            <div class="po-field-grid">
+                                <div><label>Quantity *</label><input id="wizQty" type="number" min="0.01" step="any" class="form-control" required value="1"></div>
+                                <div><label>Unit Cost *</label><input id="wizUnitCost" type="number" min="0" step="0.01" class="form-control" required value="0"></div>
+                                <div><label>Vendor *</label><input id="wizVendor" class="form-control" required placeholder="Supplier name"></div>
+                                <div><label>Delivery Deadline *</label><input id="wizDeadline" type="date" class="form-control" required></div>
+                                <div><label>Invoice No.</label><input id="wizInvoice" class="form-control" placeholder="Optional"></div>
+                                <div><label>Remarks</label><input id="wizRemarks" class="form-control" placeholder="Optional note"></div>
+                            </div>
+                            <div class="po-total-box">Estimated total <strong id="wizTotal">0.00</strong></div>
+                        </div>
+                        <div class="po-wizard-pane" data-pane="4">
+                            <div class="po-pane-title">Review before creating</div>
+                            <div id="poReview" class="po-review"></div>
+                            <div class="po-tip"><i class="fas fa-shield-halved"></i> The order will be created as <strong>Pending / Purchase</strong> and can then move through approval and delivery workflow.</div>
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
-                    <button type="button" class="btn btn-custom" id="submit-po" aria-label="Submit Purchase Order">Submit</button>
+                <div class="modal-footer po-wizard-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary d-none" id="poWizardBack">Back</button>
+                        <button type="button" class="btn btn-primary" id="poWizardNext">Continue</button>
+                        <button type="button" class="btn btn-primary d-none" id="submit-po">Create Purchase Order</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -235,28 +241,14 @@
 
     <!-- Help Modal -->
     <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="helpModalLabel">Help - Using Purchase Orders</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+                <div class="modal-header"><h5 class="modal-title" id="helpModalLabel">Purchase Orders — Quick Guide</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <h4>Welcome to the Purchase Orders Page!</h4>
-                    <p>This page helps you manage purchase orders for your projects. Here's a quick guide:</p>
-                    <ul>
-                        <li><strong>Create a New PO:</strong> Click "Create New PO" to open a form. Add multiple rows using "Add Row". Fill in the details and submit (Purchase only).</li>
-                        <li><strong>Manage a PO:</strong> Use the Edit/Delete buttons on each card to modify or remove orders (Purchase only).</li>
-                        <li><strong>Approve a PO:</strong> Project Managers can approve or reject POs in each stage using the Approve button.</li>
-                        <li><strong>View Details:</strong> Click on a PO No link to open a detailed report in a new tab.</li>
-                        <li><strong>Search POs:</strong> Use the search bar to find purchase orders by PO No or Description.</li>
-                        <li><strong>Import from CSV:</strong> Use the "Import from CSV" option in the Create modal to upload a CSV file (Purchase only).</li>
-                        <li><strong>Export to CSV:</strong> Click "Export to CSV" to download the orders as a CSV file.</li>
-                    </ul>
-                    <p>If you encounter issues, check the browser console (F12 > Console) for errors or contact your system administrator.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                    <div class="help-item"><b>1. Create</b><span>Enter project, MR, material, vendor, quantity and delivery date.</span></div>
+                    <div class="help-item"><b>2. Review</b><span>Check the commercial total and confirm the PO.</span></div>
+                    <div class="help-item"><b>3. Control</b><span>Purchase users can edit/delete; project managers can approve or reject.</span></div>
+                    <div class="help-item"><b>4. Track</b><span>Open the PO number for its detailed report and follow the workflow stage.</span></div>
                 </div>
             </div>
         </div>
@@ -266,6 +258,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous">
     <style>
+        .purchase-order-container { padding: 24px; max-width: 1500px; margin: 0 auto; }
+        .po-hero{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:28px 32px;margin-bottom:22px;border-radius:18px;background:linear-gradient(135deg,#0f766e,#155e75);color:#fff;box-shadow:0 12px 30px rgba(15,118,110,.16)}
+        .po-hero h1{margin:5px 0 6px;font-weight:800}.po-hero p{margin:0;opacity:.88}.po-eyebrow{font-size:.72rem;letter-spacing:.12em;font-weight:800;opacity:.75}.po-user{display:flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.08)}
+        .po-toolbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:16px}.po-actions{display:flex;gap:8px;flex-wrap:wrap}.btn-po{border-radius:10px;font-weight:700;padding:10px 15px}.po-search{position:relative;min-width:300px}.po-search i{position:absolute;left:14px;top:13px;color:#64748b}.po-search input{width:100%;padding:10px 38px;border:1px solid #dbe3ea;border-radius:10px}.po-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.po-summary>div{background:#fff;border:1px solid #e7edf2;border-radius:14px;padding:15px 18px;box-shadow:0 3px 12px rgba(15,23,42,.04)}.po-summary strong{display:block;font-size:1.45rem}.po-summary span{font-size:.82rem;color:#64748b}
+        .po-wizard-modal{border:0;border-radius:18px;overflow:hidden}.po-wizard-header{background:linear-gradient(135deg,#0f766e,#155e75);color:#fff;padding:22px 26px}.po-wizard-header h5{margin:5px 0;font-size:1.35rem}.po-steps{display:grid;grid-template-columns:repeat(4,1fr);padding:18px 26px 10px;background:#fff;border-bottom:1px solid #e7edf2}.po-step{display:flex;align-items:center;gap:8px;color:#94a3b8;font-size:.86rem}.po-step span{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#e2e8f0;font-weight:800}.po-step.active{color:#0f766e}.po-step.active span{background:#0f766e;color:#fff}.po-wizard-pane{display:none}.po-wizard-pane.active{display:block}.po-pane-title{font-size:1.2rem;font-weight:800;margin-bottom:20px}.po-field-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.po-field-grid .span-2{grid-column:span 2}.po-field-grid label{display:block;font-size:.82rem;font-weight:700;color:#334155;margin-bottom:6px}.po-field-grid .form-control,.po-field-grid .form-select{border-radius:10px;padding:10px 12px}.po-tip{margin-top:18px;padding:12px 14px;background:#f0fdfa;border:1px solid #ccfbf1;border-radius:10px;color:#115e59}.po-total-box{margin-top:18px;padding:16px;border-radius:12px;background:#f8fafc;text-align:right}.po-total-box strong{font-size:1.35rem;margin-left:8px}.po-review{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.po-review .review-card{padding:14px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}.help-item{padding:13px 0;border-bottom:1px solid #edf2f7}.help-item:last-child{border-bottom:0}.help-item b{display:block;margin-bottom:4px}.help-item span{color:#64748b}
+        @media(max-width:800px){.po-hero,.po-toolbar{flex-direction:column;align-items:stretch}.po-search{min-width:0}.po-summary{grid-template-columns:repeat(2,1fr)}.po-field-grid{grid-template-columns:1fr}.po-field-grid .span-2{grid-column:auto}.po-review{grid-template-columns:1fr}.po-steps{padding:14px}.po-step b{display:none}}
         .purchase-order-container {
             padding: 20px;
             max-width: 1400px;
@@ -455,6 +453,40 @@
             let poDataCache = [];
             const csrfToken = '{{ csrf_token() }}';
 
+            // Professional creation wizard
+            let poWizardStep = 1;
+            function wizardToday(){ return new Date().toISOString().split('T')[0]; }
+            function wizardValue(id){ return ($(id).val() || '').trim(); }
+            function renderWizard(){
+                $('.po-wizard-pane').removeClass('active').filter('[data-pane="'+poWizardStep+'"]').addClass('active');
+                $('.po-step').removeClass('active').filter('[data-step="'+poWizardStep+'"]').addClass('active');
+                $('#poWizardBack').toggleClass('d-none', poWizardStep === 1);
+                $('#poWizardNext').toggleClass('d-none', poWizardStep === 4);
+                $('#submit-po').toggleClass('d-none', poWizardStep !== 4);
+            }
+            function wizardReview(){
+                const qty=parseFloat($('#wizQty').val())||0, cost=parseFloat($('#wizUnitCost').val())||0;
+                $('#wizTotal').text((qty*cost).toFixed(2));
+                $('#poReview').html([
+                    ['PO Number',$('#wizPoNo').val()],['Project',$('#wizProjectNo').val()],['MR Number',$('#wizMrNo').val()],
+                    ['Item',$('#wizItemCode').val()],['Description',$('#wizDescription').val()],['Category',$('#wizCategory').val()||'-'],
+                    ['Quantity',qty],['Unit Cost',cost.toFixed(2)],['Vendor',$('#wizVendor').val()],['Delivery',$('#wizDeadline').val()],
+                    ['Estimated Total',(qty*cost).toFixed(2)],['Remarks',$('#wizRemarks').val()||'-']
+                ].map(x=>'<div class="review-card"><small>'+x[0]+'</small><div><strong>'+sanitizeInput(String(x[1]||'-'))+'</strong></div></div>').join(''));
+            }
+            function validateWizardStep(){
+                const required = poWizardStep===1 ? ['#wizProjectNo','#wizMrNo'] : poWizardStep===2 ? ['#wizItemCode','#wizDescription'] : ['#wizQty','#wizUnitCost','#wizVendor','#wizDeadline'];
+                for(const id of required){ if(!wizardValue(id)){ $(id).focus(); return false; } }
+                if(poWizardStep===3 && (parseFloat($('#wizQty').val())<=0 || parseFloat($('#wizUnitCost').val())<0)){ alert('Quantity must be greater than zero and Unit Cost cannot be negative.'); return false; }
+                return true;
+            }
+            $('#addPOModal').on('show.bs.modal',function(){
+                poWizardStep=1; $('#add-po-form')[0].reset(); $('#wizDeadline').val(wizardToday()); renderWizard(); showLoading(true);
+                $.get('/purchase_orders/api/generate_po_no').done(d=>$('#wizPoNo').val(d.po_no||'')).fail(xhr=>alert('Failed to generate PO No: '+sanitizeInput(xhr.responseJSON?.error||'Please try again later.'))).always(()=>showLoading(false));
+            });
+            $('#poWizardNext').on('click',function(){ if(!validateWizardStep()) return; if(poWizardStep<4) poWizardStep++; if(poWizardStep===4) wizardReview(); renderWizard(); });
+            $('#poWizardBack').on('click',function(){ if(poWizardStep>1){poWizardStep--;renderWizard();} });
+            $('#wizQty,#wizUnitCost').on('input',wizardReview);
             // Show loading indicator
             function showLoading(show) {
                 $('#loadingIndicator').toggleClass('d-none', !show);
@@ -517,6 +549,10 @@
                     success: function (data) {
                         console.log('Purchase Orders loaded:', data);
                         poDataCache = data;
+                        $('#poTotalCount').text(data.length);
+                        $('#poPendingCount').text(data.filter(x => String(x.status||'').toLowerCase()==='pending').length);
+                        $('#poApprovedCount').text(data.filter(x => String(x.status||'').toLowerCase()==='approved').length);
+                        $('#poDeliveredCount').text(data.filter(x => String(x.status||'').toLowerCase()==='delivered').length);
                         const ordersList = $('#ordersList');
                         ordersList.empty();
                         if (data.length === 0) {
@@ -620,29 +656,7 @@
                 updateTotalCost(tableId);
             }
 
-            // Handle modal for create
-            $('#addPOModal').on('show.bs.modal', function () {
-                const modal = $(this);
-                modal.find('.modal-title').text('Create New Purchase Order');
-                $('#add-po-form')[0].reset();
-                $('#add-po-table tbody').empty();
-                showLoading(true);
-                $.ajax({
-                    url: '/purchase_orders/api/generate_po_no',
-                    type: 'GET',
-                    headers: { 'X-CSRFToken': csrfToken },
-                    success: function (data) {
-                        addNewRow('add-po-table', { po_no: data.po_no });
-                    },
-                    error: function (xhr) {
-                        console.error('Error generating PO No:', xhr);
-                        alert('Failed to generate PO No: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
-                    },
-                    complete: function () {
-                        showLoading(false);
-                    }
-                });
-            });
+            // Legacy create handler removed: creation is handled by the professional wizard.
 
             // Handle modal for edit
             $(document).on('click', '.edit-po', function () {
@@ -688,24 +702,7 @@
             });
 
             // Add row button
-            $('#add-row').on('click', function () {
-                showLoading(true);
-                $.ajax({
-                    url: '/purchase_orders/api/generate_po_no',
-                    type: 'GET',
-                    headers: { 'X-CSRFToken': csrfToken },
-                    success: function (data) {
-                        addNewRow('add-po-table', { po_no: data.po_no });
-                    },
-                    error: function (xhr) {
-                        console.error('Error generating PO No:', xhr);
-                        alert('Failed to generate PO No: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
-                    },
-                    complete: function () {
-                        showLoading(false);
-                    }
-                });
-            });
+            // Legacy add-row handler removed for the create wizard.
 
             $('#edit-add-row').on('click', function () {
                 showLoading(true);
@@ -791,56 +788,18 @@
 
             // Handle new PO submission
             $('#submit-po').on('click', function () {
-                const rows = [];
-                $('#add-po-table tbody tr').each(function (index) {
-                    const row = {
-                        po_no: sanitizeInput($(this).find('input[name="po_no"]').val().trim()),
-                        item_code: sanitizeInput($(this).find('input[name="item_code"]').val().trim()),
-                        material_description: sanitizeInput($(this).find('input[name="material_description"]').val().trim()),
-                        material_category: $(this).find('select[name="material_category"]').val() || null,
-                        purchase_quantity: parseFloat($(this).find('input[name="purchase_quantity"]').val()) || 0,
-                        unit_cost: parseFloat($(this).find('input[name="unit_cost"]').val()) || 0,
-                        total_cost: parseFloat($(this).find('input[name="total_cost"]').val()) || 0,
-                        vendor: $(this).find('select[name="vendor"]').val() || null,
-                        delivery_deadline: $(this).find('input[name="delivery_deadline"]').val(),
-                        project_no: sanitizeInput($(this).find('input[name="project_no"]').val().trim()),
-                        mr_no: sanitizeInput($(this).find('input[name="mr_no"]').val().trim()),
-                        status: $(this).find('select[name="status"]').val() || 'Pending',
-                        invoice_no: sanitizeInput($(this).find('input[name="invoice_no"]').val().trim()) || null,
-                        remarks: sanitizeInput($(this).find('textarea[name="remarks"]').val().trim()) || null,
-                        workflow_status: 'Purchase'
-                    };
-
-                    if (!validateRow(row, index + 1)) return false;
-                    rows.push(row);
-                });
-
-                if (rows.length === 0) {
-                    alert('Please add at least one row.');
-                    return;
-                }
-
+                if (![1,2,3].every((s)=>{const old=poWizardStep;poWizardStep=s;const ok=validateWizardStep();poWizardStep=old;return ok;})) return;
+                const qty=parseFloat($('#wizQty').val())||0, cost=parseFloat($('#wizUnitCost').val())||0;
+                const row={po_no:wizardValue('#wizPoNo'),item_code:wizardValue('#wizItemCode'),material_description:wizardValue('#wizDescription'),
+                    material_category:$('#wizCategory').val()||null,purchase_quantity:qty,unit_cost:cost,total_cost:qty*cost,
+                    vendor:wizardValue('#wizVendor'),delivery_deadline:$('#wizDeadline').val(),project_no:wizardValue('#wizProjectNo'),
+                    mr_no:wizardValue('#wizMrNo'),status:'Pending',invoice_no:wizardValue('#wizInvoice')||null,
+                    remarks:wizardValue('#wizRemarks')||null,workflow_status:'Purchase'};
                 showLoading(true);
-                $.ajax({
-                    url: '/purchase_orders/api/purchase_orders',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    headers: { 'X-CSRFToken': csrfToken },
-                    data: JSON.stringify(rows),
-                    success: function (response) {
-                        loadPurchaseOrders();
-                        $('#addPOModal').modal('hide');
-                        $('#add-po-form')[0].reset();
-                        $('#add-po-table tbody').empty();
-                        alert(response.message || 'Purchase Orders created successfully!');
-                    },
-                    error: function (xhr) {
-                        console.error('Error creating PO:', xhr);
-                        alert('Failed to create Purchase Order: ' + sanitizeInput(xhr.responseJSON?.error || 'Please try again later or contact support.'));
-                    },
-                    complete: function () {
-                        showLoading(false);
-                    }
+                $.ajax({url:'/purchase_orders/api/purchase_orders',type:'POST',contentType:'application/json',headers:{'X-CSRFToken':csrfToken},data:JSON.stringify([row]),
+                    success:function(response){loadPurchaseOrders();$('#addPOModal').modal('hide');alert(response.message||'Purchase Order created successfully!');},
+                    error:function(xhr){alert('Failed to create Purchase Order: '+sanitizeInput(xhr.responseJSON?.error||'Please try again later or contact support.'));},
+                    complete:function(){showLoading(false);}
                 });
             });
 
