@@ -95,6 +95,7 @@ def update_receipt_inspection(receipt_line_id):
                 company_name=current_user.company_name,
             )
             db.session.add(qc)
+        previous_status = qc.status.value if qc.status else 'pending'
         qc.status = InspectionStatus(result)
         qc.inspected_date = datetime.utcnow().date()
         qc.user_id = current_user.id
@@ -106,7 +107,6 @@ def update_receipt_inspection(receipt_line_id):
         ).first()
         if inventory:
             qty = float(line.received_qty or 0)
-            previous_status = qc.status.value if qc.status else 'pending'
             if result == 'passed' and previous_status != 'passed':
                 inventory.quarantine_qty = max(0.0, float(inventory.quarantine_qty or 0) - qty)
                 inventory.available_qty = float(inventory.available_qty or 0) + qty
