@@ -1,41 +1,558 @@
 {% extends "base.html" %}
 {% block title %}راهنمای کاربری{% endblock %}
+{% block meta_description %}راهنمای فارسی MaterialHub — از درخواست مهندسی و خرید تا تحویل، انبار، تطبیق موجودی و گزارش‌گیری.{% endblock %}
 {% block content %}
 <style>
-.fa-guide{direction:rtl;text-align:right}.fa-story{margin-bottom:22px;padding:28px;border-radius:22px;background:linear-gradient(135deg,#102a43,#167d9a);color:#fff}.fa-story h2{margin:8px 0 12px}.fa-story p{line-height:2;opacity:.95}.fa-story-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}.fa-story-grid div{padding:12px;border-radius:12px;background:rgba(255,255,255,.11);line-height:1.7}.fa-card h3{margin-bottom:8px}.fa-card p,.fa-card li{line-height:2}.fa-section{scroll-margin-top:90px}.fa-table{width:100%;border-collapse:collapse}.fa-table th,.fa-table td{text-align:right;padding:12px;border-bottom:1px solid #edf2f5;line-height:1.9;vertical-align:top}.fa-table th{color:#48606e}.fa-note{margin-top:18px;padding:15px;background:#f5fafc;border-right:4px solid #0e7490;border-radius:10px;color:#526b76;line-height:2}@media(max-width:700px){.fa-story-grid{grid-template-columns:repeat(2,1fr)}}
+.fa-guide { direction: rtl; text-align: right; }
+.fa-hero {
+  background: linear-gradient(135deg, #0f766e, #134e4a);
+  color: #fff;
+  border-radius: 22px;
+  padding: 32px 28px;
+  margin-bottom: 22px;
+  box-shadow: 0 12px 30px rgba(15, 118, 110, 0.18);
+}
+.fa-hero .eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+  font-weight: 700;
+}
+.fa-hero h1 { margin: 10px 0 12px; font-size: clamp(1.6rem, 3vw, 2.2rem); }
+.fa-hero p { max-width: 820px; line-height: 2; opacity: 0.95; margin: 0 0 18px; }
+.fa-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.fa-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  background: #fff;
+  color: #0f766e;
+}
+.fa-actions a.ghost {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.fa-story {
+  margin-bottom: 22px;
+  padding: 28px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #102a43, #167d9a);
+  color: #fff;
+}
+.fa-story h2 { margin: 8px 0 12px; line-height: 1.5; }
+.fa-story p { line-height: 2; opacity: 0.95; }
+.fa-story-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 18px 0;
+}
+.fa-story-grid div {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.11);
+  line-height: 1.7;
+  font-size: 0.92rem;
+}
+.fa-layout {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.fa-nav {
+  position: sticky;
+  top: 90px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 10px;
+}
+.fa-nav a {
+  display: block;
+  padding: 9px 12px;
+  text-decoration: none;
+  color: #334155;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.fa-nav a:hover { background: #f0fdfa; color: #0f766e; }
+.fa-body section { scroll-margin-top: 96px; margin-bottom: 28px; }
+.fa-body h2 { margin: 0 0 12px; color: #0f172a; }
+.fa-body h3 { margin: 18px 0 8px; }
+.fa-body p, .fa-body li { line-height: 2; color: #334155; }
+.fa-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin: 14px 0;
+}
+.fa-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+.fa-card h3 { margin: 0 0 8px; font-size: 1.02rem; }
+.fa-card p, .fa-card li { margin: 0 0 8px; font-size: 0.94rem; }
+.fa-table { width: 100%; border-collapse: collapse; }
+.fa-table th, .fa-table td {
+  text-align: right;
+  padding: 12px;
+  border-bottom: 1px solid #edf2f5;
+  line-height: 1.9;
+  vertical-align: top;
+}
+.fa-table th { color: #48606e; font-weight: 700; }
+.fa-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0 16px;
+}
+.fa-flow span {
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #115e59;
+  font-size: 0.9rem;
+}
+.fa-flow b { color: #94a3b8; }
+.fa-note {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: #f5fafc;
+  border-right: 4px solid #0e7490;
+  border-radius: 10px;
+  color: #526b76;
+  line-height: 2;
+}
+.fa-cta {
+  margin-top: 28px;
+  padding: 24px 26px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ecfeff, #f0fdfa);
+  border: 1px solid #99f6e4;
+}
+.fa-cta h3 { margin: 0 0 8px; color: #0f766e; }
+.fa-cta p { margin: 0 0 14px; line-height: 2; color: #334155; }
+.fa-cta a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: #0e7490;
+  color: #fff !important;
+  text-decoration: none;
+  font-weight: 700;
+}
+.fa-cta a.secondary {
+  background: #fff;
+  color: #0e7490 !important;
+  border: 1px solid #99f6e4;
+  margin-right: 8px;
+}
+[data-theme="dark"] .fa-nav,
+[data-theme="dark"] .fa-card,
+[data-theme="dark"] .content-card {
+  background: #111827;
+  border-color: #1e293b;
+  color: #e2e8f0;
+}
+[data-theme="dark"] .fa-nav a { color: #cbd5e1; }
+[data-theme="dark"] .fa-nav a:hover { background: #164e63; color: #ecfeff; }
+[data-theme="dark"] .fa-body h2 { color: #f1f5f9; }
+[data-theme="dark"] .fa-body p,
+[data-theme="dark"] .fa-body li { color: #cbd5e1; }
+[data-theme="dark"] .fa-table th,
+[data-theme="dark"] .fa-table td { border-bottom-color: #1e293b; }
+[data-theme="dark"] .fa-note { background: #0f172a; color: #94a3b8; }
+[data-theme="dark"] .fa-cta { background: #0f172a; border-color: #164e63; }
+@media (max-width: 900px) {
+  .fa-layout { grid-template-columns: 1fr; }
+  .fa-nav { position: static; display: flex; flex-wrap: wrap; gap: 4px; }
+  .fa-nav a { padding: 8px 10px; }
+  .fa-story-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .fa-story-grid { grid-template-columns: 1fr; }
+  .fa-hero { padding: 24px 18px; }
+}
 </style>
+
 <div class="fa-guide">
-<section class="fa-hero"><div style="font-size:12px;letter-spacing:.08em;opacity:.75">راهنمای MATERIALHUB</div><h1>راهنمای کاربری</h1><p>یک راهنمای عملی برای استفاده روزمره از MaterialHub؛ از نیاز مهندسی و خرید تا تحویل، دریافت انبار، کنترل کسری و تهیه گزارش.</p><div class="fa-actions"><a href="{{ url_for('help.getting_started') }}">شروع سریع</a><a href="{{ url_for('help.help') }}">مرکز راهنما</a><a href="{{ url_for('help.user_guide') }}">English Guide</a></div></section>
 
-<section class="fa-story">
-<div style="font-size:12px;letter-spacing:.08em;opacity:.75">چرا MaterialHub ساخته شد؟</div>
-<h2>یک کارگاه بزرگ بود؛ همه مشغول بودند، اما متریال سر جای خودش نبود.</h2>
-<p>تصور کنید یک پروژه بزرگ در جریان است. پیمانکار منتظر است، نیروهای اجرایی آماده‌اند و یک جرثقیل عظیم کنار کار ایستاده؛ اما متریال موردنیاز هنوز نرسیده است. مهندسی درخواست را ثبت کرده، خرید در میان فایل‌های Excel و پیام‌ها دنبال وضعیت سفارش است، تأمین‌کننده می‌پرسد آخرین درخواست کدام است و انبار برگه‌ای از یک محموله دارد که اتصال آن به PO زمان می‌برد.</p>
-<p>مشکل همیشه کم‌کاری نیست؛ <strong>اطلاعات پراکنده است.</strong> فایل‌ها در پوشه‌های مختلف‌اند، Excelها از هم فاصله می‌گیرند، بخشی از وضعیت در پیام‌ها و تماس‌هاست و گاهی مهم‌ترین اطلاعات در ذهن یک نفر قرار دارد. آن نفر اگر مرخصی باشد، جلسه باشد یا در سایت دیگری باشد، پیدا کردن جواب «متریال کجاست؟» سخت می‌شود.</p>
-<div class="fa-story-grid"><div>📁 فایل‌های پراکنده</div><div>📊 Excelهای جدا</div><div>📞 پیگیری‌های تمام‌نشدنی</div><div>👤 وابستگی به یک نفر</div></div>
-<p><strong>MaterialHub برای همین لحظه ساخته شده است:</strong> نیاز مهندسی → MR → RFQ/PO → Delivery → دریافت واقعی انبار → موجودی و کسری. هدف این است که اطلاعات پروژه در دسترس بماند؛ حتی وقتی افراد مشغول، جابه‌جا یا در مرخصی هستند.</p>
-</section>
+  <section class="fa-hero">
+    <div class="eyebrow">راهنمای MaterialHub</div>
+    <h1>راهنمای کاربری به زبان فارسی</h1>
+    <p>
+      یک راهنمای عملی برای کار روزمره با MaterialHub؛
+      از نیاز مهندسی و خرید تا تحویل، دریافت انبار، کنترل کسری و تهیه گزارش.
+      هدف این است که تیم پروژه بداند <strong>متریال کجاست</strong> و چه چیزی هنوز باز است.
+    </p>
+    <div class="fa-actions">
+      <a href="{{ url_for('help.getting_started') }}"><i class="fas fa-rocket"></i> شروع سریع</a>
+      <a class="ghost" href="{{ url_for('help.help') }}"><i class="fas fa-life-ring"></i> مرکز راهنما</a>
+      <a class="ghost" href="{{ url_for('help.user_guide') }}"><i class="fas fa-language"></i> English Guide</a>
+      {% if current_user.is_authenticated %}
+        <a class="ghost" href="{{ url_for('role_workspace.my_workspace') }}"><i class="fas fa-layer-group"></i> فضای کاری من</a>
+      {% else %}
+        <a class="ghost" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> ساخت فضای کاری</a>
+      {% endif %}
+    </div>
+  </section>
 
-<section class="content-card fa-section"><h2>جریان اصلی کار</h2><div class="fa-flow"><span>نیاز مهندسی</span><b>←</b><span>MR</span><b>←</b><span>RFQ / PO</span><b>←</b><span>Delivery</span><b>←</b><span>دریافت انبار</span><b>←</b><span>موجودی و کسری</span></div><div class="fa-note"><strong>اصل کنترل:</strong> سفارش خرید به معنی دریافت کالا نیست. Required، Ordered و Received را کنار هم ببینید.</div></section>
+  <section class="fa-story">
+    <div class="eyebrow" style="opacity:.8">چرا MaterialHub؟</div>
+    <h2>پروژه شلوغ بود؛ اطلاعات متریال در یک جا جمع نبود.</h2>
+    <p>
+      تصور کنید کارگاه بزرگی در جریان است. پیمانکار منتظر است، نیروهای اجرایی آماده‌اند
+      و یک جرثقیل کنار کار ایستاده؛ اما متریال مورد نیاز هنوز نرسیده است.
+      مهندسی درخواست را ثبت کرده، خرید میان فایل‌های Excel و پیام‌ها دنبال وضعیت سفارش است،
+      تأمین‌کننده می‌پرسد آخرین درخواست کدام است و انبار برگه‌ای از محموله دارد که اتصال آن به PO زمان می‌برد.
+    </p>
+    <p>
+      مشکل همیشه کم‌کاری نیست؛ <strong>اطلاعات پراکنده است.</strong>
+      فایل‌ها در پوشه‌های مختلف‌اند، Excelها از هم فاصله می‌گیرند،
+      بخشی از وضعیت در پیام‌ها و تماس‌هاست و گاهی مهم‌ترین اطلاعات در ذهن یک نفر قرار دارد.
+      اگر آن نفر در مرخصی، جلسه یا سایت دیگری باشد، پیدا کردن جواب «متریال کجاست؟» سخت می‌شود.
+    </p>
+    <div class="fa-story-grid">
+      <div>📁 فایل‌های پراکنده</div>
+      <div>📊 Excelهای جدا</div>
+      <div>📞 پیگیری‌های تمام‌نشدنی</div>
+      <div>👤 وابستگی به یک نفر</div>
+    </div>
+    <p>
+      <strong>MaterialHub برای همین لحظه ساخته شده است:</strong>
+      نیاز مهندسی ← MR ← RFQ / PO ← Delivery ← دریافت واقعی انبار ← موجودی و کسری.
+      اطلاعات پروژه باید در دسترس بماند؛ حتی وقتی افراد مشغول، جابه‌جا یا در مرخصی هستند.
+    </p>
+  </section>
 
-<h2>نقش‌ها و مسئولیت‌ها</h2><section class="content-card fa-section"><div class="table-responsive"><table class="fa-table"><tr><th>نقش</th><th>مسئولیت</th><th>کنترل مطلوب</th></tr><tr><td>مدیر پروژه</td><td>وضعیت پروژه، اولویت‌ها، ریسک تأمین و پیگیری.</td><td>مواردی که می‌توانند روی اجرای پروژه اثر بگذارند سریع دیده شوند.</td></tr><tr><td>مهندسی</td><td>نیاز، مشخصات، مقدار و تاریخ موردنیاز.</td><td>درخواست‌ها دقیق، تاریخ‌دار و دارای کد پایدار باشند.</td></tr><tr><td>خرید</td><td>RFQ، پیشنهادها، تأمین‌کننده، PO و Expediting.</td><td>هر نیاز مهم تا وضعیت خرید قابل ردیابی باشد.</td></tr><tr><td>تأمین‌کننده</td><td>پیشنهاد، موجودی، تعهد تحویل و اطلاعات تأمین.</td><td>تعهدات و تغییرات قابل مشاهده باشند.</td></tr><tr><td>کنترل کیفیت</td><td>بازرسی و MTC/CoC و پذیرش.</td><td>وضعیت فنی و مدارک لازم روشن باشد.</td></tr><tr><td>Delivery</td><td>محموله و وضعیت تحویل.</td><td>تحویل مورد انتظار از دریافت واقعی جدا باشد.</td></tr><tr><td>انبار</td><td>دریافت، محل، موجودی و ردیابی.</td><td>مقدار واقعی و محل فیزیکی با سیستم منطبق باشد.</td></tr></table></div></section>
+  <div class="fa-layout">
+    <aside class="fa-nav" aria-label="فهرست راهنما">
+      <a href="#flow">جریان اصلی</a>
+      <a href="#roles">نقش‌ها</a>
+      <a href="#control">مرکز کنترل</a>
+      <a href="#mr">درخواست کالا</a>
+      <a href="#rfq">RFQ و پیشنهاد</a>
+      <a href="#po">سفارش خرید</a>
+      <a href="#delivery">تحویل</a>
+      <a href="#warehouse">انبار</a>
+      <a href="#reconcile">تطبیق موجودی</a>
+      <a href="#trace">ردیابی</a>
+      <a href="#quality">کیفیت</a>
+      <a href="#reports">گزارش‌ها</a>
+      <a href="#intelligence">هوشمندی متریال</a>
+      <a href="#copilot">Copilot</a>
+      <a href="#daily">روتین روزانه</a>
+    </aside>
 
-<h2>راهنمای بخش‌ها</h2><div class="fa-grid">
-<div class="fa-card"><h3>۱. درخواست کالا (MR)</h3><p>کد کالا، شرح و مشخصات، مقدار، واحد، پروژه، تاریخ موردنیاز، اولویت و اطلاعات لازم را دقیق ثبت کنید. کدهای ثابت، پایه گزارش‌گیری و مقایسه هستند.</p><p><strong>اشتباه رایج:</strong> یک نیاز را در چند فایل یا درخواست تکرار نکنید.</p></div>
-<div class="fa-card"><h3>۲. RFQ و مقایسه پیشنهادها</h3><p>برای نیاز تأییدشده RFQ ایجاد کنید و پیشنهادها را از نظر قیمت، زمان تحویل، موجودی، شرایط و عملکرد تأمین‌کننده مقایسه کنید. ارزان‌ترین پیشنهاد لزوماً مناسب‌ترین گزینه برای پروژه نیست.</p></div>
-<div class="fa-card"><h3>۳. Purchase Order</h3><p>مقدار سفارش، تأمین‌کننده، قیمت و تاریخ وعده تحویل را دقیق نگه دارید. PO تعهد خرید است، نه مدرک دریافت فیزیکی.</p></div>
-<div class="fa-card"><h3>۴. Delivery</h3><p>محموله و وضعیت آن را به PO مربوط کنید. اعلام ارسال یا Delivery را با مقدار واقعی دریافت‌شده در انبار یکی نگیرید.</p></div>
-<div class="fa-card"><h3>۵. Warehouse</h3><p>مقدار واقعی دریافت، وضعیت کالا، محل نگهداری و Heat/Lot/Serial/Batch را در صورت نیاز ثبت کنید. اینجا جایی است که اطلاعات سیستم با واقعیت فیزیکی تطبیق پیدا می‌کند.</p></div>
-<div class="fa-card"><h3>۶. Material Reconciliation</h3><p>در یک صفحه Required، Ordered، Delivery و Received را ببینید. فیلتر «فقط موارد مشکل‌دار» برای Not Ordered، Shortage، Partial Receipt و Surplus به‌کار می‌آید.</p></div>
-<div class="fa-card"><h3>۷. Traceability</h3><p>برای متریال‌های کنترل‌شده Heat، Lot، Serial یا Batch و ارتباط آن‌ها با اسناد و محل نگهداری را حفظ کنید.</p></div>
-<div class="fa-card"><h3>۸. مدارک کیفیت</h3><p>MTC، CoC، Datasheet و مدارک بازرسی را با وضعیت روشن نگه دارید. دریافت فیزیکی الزاماً به معنی پذیرش فنی نیست.</p></div>
-<div class="fa-card"><h3>۹. Reports</h3><p>برای MR، PO، Delivery و Warehouse گزارش آماده کنید. گزارش اشتراکی فقط‌خواندنی است و صفحه‌ای مستقل بدون منو، فوتر تبلیغاتی و تبلیغات سایت نمایش می‌دهد.</p></div>
-</div>
+    <div class="fa-body">
 
-<h2>Material Reconciliation؛ مهم‌ترین صفحه کنترل</h2><section class="content-card fa-section"><table class="fa-table"><tr><th>وضعیت</th><th>معنی</th><th>اقدام</th></tr><tr><td>Not Ordered</td><td>نیاز ثبت شده ولی مقدار سفارش‌داده‌شده کامل نیست.</td><td>وضعیت خرید را بررسی کنید.</td></tr><tr><td>Ordered / Awaiting Receipt</td><td>خرید انجام شده اما دریافت کامل ثبت نشده.</td><td>تعهد تحویل و Delivery را بررسی کنید.</td></tr><tr><td>Partial Receipt / Shortage</td><td>مقدار دریافت‌شده کمتر از نیاز است.</td><td>کسری باقیمانده و اقدام پیگیری را مشخص کنید.</td></tr><tr><td>Surplus</td><td>مقدار دریافت‌شده از نیاز محاسبه‌شده بیشتر است.</td><td>مبنای فیزیکی و اسناد را کنترل کنید.</td></tr></table><div class="fa-note"><strong>سؤال کلیدی:</strong> مهندسی چه می‌خواست؟ چه مقدار خریدیم؟ چه چیزی تحویل شد؟ انبار واقعاً چه مقدار دریافت کرد؟</div></section>
+      <section id="flow" class="content-card">
+        <h2>جریان اصلی کار</h2>
+        <div class="fa-flow">
+          <span>نیاز مهندسی</span><b>←</b>
+          <span>MR</span><b>←</b>
+          <span>RFQ / PO</span><b>←</b>
+          <span>Delivery</span><b>←</b>
+          <span>دریافت انبار</span><b>←</b>
+          <span>موجودی و کسری</span>
+        </div>
+        <p>
+          در MaterialHub این زنجیره به‌صورت یکپارچه دیده می‌شود؛
+          نه به‌عنوان صفحه‌های جدا که هر کدام فقط بخشی از حقیقت را نشان می‌دهند.
+        </p>
+        <div class="fa-note">
+          <strong>اصل کنترل:</strong>
+          سفارش خرید به معنی دریافت کالا نیست.
+          Required، Ordered و Received را همیشه کنار هم ببینید.
+        </div>
+      </section>
 
-<h2>گزارش و اشتراک‌گذاری</h2><section class="content-card fa-section"><p>از <a href="{{ url_for('reports.center') }}">مرکز گزارش‌ها</a> برای MR، PO، Delivery و Warehouse گزارش تهیه کنید. قبل از اشتراک‌گذاری Required، Ordered و Received را کنترل کنید. لینک اشتراکی فقط‌خواندنی است و برای مشاهده گیرنده، محیط مستقل و بدون تبلیغات سایت دارد.</p></section>
+      <section id="roles" class="content-card">
+        <h2>نقش‌ها و مسئولیت‌ها</h2>
+        <div class="table-responsive">
+          <table class="fa-table">
+            <tr>
+              <th>نقش</th>
+              <th>مسئولیت اصلی</th>
+              <th>کنترل مطلوب</th>
+            </tr>
+            <tr>
+              <td>مدیر پروژه</td>
+              <td>وضعیت پروژه، اولویت‌ها، ریسک تأمین و پیگیری موارد اثرگذار.</td>
+              <td>مواردی که می‌توانند روی اجرا اثر بگذارند سریع دیده شوند.</td>
+            </tr>
+            <tr>
+              <td>مهندسی</td>
+              <td>نیاز، مشخصات، مقدار و تاریخ مورد نیاز.</td>
+              <td>درخواست‌ها دقیق، تاریخ‌دار و دارای کد پایدار باشند.</td>
+            </tr>
+            <tr>
+              <td>خرید</td>
+              <td>RFQ، پیشنهادها، تأمین‌کننده، PO و Expediting.</td>
+              <td>هر نیاز مهم تا وضعیت خرید قابل ردیابی باشد.</td>
+            </tr>
+            <tr>
+              <td>تأمین‌کننده</td>
+              <td>پیشنهاد، موجودی، تعهد تحویل و اطلاعات تأمین.</td>
+              <td>تعهدات و تغییرات برای تیم پروژه قابل مشاهده باشند.</td>
+            </tr>
+            <tr>
+              <td>کنترل کیفیت</td>
+              <td>بازرسی، MTC / CoC و پذیرش فنی.</td>
+              <td>وضعیت فنی و مدارک لازم روشن باشد.</td>
+            </tr>
+            <tr>
+              <td>Delivery</td>
+              <td>محموله و وضعیت تحویل.</td>
+              <td>تحویل مورد انتظار از دریافت واقعی جدا باشد.</td>
+            </tr>
+            <tr>
+              <td>انبار</td>
+              <td>دریافت، محل نگهداری، موجودی و ردیابی.</td>
+              <td>مقدار واقعی و محل فیزیکی با سیستم منطبق باشد.</td>
+            </tr>
+          </table>
+        </div>
+      </section>
 
-<h2>کنترل روزانه</h2><section class="content-card fa-section"><ol style="line-height:2.2"><li><strong>صبح:</strong> Control Center و موارد نیازمند اقدام را ببینید.</li><li><strong>مهندسی:</strong> نیازهای فوری و تغییرات را بررسی کند.</li><li><strong>خرید:</strong> Not Ordered، تأخیرها و کسری‌های تأمین را پیگیری کند.</li><li><strong>Delivery/انبار:</strong> تحویل‌های مورد انتظار را با دریافت واقعی تطبیق دهد.</li><li><strong>مدیر پروژه:</strong> کسری‌ها و موارد اثرگذار بر اجرا را مرور کند.</li><li><strong>پایان روز:</strong> وضعیت تعهدها و دریافت‌ها به‌روز باشد تا فردا اطلاعات از ابتدا درست باشد.</li></ol><div class="fa-note"><strong>عادت اصلی:</strong> هر واقعیت را همان زمانی که اتفاق می‌افتد در سیستم ثبت کنید؛ نه چند روز بعد از روی حافظه.</div></section>
+      <section id="control" class="content-card">
+        <h2>مرکز کنترل (Control Center)</h2>
+        <p>
+          روز کاری را از اینجا شروع کنید.
+          درخواست‌های باز، فعالیت خرید، تحویل‌های مورد انتظار، استثناهای انبار و سیگنال‌های ریسک را یک‌جا ببینید.
+          لازم نیست همه رکوردها را دستی باز کنید؛ اول موارد نیازمند اقدام را پیدا کنید.
+        </p>
+        <div class="fa-note">
+          <strong>اصل کار:</strong>
+          اول بپرسید «امروز چه چیزی نیاز به توجه دارد؟»
+          بعد سراغ «چه چیزی در دیتابیس هست؟» بروید.
+        </div>
+        <p style="margin-top:12px">
+          <a href="{{ url_for('control_center.dashboard') }}">باز کردن مرکز کنترل ←</a>
+        </p>
+      </section>
+
+      <section id="mr" class="content-card">
+        <h2>۱. درخواست کالا (MR)</h2>
+        <p>
+          MR بیان نیاز مهندسی است.
+          کد کالا، شرح و مشخصات، مقدار، واحد، پروژه، تاریخ مورد نیاز، اولویت و اطلاعات لازم را دقیق ثبت کنید.
+          کدهای ثابت، پایه گزارش‌گیری و مقایسه هستند.
+        </p>
+        <ol style="line-height:2.1;padding-right:22px">
+          <li>از کد پایدار کالا استفاده کنید.</li>
+          <li>مشخصات را طوری بنویسید که خرید بتواند متریال درست را تأمین کند.</li>
+          <li>تاریخ مورد نیاز را واقع‌بینانه بگذارید.</li>
+          <li>مقدار و واحد را یکدست نگه دارید.</li>
+          <li>یک نیاز را در چند فایل یا چند درخواست تکرار نکنید.</li>
+        </ol>
+        <div class="fa-note">
+          <strong>اشتباه رایج:</strong>
+          «سفارش شده» با «دریافت شده» یکی نیست. همیشه وضعیت پایین‌دستی را هم ببینید.
+        </div>
+      </section>
+
+      <section id="rfq" class="content-card">
+        <h2>۲. RFQ و مقایسه پیشنهادها</h2>
+        <p>برای نیاز تأییدشده RFQ بسازید و پیشنهادها را ساختاریافته ثبت کنید.</p>
+        <ul style="line-height:2.1;padding-right:22px">
+          <li>قیمت، زمان تحویل، موجودی و عملکرد تأمین‌کننده را مقایسه کنید.</li>
+          <li>بررسی کنید مشخصات پیشنهادی واقعاً با نیاز منطبق است.</li>
+          <li>توضیحات و تصمیم‌های مهم را فقط در ایمیل یا چت نگه ندارید.</li>
+          <li>پیشنهاد منتخب را به PO تبدیل کنید و ارتباط با MR را حفظ کنید.</li>
+        </ul>
+        <p>ارزان‌ترین پیشنهاد لزوماً مناسب‌ترین گزینه برای پروژه نیست.</p>
+      </section>
+
+      <section id="po" class="content-card">
+        <h2>۳. سفارش خرید (Purchase Order)</h2>
+        <p>
+          PO تعهد خرید است، نه مدرک دریافت فیزیکی.
+          مقدار سفارش، تأمین‌کننده، قیمت و تاریخ وعده تحویل را دقیق نگه دارید.
+        </p>
+        <ul style="line-height:2.1;padding-right:22px">
+          <li>وقتی تعهد تغییر می‌کند، همان PO را به‌روز کنید؛ رکورد تکراری نسازید.</li>
+          <li>تاریخ‌های وعده‌داده‌شده برای متریال‌های نزدیک به اجرا را زیر نظر بگیرید.</li>
+          <li>از MR مرتبط بفهمید چرا این سفارش وجود دارد.</li>
+        </ul>
+      </section>
+
+      <section id="delivery" class="content-card">
+        <h2>۴. تحویل (Delivery)</h2>
+        <p>رکوردهای Delivery نشان‌دهنده حرکت لجستیکی هستند و تا حد امکان باید به PO وصل شوند.</p>
+        <ul style="line-height:2.1;padding-right:22px">
+          <li>شناسه و تاریخ تحویل را ثبت کنید.</li>
+          <li>تغییر وضعیت را شفاف نگه دارید.</li>
+          <li>اعلام ارسال را با دریافت نهایی انبار یکی نگیرید.</li>
+          <li>مقدار واقعی دریافت‌شده در انبار، مدرک عملیاتی است.</li>
+        </ul>
+      </section>
+
+      <section id="warehouse" class="content-card">
+        <h2>۵. انبار (Warehouse)</h2>
+        <p>اینجا جایی است که اطلاعات سیستم با واقعیت فیزیکی تطبیق پیدا می‌کند.</p>
+        <ol style="line-height:2.1;padding-right:22px">
+          <li>تحویل مورد انتظار را شناسایی کنید.</li>
+          <li>مقدار و وضعیت ظاهری کالا را کنترل کنید.</li>
+          <li>مقدار واقعی دریافت را ثبت کنید.</li>
+          <li>در صورت نیاز Heat / Lot / Serial / Batch را وارد کنید.</li>
+          <li>محل نگهداری را درست مشخص کنید.</li>
+          <li>وضعیت موجودی را با واقعیت فیزیکی هم‌راستا نگه دارید.</li>
+        </ol>
+      </section>
+
+      <section id="reconcile" class="content-card">
+        <h2>۶. تطبیق موجودی (Material Reconciliation)</h2>
+        <p>
+          مهم‌ترین صفحه کنترل برای این سؤال:
+          <strong>مهندسی چه می‌خواست؟ چه مقدار خریدیم؟ چه چیزی تحویل شد؟ انبار واقعاً چه مقدار دریافت کرد؟</strong>
+        </p>
+        <div class="table-responsive">
+          <table class="fa-table">
+            <tr>
+              <th>وضعیت</th>
+              <th>معنی</th>
+              <th>اقدام</th>
+            </tr>
+            <tr>
+              <td>Not Ordered</td>
+              <td>نیاز ثبت شده ولی مقدار سفارش‌داده‌شده کامل نیست.</td>
+              <td>وضعیت خرید را بررسی کنید.</td>
+            </tr>
+            <tr>
+              <td>Ordered / Awaiting Receipt</td>
+              <td>خرید انجام شده اما دریافت کامل ثبت نشده.</td>
+              <td>تعهد تحویل و Delivery را بررسی کنید.</td>
+            </tr>
+            <tr>
+              <td>Partial Receipt / Shortage</td>
+              <td>مقدار دریافت‌شده کمتر از نیاز است.</td>
+              <td>کسری باقیمانده و اقدام پیگیری را مشخص کنید.</td>
+            </tr>
+            <tr>
+              <td>Surplus</td>
+              <td>مقدار دریافت‌شده از نیاز محاسبه‌شده بیشتر است.</td>
+              <td>مبنای فیزیکی و اسناد را کنترل کنید.</td>
+            </tr>
+          </table>
+        </div>
+        <p style="margin-top:12px">
+          از فیلتر «فقط موارد مشکل‌دار» برای تمرکز روی Not Ordered، Shortage، Partial Receipt و Surplus استفاده کنید.
+          <a href="{{ url_for('material_reconciliation.dashboard') }}">باز کردن تطبیق موجودی ←</a>
+        </p>
+      </section>
+
+      <section id="trace" class="content-card">
+        <h2>۷. ردیابی (Traceability)</h2>
+        <p>
+          برای متریال‌های کنترل‌شده، هویت را در دریافت، نگهداری و صدور حفظ کنید.
+          Heat، Lot، Serial یا Batch و ارتباط آن‌ها با اسناد و محل نگهداری را ثبت کنید.
+        </p>
+        <p>
+          <a href="{{ url_for('intelligence.traceability') }}">رفتن به ردیابی ←</a>
+        </p>
+      </section>
+
+      <section id="quality" class="content-card">
+        <h2>۸. مدارک کیفیت</h2>
+        <p>
+          MTC، CoC، Datasheet و مدارک بازرسی را با وضعیت روشن نگه دارید.
+          دریافت فیزیکی الزاماً به معنی پذیرش فنی نیست.
+        </p>
+        <div class="fa-note">
+          <strong>قانون:</strong>
+          فرض نکنید کالایی که از نظر فیزیکی رسیده، از نظر فنی هم پذیرفته شده است.
+        </div>
+      </section>
+
+      <section id="reports" class="content-card">
+        <h2>۹. گزارش‌ها و اشتراک‌گذاری</h2>
+        <p>
+          از <a href="{{ url_for('reports.center') }}">مرکز گزارش‌ها</a>
+          برای MR، PO، Delivery و Warehouse گزارش آماده کنید.
+          قبل از اشتراک‌گذاری، اعداد Required، Ordered و Received را کنترل کنید.
+        </p>
+        <ul style="line-height:2.1;padding-right:22px">
+          <li>لینک اشتراکی فقط‌خواندنی است.</li>
+          <li>صفحه اشتراک بدون منو و تبلیغات سایت نمایش داده می‌شود.</li>
+          <li>وقتی دیگر لازم نیست، دسترسی اشتراک را لغو کنید.</li>
+        </ul>
+      </section>
+
+      <section id="intelligence" class="content-card">
+        <h2>۱۰. هوشمندی متریال (Material Intelligence)</h2>
+        <p>
+          از سیگنال‌های آمادگی، زمان تأمین و تأمین‌کننده برای اولویت‌بندی توجه استفاده کنید.
+          این‌ها نشانه‌های عملیاتی‌اند، نه تصمیم خودکار.
+          نتایج غیرعادی را با رکوردهای اصلی تطبیق دهید.
+        </p>
+        <p>
+          <a href="{{ url_for('intelligence.dashboard') }}">باز کردن هوشمندی متریال ←</a>
+        </p>
+      </section>
+
+      <section id="copilot" class="content-card">
+        <h2>۱۱. دستیار هوش مصنوعی (Operations Copilot)</h2>
+        <p>
+          در صورت فعال بودن، Copilot باید شواهد موجود در سیستم را خلاصه کند و به یک اقدام مشخص اشاره کند.
+          پاسخ مفید معمولاً شامل متریال، نیاز فعلی، وضعیت خرید، وضعیت دریافت، تاریخ مورد نیاز و عامل ریسک است.
+        </p>
+        <div class="fa-note">
+          <strong>حاکمیت:</strong>
+          هوش مصنوعی پشتیبان تصمیم است.
+          مسئولیت فنی، تجاری و تأیید نهایی با خرید، کیفیت و مدیریت پروژه باقی می‌ماند.
+        </div>
+      </section>
+
+      <section id="daily" class="content-card">
+        <h2>۱۲. روتین پیشنهادی روزانه</h2>
+        <ol style="line-height:2.2;padding-right:22px">
+          <li><strong>صبح:</strong> مرکز کنترل و موارد نیازمند اقدام را ببینید.</li>
+          <li><strong>مهندسی:</strong> نیازهای فوری و تغییرات را بررسی کند.</li>
+          <li><strong>خرید:</strong> Not Ordered، تأخیرها و کسری‌های تأمین را پیگیری کند.</li>
+          <li><strong>Delivery / انبار:</strong> تحویل‌های مورد انتظار را با دریافت واقعی تطبیق دهد.</li>
+          <li><strong>مدیر پروژه:</strong> کسری‌ها و موارد اثرگذار بر اجرا را مرور کند.</li>
+          <li><strong>پایان روز:</strong> وضعیت تعهدها و دریافت‌ها به‌روز باشد تا فردا اطلاعات از ابتدا درست باشد.</li>
+        </ol>
+        <div class="fa-note">
+          <strong>عادت اصلی:</strong>
+          هر واقعیت را همان زمانی که اتفاق می‌افتد در سیستم ثبت کنید؛ نه چند روز بعد از روی حافظه.
+        </div>
+      </section>
+
+      <div class="fa-cta">
+        <h3>آماده اید کنترل متریال را یک‌جا ببینید؟</h3>
+        <p>
+          MaterialHub برای تیم‌های مهندسی، خرید، انبار و مدیریت پروژه طراحی شده است
+          تا به‌جای فایل‌های پراکنده، یک تصویر مشترک از نیاز تا دریافت داشته باشند.
+          از فضای کاری خود شروع کنید یا اگر هنوز حساب ندارید، یک فضای کاری بسازید.
+        </p>
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('role_workspace.my_workspace') }}"><i class="fas fa-layer-group"></i> رفتن به فضای کاری</a>
+          <a class="secondary" href="{{ url_for('control_center.dashboard') }}"><i class="fas fa-chart-pie"></i> مرکز کنترل</a>
+        {% else %}
+          <a href="{{ url_for('auth.register') }}"><i class="fas fa-rocket"></i> شروع رایگان</a>
+          <a class="secondary" href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> ورود</a>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
 </div>
 {% endblock %}
