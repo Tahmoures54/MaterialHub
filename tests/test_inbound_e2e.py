@@ -71,7 +71,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
         db.session.flush()
 
         po = PurchaseOrder(
-            order_no="PO-FLOW-0001",
+            order_no="PO-9001",
             project_id=project.id,
             user_id=buyer.id,
             supplier_id=supplier.id,
