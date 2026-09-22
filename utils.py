@@ -149,6 +149,13 @@ def generate_next_delivery_id(company_name=None):
         return "DLV-0001"
 
 
+def generate_next_warehouse_transaction_no(company_name=None):
+    try:
+        return _allocate_document_number("WT", company_name or "")
+    except Exception:
+        return "WT-0001"
+
+
 def generate_next_warehouse_id(company_name=None):
     try:
         return _allocate_document_number("WH", company_name or "")
