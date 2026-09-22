@@ -5,7 +5,7 @@ from io import StringIO
 import csv
 import logging
 from datetime import datetime
-from models import db, WarehouseInventory, WarehouseTransaction, Delivery, WorkflowStatus, AccessLevel, ValidationError
+from models import db, WarehouseInventory, WarehouseTransaction, Delivery, MaterialMaster, WorkflowStatus, AccessLevel, ValidationError
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -34,6 +34,22 @@ def warehouse_operations():
     except Exception as e:
         logger.error(f"Error rendering warehouse operations for user {current_user.id}: {str(e)}")
         return render_template('errors/500.html', error=str(e)), 500
+
+
+def _resolve_material(data):
+    material_id = data.get('material_id')
+    if material_id:
+        try:
+            material = MaterialMaster.query.filter_by(id=int(material_id), company_name=current_user.company_name, status='active').first()
+        except (TypeError, ValueError):
+            material = None
+        if not material:
+            raise ValueError('Selected material is not available in Material Master.')
+        return material
+    item_code = str(data.get('item_code') or '').strip()
+    if item_code:
+        return MaterialMaster.query.filter_by(material_code=item_code, company_name=current_user.company_name, status='active').first()
+    return None
 
 @warehouse_bp.route('/api/inventory', methods=['GET'])
 @login_required
