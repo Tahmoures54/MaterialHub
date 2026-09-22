@@ -18,8 +18,8 @@ from models import (
 from tests.test_app_integration import _persist_user, _authenticate_session
 
 
-def _csrf(client):
-    with client:
+def _csrf(client, app):
+    with app.app_context():
         return generate_csrf()
 
 
@@ -105,7 +105,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
         delivery_id, material_id = delivery.id, material.id
 
     _authenticate_session(client, buyer)
-    csrf = _csrf(client)
+    csrf = _csrf(client, app)
     pl_response = client.post("/warehouse/api/packing-lists", json={
         "csrf_token": csrf,
         "delivery_id": delivery_id,
