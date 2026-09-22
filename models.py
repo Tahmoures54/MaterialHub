@@ -851,6 +851,12 @@ class WarehouseTransaction(db.Model):
     contractor = db.Column(db.String(150), nullable=True)
     storage_location_id = db.Column(db.String(100), nullable=True)
     reference_no = db.Column(db.String(100), nullable=True, index=True)
+    packing_list_no = db.Column(db.String(100), nullable=True, index=True)
+    packing_list_date = db.Column(db.Date, nullable=True)
+    packing_list_document = db.Column(db.String(500), nullable=True)
+    supplier_name = db.Column(db.String(150), nullable=True, index=True)
+    discrepancy_type = db.Column(db.String(40), nullable=True)
+    discrepancy_details = db.Column(db.Text, nullable=True)
     remarks = db.Column(db.Text, nullable=True)
     company_name = db.Column(db.String(100), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
@@ -877,6 +883,12 @@ class WarehouseTransaction(db.Model):
             'contractor': self.contractor,
             'storage_location_id': self.storage_location_id,
             'reference_no': self.reference_no,
+            'packing_list_no': self.packing_list_no,
+            'packing_list_date': self.packing_list_date.isoformat() if self.packing_list_date else None,
+            'packing_list_document': self.packing_list_document,
+            'supplier_name': self.supplier_name,
+            'discrepancy_type': self.discrepancy_type,
+            'discrepancy_details': self.discrepancy_details,
             'remarks': self.remarks,
             'balance_before': self.balance_before,
             'balance_after': self.balance_after,
