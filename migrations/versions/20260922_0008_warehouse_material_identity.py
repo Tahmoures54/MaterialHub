@@ -17,7 +17,8 @@ def _columns(inspector, table):
 
 
 def _add_column(inspector, table, column):
-    if column not in _columns(inspector, table):
+    """Add a SQLAlchemy Column only when the database does not have it."""
+    if column.name not in _columns(inspector, table):
         op.add_column(table, column)
 
 
@@ -31,8 +32,9 @@ def upgrade():
 
     if inspector.has_table("warehouse_inventory"):
         _add_column(
-            inspector, "warehouse_inventory",
-            "material_id"
+            inspector,
+            "warehouse_inventory",
+            sa.Column("material_id", sa.Integer(), nullable=True),
         )
         inspector = sa.inspect(bind)
         if "ix_warehouse_inventory_material_id" not in _index_names(inspector, "warehouse_inventory"):
@@ -56,7 +58,11 @@ def upgrade():
             )
 
     if inspector.has_table("warehouse_transaction"):
-        _add_column(inspector, "warehouse_transaction", "material_id")
+        _add_column(
+            inspector,
+            "warehouse_transaction",
+            sa.Column("material_id", sa.Integer(), nullable=True),
+        )
         inspector = sa.inspect(bind)
         if "ix_warehouse_transaction_material_id" not in _index_names(inspector, "warehouse_transaction"):
             op.create_index(
