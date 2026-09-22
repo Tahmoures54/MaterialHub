@@ -91,8 +91,18 @@ def api_receive_inventory():
             item['item_code'] = material.material_code
             item['material_description'] = material.description
             item['unit'] = item.get('unit') or material.unit
-            inventory = WarehouseInventory.from_dict(item, current_user.company_name, current_user.id)
-            db.session.add(inventory)
+            inventory = WarehouseInventory.query.filter_by(
+                warehouse_id=item['warehouse_id'],
+                material_id=material.id,
+                company_name=current_user.company_name
+            ).first()
+            if inventory:
+                inventory.received_qty += float(item.get('received_quantity') or item.get('received_qty') or 0)
+                inventory.delivery_id = str(item.get('delivery_id') or inventory.delivery_id)
+                inventory.remarks = item.get('remarks') or inventory.remarks
+            else:
+                inventory = WarehouseInventory.from_dict(item, current_user.company_name, current_user.id)
+                db.session.add(inventory)
             db.session.flush()
             from utils import generate_next_warehouse_transaction_no
             tx = WarehouseTransaction(
