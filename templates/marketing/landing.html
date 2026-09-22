@@ -1,144 +1,58 @@
 {% extends "base.html" %}
 {% block title %} — Material Operations for Construction & EPC{% endblock %}
-{% block meta_description %}MaterialHub connects material requisitions, procurement, delivery, warehouse, quality and traceability so construction and EPC teams know what is needed, where it is, and when it will arrive.{% endblock %}
-{% block content %}
+{% block meta_description %}Control the full material lifecycle for construction and EPC projects: requisitions, procurement, suppliers, delivery, QC, warehouse and traceability in one workspace.{% endblock %}
+{% block head %}
 <style>
-  .lp-hero {
-    position: relative;
-    overflow: hidden;
-    border-radius: 28px;
-    padding: 3.25rem 3rem 3rem;
-    background:
-      radial-gradient(ellipse 70% 55% at 85% 20%, rgba(34, 211, 238, 0.16), transparent 55%),
-      radial-gradient(ellipse 50% 40% at 10% 90%, rgba(14, 116, 144, 0.22), transparent 50%),
-      linear-gradient(145deg, #0B1622 0%, #0F2847 42%, #0E7490 100%);
-    color: #F8FAFC;
-    box-shadow: 0 28px 60px rgba(11, 22, 34, 0.28);
-  }
-  .lp-hero-grid {
-    display: grid;
-    grid-template-columns: 1.05fr 0.95fr;
-    gap: 2.5rem;
-    align-items: center;
-  }
-  .lp-hero-copy { position: relative; z-index: 1; }
-  .lp-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.4rem 0.75rem;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.14);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #A5F3FC;
-  }
-  .lp-hero h1 {
-    margin: 1rem 0 0.85rem;
-    font-size: clamp(2.1rem, 4.2vw, 3.35rem);
-    line-height: 1.08;
-    letter-spacing: -0.03em;
-    max-width: 16ch;
-  }
-  .lp-hero-lead {
-    margin: 0;
-    max-width: 36rem;
-    color: #CBD5E1;
-    font-size: 1.08rem;
-    line-height: 1.7;
-  }
-  .lp-hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1.6rem;
-  }
-  .lp-hero-actions .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.8rem 1.2rem;
-    border-radius: 12px;
-    font-weight: 700;
-    text-decoration: none;
-    border: 1px solid transparent;
-  }
-  .lp-btn-primary { background: #fff; color: #0E7490; }
-  .lp-btn-primary:hover { background: #ECFEFF; }
-  .lp-btn-ghost {
-    background: rgba(255,255,255,0.08);
-    border-color: rgba(255,255,255,0.2);
-    color: #F8FAFC;
-  }
-  .lp-btn-ghost:hover { background: rgba(255,255,255,0.14); }
-  .lp-hero-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.25rem;
-    margin-top: 1.75rem;
-    color: #94A3B8;
-    font-size: 0.86rem;
-  }
-  .lp-hero-meta span { display: inline-flex; align-items: center; gap: 0.4rem; }
-  .lp-hero-meta i { color: #22D3EE; }
-  .lp-hero-visual {
-    position: relative;
-    min-height: 420px;
-    border-radius: 22px;
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.12);
-    box-shadow: 0 24px 50px rgba(0,0,0,0.28);
-  }
-  .lp-hero-visual img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .lp-hero-visual::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(11,22,34,0.15) 0%, rgba(11,22,34,0.55) 100%);
-    pointer-events: none;
-  }
-  .lp-visual-card {
-    position: absolute;
-    z-index: 2;
-    left: 1rem;
-    right: auto;
-    width: min(78%, 260px);
-    padding: 0.85rem 1rem;
-    border-radius: 14px;
-    background: rgba(15, 23, 42, 0.78);
-    border: 1px solid rgba(148, 163, 184, 0.28);
-    backdrop-filter: blur(10px);
-    color: #E2E8F0;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    transition: transform 0.25s ease;
-  }
-  .lp-visual-card strong { display: block; font-size: 0.92rem; margin-bottom: 0.2rem; color: #F8FAFC; }
-  .lp-visual-card span { font-size: 0.78rem; color: #94A3B8; line-height: 1.45; }
-  .lp-visual-card.top { top: 12%; }
-  .lp-visual-card.mid { top: 42%; left: auto; right: 1rem; }
-  .lp-visual-card.bot { bottom: 12%; }
-  .lp-visual-card:hover { transform: translateY(-3px); }
-  .lp-cta { margin-top: 2rem; }
-  .lp-cta .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.85rem 1.25rem;
-    border-radius: 12px;
-    font-weight: 700;
-    text-decoration: none;
-    background: #0F172A;
-    color: #fff;
-    border: 1px solid #0F172A;
-  }
+  .lp { max-width: 1120px; margin: 0 auto; }
+  .lp-hero { position:relative; overflow:hidden; border-radius:16px; border:1px solid #CBD5E1; background:radial-gradient(ellipse 80% 60% at 85% 10%,rgba(8,145,178,.14),transparent 55%),radial-gradient(ellipse 50% 40% at 10% 90%,rgba(14,116,144,.08),transparent 50%),linear-gradient(160deg,#F0FDFF 0%,#F8FAFC 45%,#FFFFFF 100%); padding:clamp(2.25rem,5vw,3.75rem) clamp(1.5rem,4vw,3rem); margin-bottom:1.75rem; }
+  .lp-hero-badge { display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .75rem;border-radius:999px;background:#ECFEFF;border:1px solid #A5F3FC;color:#0E7490;font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:1.15rem; }
+  .lp-hero h1 { margin:0 0 1rem;font-size:clamp(1.85rem,4.2vw,3.1rem);font-weight:800;letter-spacing:-.03em;line-height:1.12;color:#0F172A; }
+  .lp-hero h1 span { color:#0E7490; }
+  .lp-hero-lead { margin:0;max-width:560px;font-size:1.05rem;line-height:1.65;color:#64748B; }
+  .lp-hero-actions { display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.85rem; }
+  .lp-hero-meta { display:flex;flex-wrap:wrap;gap:1.5rem;margin-top:2rem;padding-top:1.5rem;border-top:1px solid #E2E8F0; }
+  .lp-hero-meta div strong { display:block;font-size:1.35rem;font-weight:800;color:#0F172A;letter-spacing:-.02em; }
+  .lp-hero-meta div span { font-size:.8rem;color:#64748B;font-weight:500; }
+  .lp-hero-grid { display:grid;grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);gap:2rem;align-items:center; }
+  .lp-hero-visual { position:relative;min-height:420px;border-radius:16px;overflow:hidden;background:#0B1622;box-shadow:0 14px 34px rgba(15,23,42,.16);isolation:isolate; }
+  .lp-hero-visual img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-3; }
+  .lp-hero-visual::after { content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(11,22,34,.05) 0%,rgba(11,22,34,.18) 42%,rgba(11,22,34,.68) 100%); }
+  .lp-visual-caption { position:absolute;left:1.25rem;right:1.25rem;bottom:1.15rem;color:#F8FAFC;z-index:2; }
+  .lp-visual-kicker { display:inline-block;padding:.3rem .6rem;border-radius:999px;background:rgba(8,145,178,.82);border:1px solid rgba(103,232,249,.35);font-size:.68rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin-bottom:.55rem; }
+  .lp-visual-caption h3 { margin:0 0 .3rem;font-size:1.25rem;font-weight:800; }
+  .lp-visual-caption p { margin:0;max-width:430px;color:#D6E4EC;font-size:.84rem;line-height:1.5; }
+  .lp-visual-cards { position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none; }
+  .lp-visual-card { position:absolute;top:25%;left:50%;width:min(78%,285px);padding:.9rem 1rem;color:#F8FAFC;text-shadow:0 2px 12px rgba(0,0,0,.55);opacity:0;transform:translate(150%,-50%);transition:transform .85s cubic-bezier(.22,.61,.36,1),opacity .65s ease; }
+  .lp-visual-card.active { opacity:1;transform:translate(-50%,-50%); }
+  .lp-visual-card.exit { opacity:0;transform:translate(-170%,-50%); }
+  .lp-visual-card-label { display:flex;align-items:center;gap:.45rem;font-size:.72rem;color:#E2E8F0;font-weight:800;text-transform:uppercase;letter-spacing:.06em; }
+  .lp-visual-card-label i { color:#67E8F9; }
+  .lp-visual-card strong { display:block;margin-top:.3rem;font-size:1.35rem;font-weight:800; }
+  .lp-visual-card span { display:block;margin-top:.2rem;font-size:.82rem;color:#F1F5F9; }
+  .lp-visual-card .ok { color:#A5F3FC;font-weight:800; }
+  .lp-visual-dots { position:absolute;left:50%;bottom:1rem;transform:translateX(-50%);z-index:3;display:flex;gap:.4rem; }
+  .lp-visual-dot { width:8px;height:8px;border:0;border-radius:50%;padding:0;background:rgba(255,255,255,.5);cursor:pointer; }
+  .lp-visual-dot.active { background:#67E8F9;box-shadow:0 0 0 3px rgba(8,145,178,.28); }
+  .lp-section { margin-bottom:1.75rem; }
+  .lp-section-head { margin-bottom:1.15rem; }
+  .lp-section-head h2 { margin:0 0 .35rem;font-size:1.35rem;font-weight:800;letter-spacing:-.02em;color:#0F172A; }
+  .lp-section-head p { margin:0;font-size:.95rem;color:#64748B;max-width:520px; }
+  .lp-flow { background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:1.5rem 1.35rem;box-shadow:0 1px 3px rgba(15,23,42,.04); }
+  .lp-flow-steps { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:.75rem;margin-top:1.15rem; }
+  .lp-step { text-align:center;padding:1rem .75rem;border-radius:10px;background:#F8FAFC;border:1px solid #E2E8F0; }
+  .lp-step-num { width:28px;height:28px;margin:0 auto .55rem;border-radius:50%;background:#0E7490;color:#fff;font-size:.8rem;font-weight:800;display:grid;place-items:center; }
+  .lp-step strong { display:block;font-size:.88rem;font-weight:700;color:#0F172A;margin-bottom:.2rem; }
+  .lp-step span { font-size:.75rem;color:#64748B; }
+  .lp-roles { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:.85rem; }
+  .lp-role { background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:1.15rem 1.2rem;border-left:3px solid #0E7490;transition:box-shadow .15s; }
+  .lp-role:hover { box-shadow:0 6px 18px rgba(15,23,42,.06); }
+  .lp-role strong { display:block;font-size:.95rem;font-weight:700;color:#0F172A;margin-bottom:.3rem; }
+  .lp-role p { margin:0;font-size:.82rem;color:#64748B;line-height:1.45; }
+  .lp-cta { border-radius:16px;padding:clamp(2rem,4vw,2.75rem);text-align:center;background:linear-gradient(145deg,#0B1622 0%,#122033 55%,#0E7490 160%);border:none;position:relative;overflow:hidden; }
+  .lp-cta::before { content:"";position:absolute;top:-30%;right:-10%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(8,145,178,.25),transparent 70%);pointer-events:none; }
+  .lp-cta h2 { margin:0 0 .5rem;font-size:clamp(1.25rem,3vw,1.6rem);font-weight:800;color:#F8FAFC;letter-spacing:-.02em;position:relative; }
+  .lp-cta p { margin:0 0 1.5rem;color:#94A3B8;font-size:.95rem;position:relative; }
+  .lp-cta .btn { position:relative;background:#0891B2;border-color:#0891B2; }
   .lp-cta .btn:hover { background:#0E7490;border-color:#0E7490; }
   .lp-cta-secondary { margin-left:.5rem;background:transparent!important;border:1px solid rgba(148,163,184,.45)!important;color:#E2E8F0!important; }
   .lp-cta-secondary:hover { background:rgba(255,255,255,.06)!important;border-color:#94A3B8!important; }
@@ -150,284 +64,264 @@
   @media (max-width:600px) { .lp-hero-actions{flex-direction:column;align-items:stretch}.lp-hero-meta{gap:1rem}.lp-hero-visual{min-height:360px}.lp-visual-card{top:22%;width:min(86%,250px)} }
   @media (prefers-reduced-motion:reduce) { .lp-visual-card{transition:none!important} }
   .lp-capabilities { margin-top:.25rem; }
-  .lp-section { margin-top: 2rem; }
-  .lp-section-head { margin-bottom: 1rem; }
-  .lp-section-head h2 { margin: 0 0 0.4rem; font-size: 1.45rem; color: #0F172A; }
-  .lp-section-head p { margin: 0; color: #64748B; max-width: 720px; line-height: 1.65; }
-  .lp-cap-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-  .lp-cap {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 18px;
-    background: #fff;
-    border: 1px solid #E2E8F0;
-    border-radius: 16px;
-    text-decoration: none;
-    color: inherit;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
-    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
-  }
-  .lp-cap:hover {
-    border-color: #99F6E4;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-  }
-  .lp-cap-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: #ECFEFF;
-    color: #0E7490;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-  }
-  .lp-cap strong { display: block; margin-bottom: 4px; color: #0F172A; }
-  .lp-cap p { margin: 0; color: #64748B; font-size: 0.9rem; line-height: 1.55; }
-  .lp-cap-arrow { margin-left: auto; color: #94A3B8; font-weight: 700; }
-  .lp-flow {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 0;
-    background: #fff;
-    border: 1px solid #E2E8F0;
-    border-radius: 18px;
-    padding: 16px;
-  }
-  .lp-step { position: relative; padding: 12px; text-align: center; }
-  .lp-step:not(:last-child)::after {
-    content: "→";
-    position: absolute;
-    right: -8px;
-    top: 24px;
-    color: #94A3B8;
-    font-weight: 800;
-  }
-  .lp-step .n {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    margin: 0 auto 8px;
-    display: grid;
-    place-items: center;
-    background: #ECFEFF;
-    color: #0E7490;
-    font-weight: 800;
-  }
-  .lp-step strong { display: block; font-size: 0.84rem; color: #0F172A; }
-  .lp-step small { display: block; color: #64748B; margin-top: 3px; }
-  .lp-bottom {
-    display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    gap: 14px;
-    margin-top: 1.25rem;
-  }
-  .lp-value {
-    background: #fff;
-    border: 1px solid #E2E8F0;
-    border-radius: 18px;
-    padding: 24px;
-  }
-  .lp-value h3 { margin: 0 0 8px; color: #0F172A; }
-  .lp-value p { color: #64748B; line-height: 1.65; margin: 0; }
-  .lp-checks {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 9px;
-    margin-top: 16px;
-  }
-  .lp-check {
-    padding: 10px 12px;
-    background: #F8FAFC;
-    border-radius: 10px;
-    font-size: 0.84rem;
-    color: #334155;
-  }
-  .lp-check i { color: #0E7490; margin-right: 6px; }
-  .lp-link { color: #0E7490; text-decoration: none; font-weight: 700; }
-  @media (max-width: 1100px) {
-    .lp-cap-grid { grid-template-columns: 1fr; }
-    .lp-flow { grid-template-columns: repeat(3, 1fr); }
-    .lp-step:nth-child(3)::after { display: none; }
-    .lp-bottom { grid-template-columns: 1fr; }
-  }
-  @media (max-width: 650px) {
-    .lp-hero { padding: 1.75rem 1.25rem; border-radius: 20px; }
-    .lp-flow { grid-template-columns: 1fr 1fr; }
-    .lp-step::after { display: none !important; }
-    .lp-checks { grid-template-columns: 1fr; }
-  }
-  [data-theme="dark"] .lp-section-head h2,
-  [data-theme="dark"] .lp-cap strong,
-  [data-theme="dark"] .lp-step strong,
-  [data-theme="dark"] .lp-value h3 { color: #F1F5F9; }
-  [data-theme="dark"] .lp-cap,
-  [data-theme="dark"] .lp-flow,
-  [data-theme="dark"] .lp-value {
-    background: #111827;
-    border-color: #1E293B;
-  }
-  [data-theme="dark"] .lp-check { background: #0F172A; color: #CBD5E1; }
+  .lp-cap-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem; }
+  .lp-cap { display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.9rem;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:1.05rem 1.1rem;text-decoration:none;transition:transform .16s,box-shadow .16s,border-color .16s; }
+  .lp-cap:hover { transform:translateY(-2px);border-color:#A5F3FC;box-shadow:0 9px 24px rgba(15,23,42,.07); }
+  .lp-cap-icon { width:42px;height:42px;border-radius:12px;background:#ECFEFF;color:#0E7490;display:grid;place-items:center;font-size:1rem; }
+  .lp-cap strong { display:block;color:#0F172A;font-size:.94rem;margin-bottom:.22rem; }
+  .lp-cap p { margin:0;color:#64748B;font-size:.78rem;line-height:1.5; }
+  .lp-cap-arrow { color:#0E7490;font-size:1.1rem;font-weight:800; }
+  .lp-control { display:grid;grid-template-columns:1.05fr .95fr;gap:1.5rem;background:linear-gradient(145deg,#F0FDFF,#FFFFFF);border:1px solid #CFFAFE;border-radius:16px;padding:1.5rem; }
+  .lp-kicker { display:inline-block;color:#0E7490;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem; }
+  .lp-control h2 { margin:0 0 .5rem;font-size:1.35rem;color:#0F172A; }
+  .lp-control p { margin:0;color:#64748B;line-height:1.65;font-size:.9rem; }
+  .lp-control-checks { display:grid;grid-template-columns:1fr 1fr;gap:.7rem; }
+  .lp-control-checks > div { display:flex;gap:.6rem;padding:.85rem;border:1px solid #E2E8F0;border-radius:11px;background:#fff; }
+  .lp-control-checks i { color:#0E7490;margin-top:.15rem; }
+  .lp-control-checks strong { display:block;font-size:.78rem;color:#0F172A; }
+  .lp-control-checks small { display:block;margin-top:.2rem;color:#64748B;font-size:.7rem;line-height:1.4; }
+  @media(max-width:800px){.lp-cap-grid,.lp-control{grid-template-columns:1fr}.lp-control-checks{grid-template-columns:1fr}}
+  @media(max-width:600px){.lp-cap{grid-template-columns:auto 1fr}.lp-cap-arrow{display:none}}
+  .lp-coding { display:grid;grid-template-columns:1.05fr .95fr;gap:1.5rem;align-items:stretch;background:linear-gradient(135deg,#082F49 0%,#0E7490 72%,#0891B2 100%);border-radius:18px;padding:1.6rem;color:#F8FAFC;overflow:hidden;position:relative;box-shadow:0 14px 35px rgba(8,47,73,.15); }
+  .lp-coding:after { content:"";position:absolute;width:330px;height:330px;border:1px solid rgba(255,255,255,.1);border-radius:50%;right:-150px;bottom:-210px; }
+  .lp-coding-copy { position:relative;z-index:1; }
+  .lp-coding .lp-kicker { color:#A5F3FC; }
+  .lp-coding h2 { margin:0 0 .65rem;font-size:clamp(1.45rem,3vw,2rem);line-height:1.15;letter-spacing:-.025em;color:#fff; }
+  .lp-coding-copy > p { margin:0;color:#D8F5F5;line-height:1.7;font-size:.9rem;max-width:650px; }
+  .lp-coding-copy > p strong { color:#fff; }
+  .lp-code-example { display:inline-flex;align-items:baseline;gap:.65rem;margin:1rem 0 .85rem;padding:.55rem .8rem;border:1px solid rgba(165,243,252,.3);border-radius:10px;background:rgba(255,255,255,.08); }
+  .lp-code-example span { font:800 1.2rem/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#A5F3FC;letter-spacing:.03em; }
+  .lp-code-example small { color:#CFFAFE;font-size:.68rem; }
+  .lp-coding-points { display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.2rem; }
+  .lp-coding-points > div { display:flex;gap:.55rem;padding:.65rem;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.055); }
+  .lp-coding-points i { color:#67E8F9;margin-top:.15rem; }
+  .lp-coding-points strong { display:block;font-size:.75rem;color:#fff; }
+  .lp-coding-points small { display:block;margin-top:.15rem;color:#C8E8EA;font-size:.66rem;line-height:1.4; }
+  .lp-code-link { display:inline-flex;align-items:center;gap:.5rem;margin-top:1rem;color:#fff;text-decoration:none;font-size:.82rem;font-weight:800; }
+  .lp-code-link:hover { color:#A5F3FC; }
+  .lp-coding-visual { position:relative;z-index:1;display:flex;align-items:center;justify-content:center; }
+  .lp-code-window { width:min(100%,430px);background:#071521;border:1px solid rgba(165,243,252,.22);border-radius:15px;padding:.8rem;box-shadow:0 18px 45px rgba(0,0,0,.2); }
+  .lp-code-top { display:flex;align-items:center;gap:.35rem;padding:0 .25rem .7rem;border-bottom:1px solid rgba(255,255,255,.1);color:#CFFAFE; }
+  .lp-code-top > span { width:7px;height:7px;border-radius:50%;background:#64748B; }
+  .lp-code-top b { margin-left:auto;font-size:.68rem;font-weight:700; }
+  .lp-code-row { display:flex;justify-content:space-between;gap:1rem;padding:.58rem .35rem;border-bottom:1px solid rgba(255,255,255,.07);font-size:.72rem; }
+  .lp-code-row label { color:#94A3B8; }
+  .lp-code-row span { color:#E2E8F0;text-align:right; }
+  .lp-code-main strong { color:#67E8F9;font:800 .9rem/1 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .lp-code-row em { color:#A5F3FC;font-style:normal;font-weight:800; }
+  .lp-code-footer { display:flex;gap:.45rem;align-items:center;padding:.7rem .35rem .15rem;color:#A5F3FC;font-size:.68rem; }
+  @media(max-width:800px){.lp-coding{grid-template-columns:1fr}.lp-coding-points{grid-template-columns:1fr}.lp-code-window{max-width:520px}}
+  @media(max-width:600px){.lp-coding{padding:1.2rem}.lp-code-row{font-size:.66rem}}
 </style>
-
-<div class="lp-page">
+{% endblock %}
+{% block content %}
+<div class="lp">
   <section class="lp-hero">
     <div class="lp-hero-grid">
-      <div class="lp-hero-copy">
-        <span class="lp-eyebrow"><i class="fas fa-industry"></i> Construction & EPC</span>
-        <h1>Know what you need. Know where it is. Know when it will arrive.</h1>
-        <p class="lp-hero-lead">
-          MaterialHub connects demand, procurement, suppliers, delivery, quality, warehouse traceability and operational control —
-          one serious workspace for industrial projects.
-        </p>
+      <div>
+        <div class="lp-hero-badge"><i class="fas fa-industry"></i> Construction & EPC</div>
+        <h1>Know what you need.<br>Know <span>where it is</span>.<br>Know when it will arrive.</h1>
+        <p class="lp-hero-lead">MaterialHub connects demand, procurement, suppliers, delivery, quality, warehouse traceability and operational control — one serious workspace for industrial projects.</p>
         <div class="lp-hero-actions">
-          {% if current_user.is_authenticated %}
-            <a class="btn lp-btn-primary" href="{{ url_for('role_workspace.my_workspace') }}"><i class="fas fa-layer-group"></i> Open My Workspace</a>
-            <a class="btn lp-btn-ghost" href="{{ url_for('control_center.dashboard') }}"><i class="fas fa-chart-pie"></i> Control Center</a>
-          {% else %}
-            <a class="btn lp-btn-primary" href="{{ url_for('auth.register') }}"><i class="fas fa-rocket"></i> Create workspace</a>
-            <a class="btn lp-btn-ghost" href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> Sign in</a>
-          {% endif %}
+          <a class="btn btn-primary btn-lg" href="{{ url_for('growth.demo') }}"><i class="fas fa-play-circle"></i> Explore Demo</a>
+          <a class="btn btn-secondary btn-lg" href="{{ url_for('growth.contact') }}">Request a Demo</a>
         </div>
         <div class="lp-hero-meta">
-          <span><i class="fas fa-check"></i> Workflow driven</span>
-          <span><i class="fas fa-check"></i> Role-aware</span>
-          <span><i class="fas fa-check"></i> Traceable</span>
-          <span><i class="fas fa-check"></i> AI-assisted</span>
+          <div><strong>MR → PO</strong><span>Engineering to Procurement</span></div>
+          <div><strong>Delivery → WH</strong><span>Receive, QC & stock</span></div>
+          <div><strong>Control</strong><span>Reconcile every material</span></div>
         </div>
       </div>
-      <div class="lp-hero-visual">
-        <img src="{{ url_for('static', filename='images/landing-hero.jpg') }}" alt="Material operations" onerror="this.style.display='none'">
-        <div class="lp-visual-card top"><strong>MR → PO</strong><span>Engineering to Procurement</span></div>
-        <div class="lp-visual-card mid"><strong>Delivery → WH</strong><span>Receive, QC & stock</span></div>
-        <div class="lp-visual-card bot"><strong>Control</strong><span>Reconcile every material</span></div>
+      <div class="lp-hero-visual" aria-label="Global logistics and container supply chain with material control cards">
+        <img src="{{ url_for('static', filename='images/pic_1.png') }}" alt="Large container ship carrying containers across the ocean">
+        <div class="lp-visual-cards" aria-hidden="true">
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-clipboard-list"></i> Engineering</div>
+            <strong>Material Requisition</strong><span>Register project material needs with quantity, priority and required date.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-file-invoice-dollar"></i> Procurement</div>
+            <strong>RFQ / Tender → PO</strong><span>Request quotes, compare offers and create purchase orders.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-users"></i> Suppliers</div>
+            <strong>Supplier Management</strong><span>Search suppliers and materials by price, quantity, country and delivery time.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-truck"></i> Delivery</div>
+            <strong>Delivery Tracking</strong><span>Follow inbound deliveries and connect them directly to purchase orders.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-warehouse"></i> Warehouse</div>
+            <strong>Receiving & Stock</strong><span>Receive material, record location and keep the warehouse balance visible.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-scale-balanced"></i> Control</div>
+            <strong>Material Reconciliation</strong><span>Compare MR, PO, Delivery and Warehouse to expose shortage, surplus and gaps.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-qrcode"></i> Quality & Traceability</div>
+            <strong>QC · MTC / CoC · QR</strong><span>Keep quality evidence and material identity connected to the record.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-file-export"></i> Reports</div>
+            <strong>Reports & Sharing</strong><span>Print, export and securely share MR, PO, Delivery and Warehouse reports.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-store"></i> Marketplace</div>
+            <strong>Material Marketplace</strong><span>Filter and compare materials by supplier, price, availability and delivery.</span>
+          </div>
+          <div class="lp-visual-card">
+            <div class="lp-visual-card-label"><i class="fas fa-user-shield"></i> Workspace</div>
+            <strong>Roles & Control</strong><span>Role-based workspaces, tenant-aware data and controlled access for project teams.</span>
+          </div>
+        </div>
+        <div class="lp-visual-dots" aria-label="Material control highlights">
+          <button class="lp-visual-dot active" type="button" aria-label="Show Engineering"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Procurement"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Suppliers"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Delivery"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Warehouse"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Reconciliation"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Quality and Traceability"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Reports"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Marketplace"></button>
+          <button class="lp-visual-dot" type="button" aria-label="Show Roles and Control"></button>
+        </div>
+        <div class="lp-visual-caption">
+          <span class="lp-visual-kicker">Supply chain → project control</span>
+          <h3>Material moves. Your team stays in control.</h3>
+          <p>See the story at a glance — from engineering need to purchasing, delivery and warehouse receipt.</p>
+        </div>
       </div>
     </div>
   </section>
-
   <section class="lp-section lp-capabilities">
     <div class="lp-section-head">
       <h2>One platform, every material handoff</h2>
       <p>MaterialHub brings the real operational modules together so teams can move from demand to site readiness without losing material identity or control.</p>
     </div>
     <div class="lp-cap-grid">
-      <a class="lp-cap" href="{{ url_for('material_requisitions.material_requisitions') }}">
-        <span class="lp-cap-icon"><i class="fas fa-clipboard-list"></i></span>
-        <div>
-          <strong>Material Requisitions</strong>
-          <p>Create and track project demand, quantity, required date, priority and technical requirements.</p>
-        </div>
-        <span class="lp-cap-arrow">→</span>
-      </a>
-      <a class="lp-cap" href="{{ url_for('purchase_order.purchase_order') }}">
-        <span class="lp-cap-icon"><i class="fas fa-file-invoice-dollar"></i></span>
-        <div>
-          <strong>Procurement</strong>
-          <p>Move approved demand into procurement and purchase orders while keeping the source request connected.</p>
-        </div>
-        <span class="lp-cap-arrow">→</span>
-      </a>
-      <a class="lp-cap" href="{{ url_for('delivery.delivery_order') }}">
-        <span class="lp-cap-icon"><i class="fas fa-truck"></i></span>
-        <div>
-          <strong>Delivery Control</strong>
-          <p>Track inbound deliveries, references and timing before they affect site readiness.</p>
-        </div>
-        <span class="lp-cap-arrow">→</span>
-      </a>
-      <a class="lp-cap" href="{{ url_for('warehouse.warehouse_operations') }}">
-        <span class="lp-cap-icon"><i class="fas fa-warehouse"></i></span>
-        <div>
-          <strong>Warehouse</strong>
-          <p>Receive, locate and monitor inventory with company-level operational control.</p>
-        </div>
-        <span class="lp-cap-arrow">→</span>
-      </a>
-      <a class="lp-cap" href="{{ url_for('quality_control.quality_control') }}">
-        <span class="lp-cap-icon"><i class="fas fa-shield-alt"></i></span>
-        <div>
-          <strong>Quality Control</strong>
-          <p>Keep inspection and release status connected to the material flow.</p>
-        </div>
-        <span class="lp-cap-arrow">→</span>
-      </a>
-      <a class="lp-cap" href="{{ url_for('intelligence.dashboard') }}">
-        <span class="lp-cap-icon"><i class="fas fa-brain"></i></span>
-        <div>
-          <strong>Material Intelligence</strong>
-          <p>Readiness signals, supplier scoring and risk views from live operational data.</p>
-        </div>
-        <span class="lp-cap-arrow">→</span>
-      </a>
-      <a class="lp-cap" href="{{ url_for('intelligence.traceability') }}">
-        <span class="lp-cap-icon"><i class="fas fa-qrcode"></i></span>
-        <div>
-          <strong>Traceability</strong>
-          <p>Connect material identity, heat/lot data, PO, delivery, warehouse and project references.</p>
-        </div>
-        <span class="lp-cap-arrow">→</span>
-      </a>
-      <a class="lp-cap" href="{{ url_for('material_reconciliation.dashboard') }}">
-        <span class="lp-cap-icon"><i class="fas fa-balance-scale"></i></span>
-        <div>
-          <strong>Material Reconciliation</strong>
-          <p>Compare required, ordered, delivered and received quantities in one control view.</p>
-        </div>
-        <span class="lp-cap-arrow">→</span>
-      </a>
+      <a class="lp-cap" href="{{ url_for('material_requisitions.material_requisitions') }}"><span class="lp-cap-icon"><i class="fas fa-clipboard-list"></i></span><div><strong>Material Requisitions</strong><p>Create and track project demand, quantity, required date, priority and technical requirements.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('purchase_order.purchase_order') }}"><span class="lp-cap-icon"><i class="fas fa-file-invoice-dollar"></i></span><div><strong>Procurement</strong><p>Move approved demand into procurement and purchase orders while keeping the source request connected.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('delivery.delivery_order') }}"><span class="lp-cap-icon"><i class="fas fa-truck"></i></span><div><strong>Delivery Control</strong><p>Track inbound deliveries, references and timing before they affect project execution.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('warehouse.warehouse_operations') }}"><span class="lp-cap-icon"><i class="fas fa-warehouse"></i></span><div><strong>Warehouse</strong><p>Receive, issue, return and transfer material with controlled inventory transactions.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('quality_control.quality_control') }}"><span class="lp-cap-icon"><i class="fas fa-shield-alt"></i></span><div><strong>Quality Control</strong><p>Connect inspection and release status to the same material flow instead of separate records.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('intelligence.dashboard') }}"><span class="lp-cap-icon"><i class="fas fa-brain"></i></span><div><strong>Material Intelligence</strong><p>Surface readiness, risk signals, supplier intelligence and operational actions from live data.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('intelligence.traceability') }}"><span class="lp-cap-icon"><i class="fas fa-qrcode"></i></span><div><strong>Traceability</strong><p>Connect material identity with PO, delivery, warehouse, project and traceability references.</p></div><span class="lp-cap-arrow">→</span></a>
+      <a class="lp-cap" href="{{ url_for('intelligence.excel_import') }}"><span class="lp-cap-icon"><i class="fas fa-file-excel"></i></span><div><strong>Excel Import</strong><p>Bring structured project data into the system without rebuilding every record manually.</p></div><span class="lp-cap-arrow">→</span></a>
     </div>
   </section>
 
   <section class="lp-section">
-    <div class="lp-section-head">
-      <h2>Operational flow</h2>
-      <p>The interface follows the real material lifecycle instead of presenting disconnected pages.</p>
+    <div class="lp-coding">
+      <div class="lp-coding-copy">
+        <span class="lp-kicker">Material Intelligence · Coding System</span>
+        <h2>Every material gets one controlled identity.</h2>
+        <p>Stop managing industrial materials by inconsistent descriptions and scattered supplier part numbers. MaterialHub gives each material a stable <strong>Material Code</strong> and keeps technical identity, classification and traceability connected.</p>
+        <div class="lp-code-example"><span>MAT-000247</span><small>Stable Material Code</small></div>
+        <div class="lp-coding-points">
+          <div><i class="fas fa-layer-group"></i><span><strong>Structured identity</strong><small>Family, discipline, group, standard, grade and size.</small></span></div>
+          <div><i class="fas fa-barcode"></i><span><strong>Industry classifications</strong><small>UNSPSC · eCl@ss · ETIM when required.</small></span></div>
+          <div><i class="fas fa-fingerprint"></i><span><strong>Duplicate protection</strong><small>Detect similar material identities before creating another record.</small></span></div>
+          <div><i class="fas fa-link"></i><span><strong>Traceability ready</strong><small>Supplier part, revision, certificate, lot, heat and serial controls stay with the material.</small></span></div>
+        </div>
+        <a class="lp-code-link" href="{{ url_for('material_master.catalog') }}">Explore Material Master <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="lp-coding-visual">
+        <div class="lp-code-window">
+          <div class="lp-code-top"><span></span><span></span><span></span><b>Material Master</b></div>
+          <div class="lp-code-row lp-code-main"><label>Material Code</label><strong>MAT-000247</strong></div>
+          <div class="lp-code-row"><label>Family</label><span>PIP · Piping</span></div>
+          <div class="lp-code-row"><label>Standard</label><span>ASTM A106</span></div>
+          <div class="lp-code-row"><label>Grade</label><span>Gr. B</span></div>
+          <div class="lp-code-row"><label>Size / Schedule</label><span>6" · SCH 40</span></div>
+          <div class="lp-code-row"><label>Controls</label><span>Certificate · Inspection · Heat</span></div>
+          <div class="lp-code-row"><label>Lifecycle</label><em>ACTIVE</em></div>
+          <div class="lp-code-footer"><i class="fas fa-shield-alt"></i> One identity · many transactions · full traceability</div>
+        </div>
+      </div>
     </div>
+  </section>
+
+  <section class="lp-section">
+    <div class="lp-control">
+      <div>
+        <span class="lp-kicker">Operational control</span>
+        <h2>From material identity to project readiness</h2>
+        <p>MaterialHub is not just a collection of forms. The workflow is built around a continuous chain: identify the material, request it, procure it, receive it, inspect it, store it and keep its traceability intact.</p>
+      </div>
+      <div class="lp-control-checks">
+        <div><i class="fas fa-check-circle"></i><span><strong>Stable Material Master</strong><small>One controlled identity for each material.</small></span></div>
+        <div><i class="fas fa-check-circle"></i><span><strong>Company-scoped data</strong><small>Operational records stay within the tenant boundary.</small></span></div>
+        <div><i class="fas fa-check-circle"></i><span><strong>Role-aware workspaces</strong><small>Each project function sees the work it owns.</small></span></div>
+        <div><i class="fas fa-check-circle"></i><span><strong>Traceable transactions</strong><small>Receipt, issue, return and transfer remain auditable.</small></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section">
     <div class="lp-flow">
-      <div class="lp-step"><div class="n">1</div><strong>Requirement</strong><small>MR</small></div>
-      <div class="lp-step"><div class="n">2</div><strong>Procurement</strong><small>RFQ / PO</small></div>
-      <div class="lp-step"><div class="n">3</div><strong>Supplier</strong><small>Commitment</small></div>
-      <div class="lp-step"><div class="n">4</div><strong>Delivery</strong><small>Risk</small></div>
-      <div class="lp-step"><div class="n">5</div><strong>Warehouse</strong><small>Receipt</small></div>
-      <div class="lp-step"><div class="n">6</div><strong>Quality</strong><small>Release</small></div>
-    </div>
-  </section>
-
-  <section class="lp-section lp-bottom">
-    <div class="lp-value">
-      <h3>Decision-ready material management</h3>
-      <p>
-        Instead of forcing users through generic menus alone, the home experience explains what the system does
-        and routes each action to the real backend endpoint.
-      </p>
-      <div class="lp-checks">
-        <div class="lp-check"><i class="fas fa-check-circle"></i> Company-scoped data</div>
-        <div class="lp-check"><i class="fas fa-check-circle"></i> Role-aware workspaces</div>
-        <div class="lp-check"><i class="fas fa-check-circle"></i> Delivery risk radar</div>
-        <div class="lp-check"><i class="fas fa-check-circle"></i> Low-stock signals</div>
-      </div>
-    </div>
-    <div class="lp-value">
-      <h3>Need the operational view?</h3>
-      <p>After sign-in, Control Center becomes the main decision screen with requisition, PO, delivery, inventory and tender signals.</p>
-      <div style="margin-top:16px">
-        <a class="lp-link" href="{{ url_for('control_center.dashboard') }}">Open Control Center →</a>
+      <div class="lp-section-head" style="margin-bottom:0;"><h2>How materials move</h2><p>A single operational chain — no disconnected spreadsheets.</p></div>
+      <div class="lp-flow-steps">
+        <div class="lp-step"><div class="lp-step-num">1</div><strong>Demand</strong><span>Requisition</span></div>
+        <div class="lp-step"><div class="lp-step-num">2</div><strong>Source</strong><span>RFQ → PO</span></div>
+        <div class="lp-step"><div class="lp-step-num">3</div><strong>Deliver</strong><span>Inbound logistics</span></div>
+        <div class="lp-step"><div class="lp-step-num">4</div><strong>Receive</strong><span>QC & stock</span></div>
+        <div class="lp-step"><div class="lp-step-num">5</div><strong>Issue</strong><span>To site / job</span></div>
       </div>
     </div>
   </section>
-
-  <section class="lp-section lp-cta" style="text-align:center;padding:2rem 0 0.5rem">
-    {% if current_user.is_authenticated %}
-      <a class="btn" href="{{ url_for('role_workspace.my_workspace') }}"><i class="fas fa-layer-group"></i> Continue in workspace</a>
-    {% else %}
-      <a class="btn" href="{{ url_for('auth.register') }}"><i class="fas fa-rocket"></i> Get started free</a>
-      <a class="btn lp-cta-secondary" href="{{ url_for('growth.demo') }}"><i class="fas fa-play-circle"></i> See demo</a>
-    {% endif %}
+  <section class="lp-section">
+    <div class="lp-section-head"><h2>Built for the people who move projects</h2><p>Role-based workspaces keep every function focused on what matters.</p></div>
+    <div class="lp-roles">
+      <div class="lp-role"><strong>Project Manager</strong><p>Schedule exposure, readiness and recovery actions in one view.</p></div>
+      <div class="lp-role"><strong>Procurement</strong><p>RFQ → Quote → PO → supplier recovery without losing context.</p></div>
+      <div class="lp-role"><strong>Warehouse</strong><p>Receive → locate → issue with full material identity.</p></div>
+      <div class="lp-role"><strong>Quality</strong><p>Inspect → document → release against the same record.</p></div>
+    </div>
+  </section>
+  <section class="lp-cta">
+    <h2>Ready to run materials with control?</h2><p>Start free. Scale when your projects demand it.</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}">Create account</a>
+    <a class="btn btn-lg lp-cta-secondary" href="{{ url_for('growth.demo') }}">View demo</a>
   </section>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const root = document.querySelector('.lp-hero-visual');
+  if (!root || root.dataset.cardsReady === '1') return;
+  root.dataset.cardsReady = '1';
+  const cards = Array.from(root.querySelectorAll('.lp-visual-card'));
+  const dots = Array.from(root.querySelectorAll('.lp-visual-dot'));
+  if (!cards.length) return;
+  let index = 0, timer;
+  function showCard(next) {
+    const previous = index;
+    index = (next + cards.length) % cards.length;
+    cards.forEach((card, i) => {
+      card.classList.toggle('active', i === index);
+      card.classList.toggle('exit', i === previous && i !== index);
+    });
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === index);
+      dot.setAttribute('aria-pressed', i === index ? 'true' : 'false');
+    });
+    window.setTimeout(() => cards.forEach(card => card.classList.remove('exit')), 900);
+  }
+  function start() {
+    clearInterval(timer);
+    timer = setInterval(() => showCard(index + 1), 3000);
+  }
+  dots.forEach((dot, i) => dot.addEventListener('click', () => { showCard(i); start(); }));
+  root.addEventListener('mouseenter', () => clearInterval(timer));
+  root.addEventListener('mouseleave', start);
+  root.addEventListener('focusin', () => clearInterval(timer));
+  root.addEventListener('focusout', e => { if (!root.contains(e.relatedTarget)) start(); });
+  showCard(0);
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) start();
+})();
+</script>
 {% endblock %}
