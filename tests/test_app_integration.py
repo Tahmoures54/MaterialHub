@@ -93,7 +93,12 @@ def test_contact_inquiry_is_persisted(client, app):
 
 
 def _ensure_test_material(app, user, material_code, description=None):
-    with app.app_context():
+    """Create a test Material Master row without switching sessions mid-transaction."""
+    from contextlib import nullcontext
+    from flask import has_app_context
+
+    context = nullcontext() if has_app_context() else app.app_context()
+    with context:
         material = MaterialMaster.query.filter_by(
             material_code=material_code, company_name=user.company_name
         ).first()
