@@ -34,11 +34,14 @@ def _ensure_tenant_unique(table_name, index_name, columns, constraint_name):
     bind = op.get_bind()
     inspector = inspect(bind)
     indexes = inspector.get_indexes(table_name)
+    index_names = {item.get("name") for item in indexes}
     uniques = {item["name"] for item in inspector.get_unique_constraints(table_name)}
     if constraint_name not in uniques:
         op.create_unique_constraint(constraint_name, table_name, columns)
-    # A non-unique lookup index is useful alongside the tenant unique constraint.
-    if not any(tuple(item.get("column_names") or []) == tuple(columns) for item in indexes):
+    # Existing deployments may already have an index with the legacy name.
+    # The composite unique constraint above supplies the tenant-scoped lookup
+    # index, so never recreate an index merely because its columns differ.
+    if index_name not in index_names:
         op.create_index(index_name, table_name, columns, unique=False)
 
 
