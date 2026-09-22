@@ -22,6 +22,7 @@ from models import (
     QualityControl,
     User,
     WarehouseInventory,
+    MaterialMaster,
 )
 from utils import generate_next_mr_no, generate_next_po_no
 
@@ -91,6 +92,33 @@ def test_contact_inquiry_is_persisted(client, app):
         assert inquiry.company == "EPC Co"
 
 
+def _ensure_test_material(app, user, material_code, description=None):
+    with app.app_context():
+        material = MaterialMaster.query.filter_by(
+            material_code=material_code, company_name=user.company_name
+        ).first()
+        if material:
+            return material
+        material = MaterialMaster(
+            material_code=material_code,
+            family_code="PIP",
+            material_name=description or material_code,
+            description=description or material_code,
+            unit="EA",
+            discipline="Piping",
+            fingerprint=(f"test:{user.company_name}:{material_code}").encode().hex().ljust(64, "0")[:64],
+            company_name=user.company_name,
+            created_by=user.id,
+            status="active",
+            lifecycle_status="active",
+        )
+        db.session.add(material)
+        db.session.commit()
+        db.session.refresh(material)
+        db.session.expunge(material)
+        return material
+
+
 def test_material_requisition_from_dict_and_numbering(app):
     with app.app_context():
         user = User(
@@ -106,8 +134,10 @@ def test_material_requisition_from_dict_and_numbering(app):
         db.session.add(user)
         db.session.commit()
         mr_no = generate_next_mr_no("Acme EPC")
+        material = _ensure_test_material(app, user, "PIPE-12CS", "12-inch CS Pipe")
         mr = MaterialRequisition.from_dict({
             "mr_no": mr_no,
+            "material_id": material.id,
             "item_code": "PIPE-12CS",
             "material_description": "12-inch CS Pipe",
             "quantity": 10,
@@ -195,7 +225,9 @@ def test_material_requisition_api_workflow_and_tenant_boundary(client, app):
     user = _persist_user(app, "engineer@example.com", AccessLevel.engineering, "Acme EPC")
     other = _persist_user(app, "other@example.com", AccessLevel.engineering, "Other EPC")
     _authenticate_session(client, user)
+    material = _ensure_test_material(app, user, "PIPE-API", "API Pipe")
     payload = {
+        "material_id": material.id,
         "item_code": "PIPE-API",
         "material_description": "API Pipe",
         "quantity": 5,
@@ -227,10 +259,11 @@ def test_material_requisition_api_workflow_and_tenant_boundary(client, app):
 def test_material_requisition_csv_export_and_import(client, app):
     user = _persist_user(app, "csv@example.com", AccessLevel.engineering, "CSV EPC")
     _authenticate_session(client, user)
+    material = _ensure_test_material(app, user, "PIPE-CSV", "CSV Pipe")
     csv_body = (
-        "mr_no,subject,item_code,material_description,discipline,required_date,"
+        "mr_no,subject,material_code,item_code,material_description,discipline,required_date,"
         "unit_of_measure,quantity,priority,project_no\n"
-        ",Pipe,PIPE-CSV,CSV Pipe,Piping,2026-10-01,EA,3,Normal,PRJ-CSV\n"
+        ",Pipe,PIPE-CSV,PIPE-CSV,CSV Pipe,Piping,2026-10-01,EA,3,Normal,PRJ-CSV\n"
     )
     imported = client.post(
         "/material_requisitions/api/upload_csv",
@@ -246,7 +279,9 @@ def test_material_requisition_csv_export_and_import(client, app):
 def test_material_requisition_delete_and_access_control(client, app):
     user = _persist_user(app, "delete@example.com", AccessLevel.engineering, "Delete EPC")
     _authenticate_session(client, user)
+    material = _ensure_test_material(app, user, "DEL-1", "Delete Me")
     created = client.post("/material_requisitions/api/material_requisitions", json={
+        "material_id": material.id,
         "item_code": "DEL-1",
         "material_description": "Delete Me",
         "quantity": 1,
@@ -315,8 +350,17 @@ def test_end_to_end_procurement_delivery_qc_warehouse_tenant_boundary(client, ap
     with app.app_context():
         db.session.add(project)
         db.session.flush()
+        material = MaterialMaster(
+            material_code="E2E-PIPE", family_code="PIP", material_name="E2E Pipe",
+            description="E2E Pipe", unit="EA", discipline="Piping",
+            fingerprint=("test:E2E EPC:E2E-PIPE").encode().hex().ljust(64, "0")[:64],
+            company_name="E2E EPC", created_by=engineer.id, status="active", lifecycle_status="active",
+        )
+        db.session.add(material)
+        db.session.flush()
         mr = MaterialRequisition.from_dict({
             "mr_no": "MR-0001",
+            "material_id": material.id,
             "item_code": "E2E-PIPE",
             "material_description": "E2E Pipe",
             "quantity": 10,
