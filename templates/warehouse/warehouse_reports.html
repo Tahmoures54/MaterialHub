@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Warehouse Reports{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div>
+    <span class="eyebrow">WAREHOUSE DOCUMENT CONTROL</span>
+    <h1>Receiving & Warehouse Reports</h1>
+    <p>Print controlled receiving records, material receipts and OSID forms directly from the warehouse transaction ledger.</p>
+  </div>
+</section>
+<section class="content-card">
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead><tr><th>Transaction</th><th>Material</th><th>Type</th><th>Packing List</th><th>Supplier</th><th>Qty</th><th>Date</th><th>Print</th></tr></thead>
+      <tbody>
+      {% for t in transactions %}
+        <tr>
+          <td><strong>{{ t.transaction_no }}</strong></td>
+          <td>{{ t.item_code }}<div class="small text-muted">{{ t.material_description }}</div></td>
+          <td>{{ t.transaction_type }}</td>
+          <td>{{ t.packing_list_no or '—' }}</td>
+          <td>{{ t.supplier_name or '—' }}</td>
+          <td>{{ t.quantity }} {{ t.unit }}</td>
+          <td>{{ t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '—' }}</td>
+          <td class="text-nowrap">
+            <a class="btn btn-sm btn-outline-primary" target="_blank" href="{{ url_for('warehouse.warehouse_receipt_report', transaction_id=t.id) }}">Receipt</a>
+            {% if t.discrepancy_type %}
+            <a class="btn btn-sm btn-outline-danger" target="_blank" href="{{ url_for('warehouse.warehouse_osid_report', transaction_id=t.id) }}">OSID</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-5">No warehouse transactions yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
