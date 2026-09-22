@@ -318,7 +318,9 @@ def create_app(config_name=None):
 
     @app.route('/overview')
     def product_overview():
-        return render_template('dashboard/home.html')
+        # Keep the legacy product URL as a compatibility alias.
+        # The public landing page at / is the single canonical home page.
+        return redirect(url_for('index'))
 
     @app.route('/dashboard')
     @login_required
