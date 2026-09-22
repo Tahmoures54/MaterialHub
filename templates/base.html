@@ -32,6 +32,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/documentation.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/command-palette.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   {% block head %}{% endblock %}
   <style>
@@ -183,7 +184,6 @@
       width: 100%; max-width: 1500px; margin: 0 auto; padding: 26px; flex: 1 1 auto;
     }
 
-    /* ── Footer — industrial dark ── */
     .mh-footer {
       width: 100%;
       flex-shrink: 0;
@@ -195,145 +195,42 @@
     .mh-footer::before {
       content: "";
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
+      top: 0; left: 0; right: 0; height: 3px;
       background: linear-gradient(90deg, #0E7490 0%, #22D3EE 40%, #0891B2 70%, transparent 100%);
     }
     .mh-footer-inner {
-      max-width: 1500px;
-      margin: 0 auto;
-      padding: 40px 26px 28px;
-      display: grid;
-      grid-template-columns: 1.55fr repeat(3, 1fr);
-      gap: 36px 40px;
-      position: relative;
+      max-width: 1500px; margin: 0 auto; padding: 40px 26px 28px;
+      display: grid; grid-template-columns: 1.55fr repeat(3, 1fr); gap: 36px 40px; position: relative;
     }
-    .mh-footer-brand {
-      padding-right: 12px;
-    }
-    .mh-footer-logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
-      text-decoration: none;
-    }
+    .mh-footer-brand { padding-right: 12px; }
+    .mh-footer-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; text-decoration: none; }
     .mh-footer-logo-mark {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
+      width: 40px; height: 40px; border-radius: 10px;
       background: linear-gradient(145deg, #0E7490, #0891B2);
-      display: grid;
-      place-items: center;
-      color: #fff;
-      font-weight: 900;
-      font-size: 1rem;
-      box-shadow: 0 4px 14px rgba(14, 116, 144, 0.35);
-      flex-shrink: 0;
+      display: grid; place-items: center; color: #fff; font-weight: 900; font-size: 1rem;
+      box-shadow: 0 4px 14px rgba(14, 116, 144, 0.35); flex-shrink: 0;
     }
-    .mh-footer-logo strong {
-      display: block;
-      color: #F1F5F9;
-      font-size: 1.05rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-    .mh-footer-logo span {
-      display: block;
-      font-size: 0.7rem;
-      color: #64748B;
-      font-weight: 500;
-      margin-top: 1px;
-    }
-    .mh-footer-brand > p {
-      margin: 0 0 18px;
-      font-size: 0.85rem;
-      line-height: 1.6;
-      color: #94A3B8;
-      max-width: 300px;
-    }
+    .mh-footer-logo strong { display: block; color: #F1F5F9; font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; }
+    .mh-footer-logo span { display: block; font-size: 0.7rem; color: #64748B; font-weight: 500; margin-top: 1px; }
+    .mh-footer-brand > p { margin: 0 0 18px; font-size: 0.85rem; line-height: 1.6; color: #94A3B8; max-width: 300px; }
     .mh-footer-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 16px;
-      border-radius: 8px;
-      background: #0E7490;
-      color: #fff !important;
-      font-size: 0.84rem;
-      font-weight: 650;
-      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 8px;
+      background: #0E7490; color: #fff !important; font-size: 0.84rem; font-weight: 650; text-decoration: none;
       transition: background 0.15s;
     }
     .mh-footer-cta:hover { background: #0891B2; }
-
-    .mh-footer-col h4 {
-      margin: 0 0 16px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #64748B;
-    }
-    .mh-footer-col a {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 0;
-      font-size: 0.875rem;
-      color: #CBD5E1;
-      text-decoration: none;
-      transition: color 0.15s, transform 0.15s;
-    }
-    .mh-footer-col a:hover {
-      color: #22D3EE;
-      transform: translateX(3px);
-    }
-    .mh-footer-col a i {
-      width: 16px;
-      font-size: 0.75rem;
-      color: #475569;
-      text-align: center;
-    }
+    .mh-footer-col h4 { margin: 0 0 16px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #64748B; }
+    .mh-footer-col a { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 0.875rem; color: #CBD5E1; text-decoration: none; transition: color 0.15s, transform 0.15s; }
+    .mh-footer-col a:hover { color: #22D3EE; transform: translateX(3px); }
+    .mh-footer-col a i { width: 16px; font-size: 0.75rem; color: #475569; text-align: center; }
     .mh-footer-col a:hover i { color: #22D3EE; }
-
     .mh-footer-bottom {
-      border-top: 1px solid rgba(148, 163, 184, 0.12);
-      max-width: 1500px;
-      margin: 0 auto;
-      padding: 16px 26px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      flex-wrap: wrap;
-      font-size: 0.78rem;
-      color: #64748B;
-      position: relative;
+      border-top: 1px solid rgba(148, 163, 184, 0.12); max-width: 1500px; margin: 0 auto;
+      padding: 16px 26px 20px; display: flex; align-items: center; justify-content: space-between;
+      gap: 14px; flex-wrap: wrap; font-size: 0.78rem; color: #64748B; position: relative;
     }
-    .mh-footer-bottom-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 18px;
-    }
-    .mh-footer-bottom-links a {
-      color: #94A3B8;
-      text-decoration: none;
-      transition: color 0.15s;
-    }
-    .mh-footer-bottom-links a:hover { color: #22D3EE; }
-    .mh-footer-tagline {
-      font-size: 0.72rem;
-      color: #475569;
-      letter-spacing: 0.02em;
-    }
-
-    .mh-sidebar-backdrop {
-      display: none; position: fixed; inset: 0;
-      background: rgba(15, 23, 42, 0.45); z-index: 998;
-    }
+    .mh-footer-tagline { font-size: 0.72rem; color: #475569; letter-spacing: 0.02em; }
+    .mh-sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 998; }
     body.mh-sidebar-open .mh-sidebar-backdrop { display: block; }
 
     @media (max-width: 950px) {
@@ -342,19 +239,14 @@
         position: fixed; left: -280px; top: var(--mh-topbar-h);
         width: var(--mh-sidebar-w); z-index: 999; transition: left 0.2s ease;
         box-shadow: 12px 0 32px rgba(0, 0, 0, 0.25);
-        height: calc(100vh - var(--mh-topbar-h));
-        height: calc(100dvh - var(--mh-topbar-h));
+        height: calc(100vh - var(--mh-topbar-h)); height: calc(100dvh - var(--mh-topbar-h));
       }
       body.mh-sidebar-open .mh-sidebar { left: 0; }
       .mh-public-nav { display: none; }
       .mh-main { padding: 18px; }
       .mh-topbar { padding: 0 14px; }
       .mh-flashes { padding: 0 18px; }
-      .mh-footer-inner {
-        grid-template-columns: 1fr 1fr;
-        padding: 32px 18px 22px;
-        gap: 28px 24px;
-      }
+      .mh-footer-inner { grid-template-columns: 1fr 1fr; padding: 32px 18px 22px; gap: 28px 24px; }
       .mh-footer-brand { grid-column: 1 / -1; }
       .mh-footer-bottom { padding: 14px 18px 18px; }
     }
@@ -364,20 +256,42 @@
       .mh-flashes { padding: 0 14px; }
       .mh-brand span { display: none; }
       .mh-top-actions .mh-pill:not(.primary) { display: none; }
-      .mh-footer-inner {
-        grid-template-columns: 1fr;
-        padding: 28px 16px 18px;
-        gap: 24px;
-      }
-      .mh-footer-bottom {
-        padding: 14px 16px 18px;
-        flex-direction: column;
-        align-items: flex-start;
-      }
+      .mh-footer-inner { grid-template-columns: 1fr; padding: 28px 16px 18px; gap: 24px; }
+      .mh-footer-bottom { padding: 14px 16px 18px; flex-direction: column; align-items: flex-start; }
     }
+
+    /* Dark mode shell */
+    [data-theme="dark"] body { color: var(--mh-text, #E2E8F0); }
+    [data-theme="dark"] .mh-topbar {
+      background: #0F172A !important;
+      border-bottom-color: #1E293B !important;
+    }
+    [data-theme="dark"] .mh-brand strong { color: #F1F5F9; }
+    [data-theme="dark"] .mh-brand span { color: #94A3B8; }
+    [data-theme="dark"] .mh-menu { color: #CBD5E1; }
+    [data-theme="dark"] .mh-menu:hover { background: #1E293B; }
+    [data-theme="dark"] .mh-pill {
+      background: #1E293B;
+      border-color: #334155;
+      color: #E2E8F0;
+    }
+    [data-theme="dark"] .mh-pill:hover { background: #334155; border-color: #475569; }
+    [data-theme="dark"] .mh-pill.primary { background: #0E7490; border-color: #0E7490; color: #fff; }
+    [data-theme="dark"] .mh-avatar { background: #164E63; color: #A5F3FC; border-color: #0E7490; }
+    [data-theme="dark"] .mh-public-nav a { color: #94A3B8; }
+    [data-theme="dark"] .mh-public-nav a:hover { background: #1E293B; color: #F1F5F9; }
   </style>
   <!-- Vercel Web Analytics -->
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
+  <script>
+    (function(){
+      try {
+        var t = localStorage.getItem('mh-theme');
+        if (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) t = 'dark';
+        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
 <div class="mh-shell">
@@ -487,13 +401,13 @@
             {% block content %}{% endblock %}
           </main>
 
-        </div>{# /.mh-content #}
+        </div>
 
     {% if current_user.is_authenticated %}
-      </div>{# /.mh-layout #}
+      </div>
     {% endif %}
 
-  </div>{# /.mh-body #}
+  </div>
 
   <footer class="mh-footer">
     <div class="mh-footer-inner">
@@ -550,7 +464,7 @@
     </div>
   </footer>
 
-</div>{# /.mh-shell #}
+</div>
 
 <script>
   if ('serviceWorker' in navigator) {
@@ -564,6 +478,7 @@
 </script>
 <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
 <script src="{{ url_for('static', filename='js/workspace.js') }}"></script>
+<script src="{{ url_for('static', filename='js/command-palette.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
