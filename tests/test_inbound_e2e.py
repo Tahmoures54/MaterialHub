@@ -5,8 +5,10 @@ This test intentionally uses the public application APIs for PL/GR/QC and
 asserts the persisted inventory state and OS&D generation.
 """
 from datetime import date
+import hashlib
+import os
 
-from flask_wtf.csrf import generate_csrf
+from itsdangerous import URLSafeTimedSerializer
 
 from extensions import db
 from models import (
@@ -18,10 +20,20 @@ from models import (
 from tests.test_app_integration import _persist_user, _authenticate_session
 
 
-def _csrf(client):
-    with client:
-        client.get("/")
-        return generate_csrf()
+def _csrf(client, app):
+    """Create a signed CSRF token bound to the test client's session.
+
+    Flask-WTF stores a raw token in the session and signs that value for the
+    request token. Seeding the same session explicitly avoids relying on a
+    request context that ends before the subsequent API call.
+    """
+    field_name = app.config.get("WTF_CSRF_FIELD_NAME", "csrf_token")
+    secret_key = app.config.get("WTF_CSRF_SECRET_KEY") or app.secret_key
+    raw_token = hashlib.sha1(os.urandom(64)).hexdigest()
+    with client.session_transaction() as session:
+        session[field_name] = raw_token
+    serializer = URLSafeTimedSerializer(secret_key, salt="wtf-csrf-token")
+    return serializer.dumps(raw_token)
 
 
 def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
@@ -106,7 +118,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
         delivery_id, material_id = delivery.id, material.id
 
     _authenticate_session(client, buyer)
-    csrf = _csrf(client)
+    csrf = _csrf(client, app)
     pl_response = client.post("/warehouse/api/packing-lists", json={
         "csrf_token": csrf,
         "delivery_id": delivery_id,
