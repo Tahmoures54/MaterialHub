@@ -1335,13 +1335,31 @@
  }
  document.addEventListener('DOMContentLoaded',()=>{
    loadTransactions(); loadStockOptions();
+   document.getElementById('txMaterial')?.addEventListener('change', async()=>{
+     const opt=document.querySelector('#txMaterial option:checked');
+     const meta=document.getElementById('txMaterialMeta');
+     if(meta) meta.textContent=opt?.value ? `${opt.dataset.code} · ${opt.dataset.unit} · ${opt.dataset.name}` : 'Select the approved material identity used across procurement and warehouse.';
+     await loadStocksForMaterial();
+   });
+   document.getElementById('txType')?.addEventListener('change',()=>{
+     const transfer=document.getElementById('txType').value==='TRANSFER';
+     document.getElementById('txDestinationWrap').style.display=transfer?'block':'none';
+   });
+   document.getElementById('txWarehouse')?.addEventListener('change',()=>{
+     const opt=document.querySelector('#txWarehouse option:checked');
+     const b=opt?.dataset.balance;
+     document.getElementById('txStockBalance').textContent=b!==undefined ? `Available: ${b}` : '';
+   });
    document.getElementById('refreshTransactions')?.addEventListener('click',loadTransactions);
    document.getElementById('transactionTypeFilter')?.addEventListener('change',loadTransactions);
    document.getElementById('transactionModal')?.addEventListener('show.bs.modal',loadStockOptions);
    document.getElementById('submitTransaction')?.addEventListener('click',async()=>{
-     const type=document.getElementById('txType').value, warehouse_id=document.getElementById('txWarehouse').value, quantity=document.getElementById('txQuantity').value;
-     if(!type||!warehouse_id||!(Number(quantity)>0)){alert('Select movement, stock and a positive quantity.');return;}
-     const payload={csrf_token:csrfToken,transaction_type:type,warehouse_id,quantity:Number(quantity),reference_no:document.getElementById('txReference').value,project_no:document.getElementById('txProject').value,contractor:document.getElementById('txContractor').value,remarks:document.getElementById('txRemarks').value};
+     const type=document.getElementById('txType').value, material_id=document.getElementById('txMaterial').value, warehouse_id=document.getElementById('txWarehouse').value, quantity=document.getElementById('txQuantity').value;
+     const destination_warehouse_id=document.getElementById('txDestination')?.value||'';
+     if(!type||!material_id||!warehouse_id||!(Number(quantity)>0)){alert('Select material, movement, source stock and a positive quantity.');return;}
+     if(type==='TRANSFER'&&!destination_warehouse_id){alert('Select a destination stock.');return;}
+     if(type==='TRANSFER'&&destination_warehouse_id===warehouse_id){alert('Source and destination must be different.');return;}
+     const payload={csrf_token:csrfToken,transaction_type:type,material_id,warehouse_id,destination_warehouse_id,quantity:Number(quantity),reference_no:document.getElementById('txReference').value,project_no:document.getElementById('txProject').value,contractor:document.getElementById('txContractor').value,remarks:document.getElementById('txRemarks').value};
      const btn=document.getElementById('submitTransaction');btn.disabled=true;
      try{const res=await fetch('/warehouse/api/transactions',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrfToken},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||'Failed');bootstrap.Modal.getOrCreateInstance(document.getElementById('transactionModal')).hide();document.getElementById('transaction-form').reset();loadTransactions();loadInventory();alert('Movement recorded: '+data.transaction.transaction_no);}catch(e){alert(e.message);}finally{btn.disabled=false;}
    });
