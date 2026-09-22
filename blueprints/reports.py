@@ -127,7 +127,7 @@ def _operational_payload(kind, obj):
                      ('PO', getattr(obj.order, 'order_no', obj.order_id or '')), ('Delivery', getattr(obj.delivery, 'delivery_id', obj.delivery_id or '')),
                      ('Warehouse', obj.warehouse_id), ('Received By', getattr(obj.receiver, 'full_name', '') or getattr(obj.receiver, 'company_email', '')), ('Status', _value(obj.status))],
             'headers': ['#','Item Code','Description','Expected','Received','Variance','Unit','Location','Inspection','Lot / Heat / Serial'],
-            'table': [[i+1,l.item_code,l.material_description,l.expected_qty,l.received_qty,l.received_qty-l.expected_qty,l.unit,l.storage_location_id or '',l.inspection_status, ' / '.join(x for x in [l.lot_no,l.heat_no,l.serial_no] if x)] for i,l in enumerate(lines)],
+            'table': [[i+1,line.item_code,line.material_description,line.expected_qty,line.received_qty,line.received_qty-line.expected_qty,line.unit,line.storage_location_id or '',line.inspection_status, ' / '.join(x for x in [line.lot_no,line.heat_no,line.serial_no] if x)] for i,line in enumerate(lines)],
             'notes': obj.remarks or ''
         }
     if kind == 'OSD':
