@@ -154,15 +154,9 @@ def upgrade():
     op.create_index("ix_warehouse_transaction_goods_receipt_id", "warehouse_transaction", ["goods_receipt_id"])
     op.create_index("ix_warehouse_transaction_receipt_line_id", "warehouse_transaction", ["receipt_line_id"])
     op.create_index("ix_warehouse_transaction_packing_list_id", "warehouse_transaction", ["packing_list_id"])
-    op.create_foreign_key("fk_wh_tx_goods_receipt", "warehouse_transaction", "goods_receipt", ["goods_receipt_id"], ["id"])
-    op.create_foreign_key("fk_wh_tx_receipt_line", "warehouse_transaction", "goods_receipt_line", ["receipt_line_id"], ["id"])
-    op.create_foreign_key("fk_wh_tx_packing_list", "warehouse_transaction", "packing_list", ["packing_list_id"], ["id"])
 
 
 def downgrade():
-    op.drop_constraint("fk_wh_tx_packing_list", "warehouse_transaction", type_="foreignkey")
-    op.drop_constraint("fk_wh_tx_receipt_line", "warehouse_transaction", type_="foreignkey")
-    op.drop_constraint("fk_wh_tx_goods_receipt", "warehouse_transaction", type_="foreignkey")
     op.drop_index("ix_warehouse_transaction_packing_list_id", table_name="warehouse_transaction")
     op.drop_index("ix_warehouse_transaction_receipt_line_id", table_name="warehouse_transaction")
     op.drop_index("ix_warehouse_transaction_goods_receipt_id", table_name="warehouse_transaction")
