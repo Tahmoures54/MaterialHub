@@ -116,7 +116,7 @@ def _operational_payload(kind, obj):
                      ('Delivery', getattr(obj.delivery, 'delivery_id', obj.delivery_id or '')), ('Supplier', getattr(obj.supplier, 'full_name', '') or getattr(obj.supplier, 'company_email', '')),
                      ('Vehicle', obj.vehicle_no or ''), ('Packages', obj.package_count or ''), ('Gross Weight', obj.gross_weight or ''), ('Net Weight', obj.net_weight or ''), ('Status', obj.status)],
             'headers': ['#','Item Code','Description','Qty','Unit','Package','Lot','Heat','Serial'],
-            'table': [[i+1,l.item_code,l.material_description,l.quantity,l.unit,l.package_no or '',l.lot_no or '',l.heat_no or '',l.serial_no or ''] for i,l in enumerate(lines)],
+            'table': [[i+1,line.item_code,line.material_description,line.quantity,line.unit,line.package_no or '',line.lot_no or '',line.heat_no or '',line.serial_no or ''] for i,line in enumerate(lines)],
             'notes': obj.remarks or ''
         }
     if kind in {'GR','RR'}:
