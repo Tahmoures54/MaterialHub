@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from datetime import datetime
 from flask_login import login_required, current_user
 from models import db, QualityControl, InspectionStatus, AccessLevel, GoodsReceiptLine, WarehouseInventory
 from forms.material_forms import QualityControlForm
@@ -74,9 +75,6 @@ def update_receipt_inspection(receipt_line_id):
         data = request.get_json() or {}
         from flask_wtf.csrf import validate_csrf, CSRFError
         validate_csrf(data.get('csrf_token'))
-        line = GoodsReceiptLine.query.join(
-            line.__class__.goods_receipt if False else GoodsReceiptLine
-        )
         line = GoodsReceiptLine.query.filter_by(id=receipt_line_id).first()
         if not line or line.goods_receipt.company_name != current_user.company_name:
             return jsonify({'error': 'Receipt Line not found'}), 404
