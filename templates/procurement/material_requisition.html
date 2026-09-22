@@ -151,9 +151,7 @@
                 </div>
                 <div class="modal-body">
                     <!-- Display Logged-in User -->
-                    <div class="mb-3">
-                        <strong>Logged in as:</strong> {{ current_user.full_name or 'Unknown User' }}
-                    </div>
+                    <div class="mr-edit-context"><i class="fas fa-user-circle"></i><span>Editing as <strong>{{ current_user.full_name or 'Unknown User' }}</strong></span><small>Technical fields are kept here so the creation wizard stays simple.</small></div>
                     <form id="edit-mr-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="table-responsive">
@@ -259,19 +257,16 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <h4>Welcome to the Material Requisitions Page!</h4>
-                    <p>This page helps you manage material requisitions for your projects. Here's a quick guide:</p>
-                    <ul>
-                        <li><strong>Create a New MR:</strong> Click "Create New MR" to open a form. Add multiple rows using "Add Row". Fill in the details and submit (Engineering only).</li>
-                        <li><strong>Manage an MR:</strong> Use the Edit/Delete buttons on each card to modify or remove requisitions (Engineering only).</li>
-                        <li><strong>Approve an MR:</strong> Project Managers can approve or reject MRs in each stage using the Approve button.</li>
-                        <li><strong>View Details:</strong> Click on an MR No link to open a detailed report in a new tab.</li>
-                        <li><strong>Filter by Discipline:</strong> Use the discipline dropdown to filter requisitions.</li>
-                        <li><strong>Search MRs:</strong> Use the search bar to find requisitions by MR No or Subject.</li>
-                        <li><strong>Import from CSV:</strong> Use the "Import from CSV" option in the Create modal to upload a CSV file (Engineering only).</li>
-                        <li><strong>Export to CSV:</strong> Click "Export to CSV" to download the requisitions as a CSV file.</li>
-                    </ul>
-                    <p>If you encounter issues, check the browser console (F12 > Console) for errors or contact your system administrator.</p>
+                    <div class="mr-help-hero">
+                        <div class="mr-help-icon"><i class="fas fa-route"></i></div>
+                        <div><h4>Material Requisitions in 3 simple actions</h4><p>Create the request, review it, then let the workflow take over.</p></div>
+                    </div>
+                    <div class="mr-help-grid">
+                        <div><span>01</span><strong>Create</strong><p>Click <b>New MR</b> and follow the short wizard. You only enter the information needed to start procurement.</p></div>
+                        <div><span>02</span><strong>Review</strong><p>Check the material, quantity and required date. You can add another material before creating the MR.</p></div>
+                        <div><span>03</span><strong>Manage</strong><p>Use the MR number for the report. Engineering can edit or delete; Project Management can approve or reject.</p></div>
+                    </div>
+                    <div class="mr-help-note"><i class="fas fa-file-excel"></i><div><strong>Excel import</strong><p>If you already have a list, choose <b>Import Excel</b> from the New MR wizard. The first worksheet is previewed before creation.</p></div></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Close</button>
@@ -468,6 +463,12 @@
         }
         /* Professional MR creation wizard */
         .mr-wizard-modal{border:0;border-radius:18px;overflow:hidden;box-shadow:0 24px 70px rgba(15,23,42,.22)}
+        /* Keep workflow dialogs hidden until Bootstrap opens them. This also protects the page if a CDN stylesheet is delayed. */
+        .material-requisition-container + .modal, .material-requisition-container + .modal ~ .modal{display:none;}
+        .material-requisition-container + .modal.show, .material-requisition-container + .modal.show ~ .modal{display:block;}
+        .mr-edit-context{display:flex;align-items:center;gap:9px;margin-bottom:18px;padding:11px 14px;border:1px solid #e2e8f0;border-radius:11px;background:#f8fafc;color:#475569}.mr-edit-context i{font-size:1.2rem;color:#2563eb}.mr-edit-context small{margin-left:auto;color:#94a3b8}
+        .mr-help-hero{display:flex;gap:14px;align-items:center;padding:14px;border:1px solid #dbeafe;background:#eff6ff;border-radius:13px;margin-bottom:16px}.mr-help-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:11px;background:#dbeafe;color:#2563eb}.mr-help-hero h4{margin:0 0 3px;font-size:1rem}.mr-help-hero p{margin:0;color:#64748b;font-size:.86rem}.mr-help-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.mr-help-grid>div{padding:14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff}.mr-help-grid span{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#eef2ff;color:#2563eb;font-weight:800;font-size:.72rem}.mr-help-grid strong{display:block;margin-top:8px}.mr-help-grid p{margin:5px 0 0;color:#64748b;font-size:.82rem;line-height:1.5}.mr-help-note{display:flex;gap:11px;margin-top:12px;padding:12px 14px;border-radius:11px;background:#f8fafc}.mr-help-note i{color:#16a34a;margin-top:3px}.mr-help-note p{margin:2px 0 0;color:#64748b;font-size:.82rem}
+        @media(max-width:768px){.mr-edit-context{align-items:flex-start;flex-wrap:wrap}.mr-edit-context small{width:100%;margin-left:0}.mr-help-grid{grid-template-columns:1fr}}
         .mr-wizard-header{padding:22px 24px;background:linear-gradient(135deg,#0f4c81,#2563eb);color:#fff}
         .mr-wizard-kicker{font-size:.7rem;letter-spacing:.14em;font-weight:800;opacity:.78;margin-bottom:4px}
         .mr-wizard-header .modal-title{font-size:1.35rem;font-weight:750}
@@ -803,7 +804,7 @@
                 wizardSetStep(1);
             }
             function wizardValidateStep(step){
-                if(step===1&&!$('#mrSubject').val().trim()||step===1&&!$('#mrProjectNo').val().trim()){alert('Please enter the Request Subject and Project No.');return false;}
+                if(step===1&&(!$('#mrSubject').val().trim()||!$('#mrProjectNo').val().trim())){alert('Please enter the Request Subject and Project No.');return false;}
                 if(step===2&&(!$('#mrDescription').val().trim()||!$('#mrItemCode').val().trim()||!$('#mrDiscipline').val())){alert('Please complete the material description, item code and discipline.');return false;}
                 if(step===3&&(!$('#mrRequiredDate').val()||!Number.isFinite(Number($('#mrQuantity').val()))||Number($('#mrQuantity').val())<=0)){alert('Please enter a valid quantity and required date.');return false;}
                 return true;
