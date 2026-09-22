@@ -339,6 +339,16 @@ def api_create_transaction():
                 }, current_user.company_name, current_user.id)
                 db.session.add(inventory)
                 db.session.flush()
+            inventory.received_qty = float(inventory.received_qty or 0) + quantity
+            inventory.material_id = material.id
+            inventory.item_code = material.material_code
+            inventory.material_description = material.description
+            inventory.unit = inventory.unit or material.unit
+            inventory.delivery_id = str(data.get('delivery_id') or data.get('reference_no') or packing_list_no)
+            if data.get('project_no'):
+                inventory.project_no = data.get('project_no')
+            if data.get('supplier_name'):
+                inventory.remarks = data.get('supplier_name')
             destination = None
         else:
             if not inventory:
