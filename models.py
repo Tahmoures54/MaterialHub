@@ -59,6 +59,17 @@ class DeliveryStatus(enum.Enum):
     delivered = 'delivered'
     delayed = 'delayed'
 
+class ReceivingStatus(enum.Enum):
+    draft = 'draft'
+    posted = 'posted'
+    cancelled = 'cancelled'
+
+class OSDStatus(enum.Enum):
+    open = 'open'
+    acknowledged = 'acknowledged'
+    resolved = 'resolved'
+    cancelled = 'cancelled'
+
 class ApprovalStatus(enum.Enum):
     pending = 'pending'
     approved = 'approved'
@@ -687,6 +698,215 @@ class Delivery(db.Model):
     def __repr__(self):
         return f"<Delivery {self.order_id}: {self.status}>"
 
+
+class PackingList(db.Model):
+    """Supplier packing-list header received with an inbound delivery."""
+    __tablename__ = 'packing_list'
+    __table_args__ = (
+        db.UniqueConstraint('packing_list_no', 'company_name', name='uq_packing_list_no_company'),
+        {"extend_existing": True},
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    packing_list_no = db.Column(db.String(80), nullable=False, index=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('purchase_order.id'), nullable=True, index=True)
+    delivery_id = db.Column(db.Integer, db.ForeignKey('delivery.id'), nullable=True, index=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, index=True)
+    packing_list_date = db.Column(db.Date, nullable=False)
+    vehicle_no = db.Column(db.String(80), nullable=True)
+    package_count = db.Column(db.Integer, nullable=True)
+    gross_weight = db.Column(db.Float, nullable=True)
+    net_weight = db.Column(db.Float, nullable=True)
+    document_path = db.Column(db.String(500), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='received', index=True)
+    remarks = db.Column(db.Text, nullable=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    order = db.relationship('PurchaseOrder', backref=db.backref('packing_lists', lazy=True))
+    delivery = db.relationship('Delivery', backref=db.backref('packing_lists', lazy=True))
+    supplier = db.relationship('User', foreign_keys=[supplier_id])
+    creator = db.relationship('User', foreign_keys=[created_by])
+    lines = db.relationship('PackingListLine', backref='packing_list', lazy=True, cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'packing_list_no': self.packing_list_no,
+            'order_id': self.order_id, 'delivery_id': self.delivery_id,
+            'supplier_id': self.supplier_id,
+            'packing_list_date': self.packing_list_date.isoformat() if self.packing_list_date else None,
+            'vehicle_no': self.vehicle_no, 'package_count': self.package_count,
+            'gross_weight': self.gross_weight, 'net_weight': self.net_weight,
+            'document_path': self.document_path, 'status': self.status,
+            'remarks': self.remarks, 'company_name': self.company_name,
+            'created_by': self.created_by,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'lines': [line.to_dict() for line in self.lines],
+        }
+
+class PackingListLine(db.Model):
+    __tablename__ = 'packing_list_line'
+    id = db.Column(db.Integer, primary_key=True)
+    packing_list_id = db.Column(db.Integer, db.ForeignKey('packing_list.id'), nullable=False, index=True)
+    material_id = db.Column(db.Integer, db.ForeignKey('material_master.id'), nullable=False, index=True)
+    item_code = db.Column(db.String(50), nullable=False, index=True)
+    material_description = db.Column(db.Text, nullable=False)
+    quantity = db.Column(db.Float, nullable=False)
+    unit = db.Column(db.String(30), nullable=False)
+    package_no = db.Column(db.String(80), nullable=True)
+    lot_no = db.Column(db.String(100), nullable=True)
+    heat_no = db.Column(db.String(100), nullable=True)
+    serial_no = db.Column(db.String(100), nullable=True)
+    remarks = db.Column(db.Text, nullable=True)
+    material = db.relationship('MaterialMaster', foreign_keys=[material_id])
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'packing_list_id': self.packing_list_id,
+            'material_id': self.material_id, 'item_code': self.item_code,
+            'material_description': self.material_description, 'quantity': self.quantity,
+            'unit': self.unit, 'package_no': self.package_no, 'lot_no': self.lot_no,
+            'heat_no': self.heat_no, 'serial_no': self.serial_no, 'remarks': self.remarks,
+        }
+
+class GoodsReceipt(db.Model):
+    """Warehouse receipt header linked to the supplier packing list."""
+    __tablename__ = 'goods_receipt'
+    __table_args__ = (
+        db.UniqueConstraint('receipt_no', 'company_name', name='uq_goods_receipt_no_company'),
+        {"extend_existing": True},
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    receipt_no = db.Column(db.String(80), nullable=False, index=True)
+    packing_list_id = db.Column(db.Integer, db.ForeignKey('packing_list.id'), nullable=False, index=True)
+    delivery_id = db.Column(db.Integer, db.ForeignKey('delivery.id'), nullable=True, index=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('purchase_order.id'), nullable=True, index=True)
+    warehouse_id = db.Column(db.String(50), nullable=False, index=True)
+    receipt_date = db.Column(db.Date, nullable=False)
+    received_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    status = db.Column(Enum(ReceivingStatus), nullable=False, default=ReceivingStatus.posted, index=True)
+    remarks = db.Column(db.Text, nullable=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    packing_list = db.relationship('PackingList', backref=db.backref('goods_receipts', lazy=True))
+    delivery = db.relationship('Delivery', backref=db.backref('goods_receipts', lazy=True))
+    order = db.relationship('PurchaseOrder', backref=db.backref('goods_receipts', lazy=True))
+    receiver = db.relationship('User', foreign_keys=[received_by])
+    lines = db.relationship('GoodsReceiptLine', backref='goods_receipt', lazy=True, cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'receipt_no': self.receipt_no,
+            'packing_list_id': self.packing_list_id, 'delivery_id': self.delivery_id,
+            'order_id': self.order_id, 'warehouse_id': self.warehouse_id,
+            'receipt_date': self.receipt_date.isoformat() if self.receipt_date else None,
+            'received_by': self.received_by, 'status': self.status.value,
+            'remarks': self.remarks, 'company_name': self.company_name,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'lines': [line.to_dict() for line in self.lines],
+        }
+
+class GoodsReceiptLine(db.Model):
+    __tablename__ = 'goods_receipt_line'
+    id = db.Column(db.Integer, primary_key=True)
+    goods_receipt_id = db.Column(db.Integer, db.ForeignKey('goods_receipt.id'), nullable=False, index=True)
+    packing_list_line_id = db.Column(db.Integer, db.ForeignKey('packing_list_line.id'), nullable=False, index=True)
+    material_id = db.Column(db.Integer, db.ForeignKey('material_master.id'), nullable=False, index=True)
+    item_code = db.Column(db.String(50), nullable=False, index=True)
+    material_description = db.Column(db.Text, nullable=False)
+    expected_qty = db.Column(db.Float, nullable=False)
+    received_qty = db.Column(db.Float, nullable=False)
+    unit = db.Column(db.String(30), nullable=False)
+    storage_location_id = db.Column(db.String(100), nullable=True)
+    inspection_status = db.Column(db.String(30), nullable=False, default='pending')
+    lot_no = db.Column(db.String(100), nullable=True)
+    heat_no = db.Column(db.String(100), nullable=True)
+    serial_no = db.Column(db.String(100), nullable=True)
+    remarks = db.Column(db.Text, nullable=True)
+    packing_list_line = db.relationship('PackingListLine', backref=db.backref('receipt_lines', lazy=True))
+    material = db.relationship('MaterialMaster', foreign_keys=[material_id])
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'goods_receipt_id': self.goods_receipt_id,
+            'packing_list_line_id': self.packing_list_line_id, 'material_id': self.material_id,
+            'item_code': self.item_code, 'material_description': self.material_description,
+            'expected_qty': self.expected_qty, 'received_qty': self.received_qty,
+            'variance_qty': self.received_qty - self.expected_qty, 'unit': self.unit,
+            'storage_location_id': self.storage_location_id,
+            'inspection_status': self.inspection_status, 'lot_no': self.lot_no,
+            'heat_no': self.heat_no, 'serial_no': self.serial_no, 'remarks': self.remarks,
+        }
+
+class OSDReport(db.Model):
+    """Over/Short/Damaged (OS&D) report generated from receipt discrepancies."""
+    __tablename__ = 'osd_report'
+    __table_args__ = (
+        db.UniqueConstraint('osd_no', 'company_name', name='uq_osd_no_company'),
+        {"extend_existing": True},
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    osd_no = db.Column(db.String(80), nullable=False, index=True)
+    goods_receipt_id = db.Column(db.Integer, db.ForeignKey('goods_receipt.id'), nullable=False, index=True)
+    packing_list_id = db.Column(db.Integer, db.ForeignKey('packing_list.id'), nullable=False, index=True)
+    delivery_id = db.Column(db.Integer, db.ForeignKey('delivery.id'), nullable=True, index=True)
+    report_date = db.Column(db.Date, nullable=False)
+    status = db.Column(Enum(OSDStatus), nullable=False, default=OSDStatus.open, index=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, index=True)
+    remarks = db.Column(db.Text, nullable=True)
+    company_name = db.Column(db.String(100), nullable=False, index=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    goods_receipt = db.relationship('GoodsReceipt', backref=db.backref('osd_reports', lazy=True))
+    packing_list = db.relationship('PackingList', backref=db.backref('osd_reports', lazy=True))
+    delivery = db.relationship('Delivery', backref=db.backref('osd_reports', lazy=True))
+    supplier = db.relationship('User', foreign_keys=[supplier_id])
+    creator = db.relationship('User', foreign_keys=[created_by])
+    lines = db.relationship('OSDReportLine', backref='osd_report', lazy=True, cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'osd_no': self.osd_no,
+            'goods_receipt_id': self.goods_receipt_id, 'packing_list_id': self.packing_list_id,
+            'delivery_id': self.delivery_id,
+            'report_date': self.report_date.isoformat() if self.report_date else None,
+            'status': self.status.value, 'supplier_id': self.supplier_id,
+            'remarks': self.remarks, 'company_name': self.company_name,
+            'created_by': self.created_by,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'lines': [line.to_dict() for line in self.lines],
+        }
+
+class OSDReportLine(db.Model):
+    __tablename__ = 'osd_report_line'
+    id = db.Column(db.Integer, primary_key=True)
+    osd_report_id = db.Column(db.Integer, db.ForeignKey('osd_report.id'), nullable=False, index=True)
+    goods_receipt_line_id = db.Column(db.Integer, db.ForeignKey('goods_receipt_line.id'), nullable=False, index=True)
+    material_id = db.Column(db.Integer, db.ForeignKey('material_master.id'), nullable=False, index=True)
+    discrepancy_type = db.Column(db.String(40), nullable=False)
+    expected_qty = db.Column(db.Float, nullable=False)
+    received_qty = db.Column(db.Float, nullable=False)
+    variance_qty = db.Column(db.Float, nullable=False)
+    details = db.Column(db.Text, nullable=True)
+    action_required = db.Column(db.String(200), nullable=True)
+    material = db.relationship('MaterialMaster', foreign_keys=[material_id])
+    goods_receipt_line = db.relationship('GoodsReceiptLine', backref=db.backref('osd_lines', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'osd_report_id': self.osd_report_id,
+            'goods_receipt_line_id': self.goods_receipt_line_id,
+            'material_id': self.material_id, 'discrepancy_type': self.discrepancy_type,
+            'expected_qty': self.expected_qty, 'received_qty': self.received_qty,
+            'variance_qty': self.variance_qty, 'details': self.details,
+            'action_required': self.action_required,
+        }
+
 class WarehouseInventory(db.Model):
     __tablename__ = 'warehouse_inventory'
     __table_args__ = (
@@ -864,6 +1084,9 @@ class WarehouseTransaction(db.Model):
     balance_before = db.Column(db.Float, nullable=True)
     balance_after = db.Column(db.Float, nullable=True)
     destination_warehouse_id = db.Column(db.String(50), nullable=True, index=True)
+    goods_receipt_id = db.Column(db.Integer, db.ForeignKey('goods_receipt.id'), nullable=True, index=True)
+    receipt_line_id = db.Column(db.Integer, db.ForeignKey('goods_receipt_line.id'), nullable=True, index=True)
+    packing_list_id = db.Column(db.Integer, db.ForeignKey('packing_list.id'), nullable=True, index=True)
     user = db.relationship('User', backref=db.backref('warehouse_transactions', lazy=True))
     material = db.relationship('MaterialMaster', foreign_keys=[material_id], backref=db.backref('warehouse_transactions', lazy=True))
 
@@ -893,6 +1116,9 @@ class WarehouseTransaction(db.Model):
             'balance_before': self.balance_before,
             'balance_after': self.balance_after,
             'destination_warehouse_id': self.destination_warehouse_id,
+            'goods_receipt_id': self.goods_receipt_id,
+            'receipt_line_id': self.receipt_line_id,
+            'packing_list_id': self.packing_list_id,
             'company_name': self.company_name,
             'user_id': self.user_id,
             'created_at': self.created_at.isoformat() if self.created_at else None,
