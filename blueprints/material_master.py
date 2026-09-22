@@ -72,6 +72,16 @@ def _payload(data):
         "schedule": _clean(data.get("schedule"))[:50] or None,
         "manufacturer": _clean(data.get("manufacturer"))[:150] or None,
         "manufacturer_part_no": _clean(data.get("manufacturer_part_no"))[:100] or None,
+        "supplier_material_no": _clean(data.get("supplier_material_no"))[:100] or None,
+        "revision": _clean(data.get("revision"))[:30] or None,
+        "certificate_required": bool(data.get("certificate_required", False)),
+        "inspection_required": bool(data.get("inspection_required", False)),
+        "lot_control": bool(data.get("lot_control", False)),
+        "heat_control": bool(data.get("heat_control", False)),
+        "serial_control": bool(data.get("serial_control", False)),
+        "quarantine_allowed": bool(data.get("quarantine_allowed", True)),
+        "project_peg_required": bool(data.get("project_peg_required", False)),
+        "lifecycle_status": _clean(data.get("lifecycle_status")) or "active",
         "attributes": json.dumps(data.get("attributes") or {}, ensure_ascii=False, sort_keys=True),
         "status": _clean(data.get("status")) or "active",
     }
@@ -255,7 +265,9 @@ def api_export():
     writer.writerow([
         "Material Code", "Family", "Material Name", "Description", "Unit", "Material Group",
         "Discipline", "UNSPSC", "eCl@ss", "ETIM Class", "Standard", "Grade", "Size",
-        "Schedule", "Manufacturer", "Manufacturer Part No.", "Status",
+        "Schedule", "Manufacturer", "Manufacturer Part No.", "Supplier Material No.", "Revision",
+        "Certificate Required", "Inspection Required", "Lot Control", "Heat Control", "Serial Control",
+        "Quarantine Allowed", "Project Peg Required", "Lifecycle Status", "Status",
     ])
     for row in rows:
         writer.writerow([
@@ -263,7 +275,11 @@ def api_export():
             row.material_group or "", row.discipline or "", row.unspsc_code or "",
             row.eclass_code or "", row.etim_class or "", row.standard or "", row.grade or "",
             row.size or "", row.schedule or "", row.manufacturer or "",
-            row.manufacturer_part_no or "", row.status,
+            row.manufacturer_part_no or "", row.supplier_material_no or "", row.revision or "",
+            "Yes" if row.certificate_required else "No", "Yes" if row.inspection_required else "No",
+            "Yes" if row.lot_control else "No", "Yes" if row.heat_control else "No",
+            "Yes" if row.serial_control else "No", "Yes" if row.quarantine_allowed else "No",
+            "Yes" if row.project_peg_required else "No", row.lifecycle_status or "active", row.status,
         ])
     return (
         out.getvalue(),
