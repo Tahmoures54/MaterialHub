@@ -625,6 +625,9 @@ class QualityControl(db.Model):
     material_id = db.Column(db.Integer, db.ForeignKey('material_master.id'), nullable=True, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     status = db.Column(Enum(InspectionStatus), nullable=False, default=InspectionStatus.pending)
+    goods_receipt_id = db.Column(db.Integer, db.ForeignKey('goods_receipt.id'), nullable=True, index=True)
+    receipt_line_id = db.Column(db.Integer, db.ForeignKey('goods_receipt_line.id'), nullable=True, index=True)
+    warehouse_id = db.Column(db.String(50), nullable=True, index=True)
     inspected_date = db.Column(db.Date, nullable=True)
     remarks = db.Column(db.Text, nullable=True)
     company_name = db.Column(db.String(100), nullable=False, index=True)
@@ -633,6 +636,8 @@ class QualityControl(db.Model):
     order = db.relationship('PurchaseOrder', backref=db.backref('quality_controls', lazy=True))
     material = db.relationship('MaterialMaster', foreign_keys=[material_id], backref=db.backref('quality_controls', lazy=True))
     user = db.relationship('User', backref=db.backref('quality_controls', lazy=True))
+    goods_receipt = db.relationship('GoodsReceipt', backref=db.backref('quality_controls', lazy=True))
+    receipt_line = db.relationship('GoodsReceiptLine', backref=db.backref('quality_controls', lazy=True))
 
     def to_dict(self):
         return {
@@ -640,6 +645,9 @@ class QualityControl(db.Model):
             'order_id': self.order_id,
             'material_id': self.material_id,
             'user_id': self.user_id,
+            'goods_receipt_id': self.goods_receipt_id,
+            'receipt_line_id': self.receipt_line_id,
+            'warehouse_id': self.warehouse_id,
             'status': self.status.value,
             'inspected_date': self.inspected_date.isoformat() if self.inspected_date else None,
             'remarks': self.remarks,
@@ -923,6 +931,8 @@ class WarehouseInventory(db.Model):
     material_description = db.Column(db.Text, nullable=False)
     material_category = db.Column(db.String(50))
     received_qty = db.Column(db.Float, nullable=False)
+    available_qty = db.Column(db.Float, nullable=False, default=0.0)
+    quarantine_qty = db.Column(db.Float, nullable=False, default=0.0)
     unit = db.Column(db.String(50), nullable=False)
     storage_location_id = db.Column(db.String(100), nullable=True)
     receipt_date = db.Column(db.Date, nullable=False)
@@ -961,6 +971,8 @@ class WarehouseInventory(db.Model):
             'material_description': self.material_description,
             'material_category': self.material_category,
             'received_qty': self.received_qty,
+            'available_qty': self.available_qty,
+            'quarantine_qty': self.quarantine_qty,
             'unit': self.unit,
             'storage_location_id': self.storage_location_id,
             'receipt_date': self.receipt_date.isoformat() if self.receipt_date else None,
@@ -1009,6 +1021,8 @@ class WarehouseInventory(db.Model):
             material_description=(payload.get('material_description') or '').strip(),
             material_category=payload.get('material_category') or payload.get('category'),
             received_qty=qty,
+            available_qty=_parse_float(payload.get('available_qty'), qty),
+            quarantine_qty=_parse_float(payload.get('quarantine_qty'), 0.0),
             unit=payload.get('unit') or payload.get('unit_of_measure') or 'EA',
             storage_location_id=payload.get('storage_location_id'),
             receipt_date=receipt_date,
