@@ -1,66 +1,74 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="material-requisition-container">
-    <div class="dashboard-header">
-        <h1><i class="fas fa-clipboard-list me-2" aria-hidden="true"></i>Material Requisitions</h1>
-        <p>Manage material requisitions for {{ company_name }}</p>
-    </div>
-
-    <!-- Notifications Container -->
-    <div id="notifications" class="notifications-container" role="alert" aria-live="polite"></div>
-
-    <!-- Debug Info -->
-    <div class="alert alert-info" role="alert">
-        <strong>Debug Info:</strong><br>
-        User: {{ current_user.full_name or 'Not set' }}<br>
-        Access Level: {{ current_user.access_level or 'Not set' }}<br>
-        Read Only: {{ read_only|default('Not set', true) }}<br>
-        Authenticated: {{ current_user.is_authenticated }}
-    </div>
-
-    <section class="material-requisitions" aria-labelledby="requisitions-heading">
-        <h2 id="requisitions-heading">Current Material Requisitions</h2>
-
-        <!-- Buttons and Filters Group -->
-        <div class="button-group mb-3 d-flex align-items-center flex-wrap">
+<div class="mh-page material-requisition-container">
+    <div class="mh-page-header">
+        <div>
+            <div class="mh-badge mh-badge-primary">PROCUREMENT · MATERIAL CONTROL</div>
+            <h1>Material Requisitions</h1>
+            <p>Plan, submit, review and track material demand for <strong>{{ company_name }}</strong>.</p>
+        </div>
+        <div class="mh-flex mh-gap-2" style="flex-wrap:wrap;">
             {% if current_user.is_authenticated and current_user.access_level.name == 'engineering' %}
-            <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#addMRModal" id="createNewMR" aria-label="Create New Material Requisition">
-                <i class="fas fa-plus me-2" aria-hidden="true"></i>Create New MR
+            <button class="mh-btn mh-btn-primary" data-bs-toggle="modal" data-bs-target="#addMRModal" id="createNewMR" aria-label="Create New Material Requisition">
+                <i class="fas fa-plus" aria-hidden="true"></i> New MR
             </button>
             {% endif %}
-            <button class="btn btn-custom ms-2" data-bs-toggle="modal" data-bs-target="#helpModal" id="showHelp" aria-label="Show Help">
-                <i class="fas fa-question-circle me-2" aria-hidden="true"></i>Help
+            <button class="mh-btn mh-btn-secondary" data-bs-toggle="modal" data-bs-target="#helpModal" id="showHelp" aria-label="Show Help">
+                <i class="fas fa-circle-question" aria-hidden="true"></i> Help
             </button>
             {% if current_user.is_authenticated %}
-            <button id="exportCSV" class="btn btn-custom ms-2" aria-label="Export to CSV">
-                <i class="fas fa-file-csv me-2" aria-hidden="true"></i>Export to CSV
+            <button id="exportCSV" class="mh-btn mh-btn-secondary" aria-label="Export to CSV">
+                <i class="fas fa-file-export" aria-hidden="true"></i> Export CSV
             </button>
             {% endif %}
-            <!-- Discipline Filter -->
-            <select id="disciplineFilter" class="form-select ms-2" style="width: 200px;" aria-label="Filter by Discipline">
-                <option value="" selected>All Disciplines</option>
-                <!-- Options populated dynamically via JS -->
-            </select>
-            <!-- Search Bar -->
-            <input type="text" id="searchBar" class="form-control ms-2" style="width: 200px;" placeholder="Search MRs..." aria-label="Search Material Requisitions">
-            <!-- Loading Indicator -->
-            <div id="loadingIndicator" class="ms-2 d-none" aria-live="polite">
-                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading...
+        </div>
+    </div>
+
+    <div id="notifications" class="notifications-container" role="alert" aria-live="polite"></div>
+
+    <div class="mh-grid mh-grid-4" style="margin-bottom:1.25rem;">
+        <div class="mh-kpi info"><div class="label">Total Requests</div><div class="value" id="mrKpiTotal">—</div><div class="meta">Current company</div></div>
+        <div class="mh-kpi warning"><div class="label">Pending</div><div class="value" id="mrKpiPending">—</div><div class="meta">Awaiting action</div></div>
+        <div class="mh-kpi success"><div class="label">Approved</div><div class="value" id="mrKpiApproved">—</div><div class="meta">Approved requests</div></div>
+        <div class="mh-kpi danger"><div class="label">High Priority</div><div class="value" id="mrKpiHigh">—</div><div class="meta">Requires attention</div></div>
+    </div>
+
+    <section class="mh-card" aria-labelledby="requisitions-heading">
+        <div class="mh-card-header" style="align-items:flex-end; flex-wrap:wrap;">
+            <div>
+                <h2 id="requisitions-heading" class="mh-card-title">Requisition Register</h2>
+                <p class="mh-card-subtitle">Search, filter and open any request without leaving the workspace.</p>
+            </div>
+            <div id="loadingIndicator" class="mh-badge mh-badge-info d-none" aria-live="polite">
+                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading
             </div>
         </div>
 
-        <!-- Material Requisitions Cards -->
-        <div class="requisitions-container">
-            <div id="requisitionsList" class="row" role="list"></div>
+        <div class="mh-grid mh-grid-2" style="margin-bottom:1rem;">
+            <label class="mh-form" style="margin:0;">
+                <span>Search</span>
+                <input type="search" id="searchBar" class="mh-input" placeholder="MR number, subject, project or vendor…" aria-label="Search Material Requisitions">
+            </label>
+            <label class="mh-form" style="margin:0;">
+                <span>Discipline</span>
+                <select id="disciplineFilter" class="mh-select" aria-label="Filter by Discipline">
+                    <option value="" selected>All disciplines</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="mh-flex-between" style="margin-bottom:1rem; flex-wrap:wrap;">
+            <div class="mh-muted" id="mrResultSummary">Loading requisitions…</div>
+            <a class="mh-btn btn-ghost btn-sm" href="{{ url_for('project_dashboard.dashboard') }}">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i> Workspace
+            </a>
+        </div>
+
+        <div class="requisitions-container" style="padding:0; box-shadow:none; background:transparent;">
+            <div id="requisitionsList" class="row g-3" role="list"></div>
         </div>
     </section>
-
-    <!-- Navigation -->
-    <section class="navigation">
-        <a href="{{ url_for('project_dashboard.dashboard') }}" class="btn btn-secondary" aria-label="Back to Dashboard">
-            <i class="fas fa-arrow-left me-2" aria-hidden="true"></i>Back to Dashboard
-        </a>
-    </section>
+</div>
 
     <!-- Modal for Creating MR -->
     <div class="modal fade" id="addMRModal" tabindex="-1" aria-labelledby="addMRModalLabel" aria-hidden="true">
@@ -501,6 +509,16 @@
             let mrDataCache = [];
             const csrfToken = '{{ csrf_token() }}';
 
+            function updateMrKpis(data) {
+                const rows = Array.isArray(data) ? data : [];
+                const norm = value => String(value ?? '').trim().toLowerCase();
+                const status = row => norm(row.status);
+                $('#mrKpiTotal').text(rows.length);
+                $('#mrKpiPending').text(rows.filter(row => ['pending','submitted','under review','under_review'].includes(status(row))).length);
+                $('#mrKpiApproved').text(rows.filter(row => status(row) === 'approved').length);
+                $('#mrKpiHigh').text(rows.filter(row => norm(row.priority) === 'high').length);
+            }
+
             // Show loading indicator
             function showLoading(show) {
                 $('#loadingIndicator').toggleClass('d-none', !show);
@@ -549,6 +567,8 @@
                     success: function (data) {
                         console.log('Requisitions loaded:', data);
                         mrDataCache = data;
+                        updateMrKpis(data);
+                        $('#mrResultSummary').text(`${data.length} requisition${data.length === 1 ? '' : 's'} shown`);
                         const requisitionsList = $('#requisitionsList');
                         requisitionsList.empty();
                         if (data.length === 0) {
