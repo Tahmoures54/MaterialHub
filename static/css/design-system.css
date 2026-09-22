@@ -61,6 +61,69 @@
   --mh-track-lg: 320px;
 }
 
+/* ---------- Dark mode ---------- */
+[data-theme="dark"] {
+  --mh-bg:             #0B1220;
+  --mh-surface:        #111827;
+  --mh-surface-2:      #1E293B;
+  --mh-text:           #E2E8F0;
+  --mh-muted:          #94A3B8;
+  --mh-border:         #334155;
+  --mh-border-soft:    #1E293B;
+  --mh-primary-light:  #164E63;
+  --mh-success-bg:     #064E3B;
+  --mh-warning-bg:     #78350F;
+  --mh-danger-bg:      #7F1D1D;
+  --mh-info-bg:        #0C4A6E;
+}
+
+[data-theme="dark"] body {
+  background: var(--mh-bg);
+  color: var(--mh-text);
+}
+
+[data-theme="dark"] .mh-topbar {
+  background: #0F172A !important;
+  border-bottom-color: #1E293B !important;
+}
+
+[data-theme="dark"] .mh-card,
+[data-theme="dark"] .mh-kpi,
+[data-theme="dark"] .mh-table-wrap {
+  background: var(--mh-surface);
+  border-color: var(--mh-border-soft);
+}
+
+[data-theme="dark"] .mh-table thead th {
+  background: var(--mh-surface-2);
+}
+
+[data-theme="dark"] .mh-table tbody tr:hover {
+  background: #1E293B;
+}
+
+[data-theme="dark"] .mh-form input,
+[data-theme="dark"] .mh-form textarea,
+[data-theme="dark"] .mh-form select,
+[data-theme="dark"] .mh-input,
+[data-theme="dark"] .mh-select,
+[data-theme="dark"] .mh-textarea {
+  background: #0F172A;
+  border-color: #334155;
+  color: var(--mh-text);
+}
+
+[data-theme="dark"] .mh-pill {
+  background: #1E293B;
+  border-color: #334155;
+  color: #E2E8F0;
+}
+
+[data-theme="dark"] .mh-workspace-hero {
+  background: linear-gradient(135deg, #164E63 0%, #0F172A 55%, #111827 100%);
+  border-color: #1E293B;
+}
+
 /* ---------- Base ---------- */
 html { scroll-behavior: smooth; }
 body {
@@ -221,9 +284,11 @@ img { max-width: 100%; display: block; }
 }
 
 .btn:disabled,
-.mh-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+.mh-btn:disabled,
+.btn.mh-loading,
+.mh-btn.mh-loading {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .btn-primary,
@@ -447,6 +512,168 @@ img { max-width: 100%; display: block; }
 .mh-alert-warning { background: var(--mh-warning-bg); color: #92400E; border-color: #FDE68A; }
 .mh-alert-info    { background: var(--mh-info-bg);    color: #1E40AF; border-color: #BFDBFE; }
 
+/* ---------- Toast notifications ---------- */
+.mh-toast-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 380px;
+  width: calc(100% - 32px);
+  pointer-events: none;
+}
+
+.mh-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--mh-radius);
+  background: var(--mh-surface);
+  border: 1px solid var(--mh-border-soft);
+  box-shadow: var(--mh-shadow-lg);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--mh-text);
+  opacity: 0;
+  transform: translateX(24px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: auto;
+}
+
+.mh-toast.mh-toast-in {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.mh-toast.mh-toast-out {
+  opacity: 0;
+  transform: translateX(24px);
+}
+
+.mh-toast-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 1.1rem;
+}
+
+.mh-toast-success { border-left: 4px solid var(--mh-success); }
+.mh-toast-success .mh-toast-icon { color: var(--mh-success); }
+
+.mh-toast-danger,
+.mh-toast-error { border-left: 4px solid var(--mh-danger); }
+.mh-toast-danger .mh-toast-icon,
+.mh-toast-error .mh-toast-icon { color: var(--mh-danger); }
+
+.mh-toast-warning { border-left: 4px solid var(--mh-warning); }
+.mh-toast-warning .mh-toast-icon { color: var(--mh-warning); }
+
+.mh-toast-info,
+.mh-toast-message { border-left: 4px solid var(--mh-info); }
+.mh-toast-info .mh-toast-icon,
+.mh-toast-message .mh-toast-icon { color: var(--mh-info); }
+
+.mh-toast-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.mh-toast-close {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--mh-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: 4px;
+}
+
+.mh-toast-close:hover {
+  color: var(--mh-text);
+  background: var(--mh-surface-2);
+}
+
+@media (max-width: 600px) {
+  .mh-toast-container {
+    top: auto;
+    bottom: 16px;
+    right: 12px;
+    left: 12px;
+    max-width: none;
+    width: auto;
+  }
+}
+
+/* ---------- Empty state (improved) ---------- */
+.mh-empty {
+  text-align: center;
+  padding: 3rem 1.75rem;
+  color: var(--mh-muted);
+  background: var(--mh-surface);
+  border: 1px dashed var(--mh-border);
+  border-radius: var(--mh-radius);
+}
+
+.mh-empty i {
+  font-size: 2.25rem;
+  margin-bottom: 0.85rem;
+  opacity: 0.55;
+  color: var(--mh-primary);
+  display: block;
+}
+
+.mh-empty strong {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--mh-text);
+  margin-bottom: 0.35rem;
+}
+
+.mh-empty p {
+  margin: 0 0 1.25rem;
+  font-size: 0.9rem;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---------- Page header ---------- */
+.mh-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mh-page-header h1 {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.mh-page-header p {
+  margin: 0.3rem 0 0;
+  color: var(--mh-muted);
+  font-size: 0.925rem;
+}
+
+/* ---------- Industrial divider ---------- */
+.mh-divider {
+  height: 1px;
+  background: var(--mh-border-soft);
+  margin: 1.5rem 0;
+  border: none;
+}
+
 /* ---------- Utility ---------- */
 .mh-muted { color: var(--mh-muted); }
 .mh-text-primary { color: var(--mh-primary); }
@@ -490,46 +717,8 @@ img { max-width: 100%; display: block; }
   margin: 0 0 1.25rem;
 }
 
-/* ---------- Empty state ---------- */
-.mh-empty {
-  text-align: center;
-  padding: 2.5rem 1.5rem;
-  color: var(--mh-muted);
-}
-.mh-empty i {
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
-  opacity: 0.5;
-  color: var(--mh-primary);
-}
-
-/* ---------- Page header ---------- */
-.mh-page-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.mh-page-header h1 {
-  margin: 0;
-  font-size: 1.55rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.mh-page-header p {
-  margin: 0.3rem 0 0;
-  color: var(--mh-muted);
-  font-size: 0.925rem;
-}
-
-/* ---------- Industrial divider ---------- */
-.mh-divider {
-  height: 1px;
-  background: var(--mh-border-soft);
-  margin: 1.5rem 0;
-  border: none;
+/* Theme toggle button */
+.mh-theme-toggle {
+  min-width: 40px;
+  justify-content: center;
 }
