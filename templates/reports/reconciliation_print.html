@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Material Reconciliation · Print{% endblock %}
+{% block content %}
+<style>
+.print{max-width:1500px;margin:0 auto;padding:15px;background:#fff;font-size:9px}.toolbar{margin-bottom:12px}.toolbar button,.toolbar a{padding:7px 10px;border:1px solid #ccd9df;border-radius:6px;text-decoration:none;color:#0b6179;background:#fff}.print h1{margin:3px 0}.print table{width:100%;border-collapse:collapse}.print th,.print td{border:1px solid #cbd5db;padding:4px;white-space:nowrap}.print th{background:#eef4f6}.num{text-align:right}@media print{.toolbar{display:none}.print{padding:0}.print th{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+<div class="print">
+ <div class="toolbar"><button onclick="window.print()">🖨 Print / Save PDF</button> <a href="{{ url_for('reports.reconciliation') }}">← Back</a></div>
+ <div class="text-muted">MATERIALHUB · CONTROLLED RECONCILIATION · {{ current_user.company_name }}</div>
+ <h1>Material Reconciliation</h1>
+ <div>MR → PO → Delivery → Packing List → GRN → QC → Warehouse</div>
+ <table><thead><tr><th>MR</th><th>Project</th><th>Item</th><th>Unit</th><th>MR</th><th>PO</th><th>PO Δ</th><th>Delivery</th><th>Del Δ</th><th>PL</th><th>PL Δ</th><th>GRN</th><th>GRN Δ</th><th>QC Passed</th><th>QC Δ</th><th>QC Pending</th><th>QC Failed</th><th>WH Received</th><th>WH Available</th><th>WH Quarantine</th><th>WH Δ</th></tr></thead>
+ <tbody>{% for r in rows %}<tr><td>{{ r.mr.mr_no }}</td><td>{{ r.mr.project_no }}</td><td>{{ r.mr.item_code }}</td><td>{{ r.mr.unit_of_measure }}</td><td class="num">{{ '%.2f'|format(r.mr_qty) }}</td><td class="num">{{ '%.2f'|format(r.po_qty) }}</td><td class="num">{{ '%.2f'|format(r.variance_mr_po) }}</td><td class="num">{{ '%.2f'|format(r.delivery_qty) }}</td><td class="num">{{ '%.2f'|format(r.variance_po_delivery) }}</td><td class="num">{{ '%.2f'|format(r.pl_qty) }}</td><td class="num">{{ '%.2f'|format(r.variance_delivery_pl) }}</td><td class="num">{{ '%.2f'|format(r.grn_qty) }}</td><td class="num">{{ '%.2f'|format(r.variance_pl_grn) }}</td><td class="num">{{ '%.2f'|format(r.qc_passed_qty) }}</td><td class="num">{{ '%.2f'|format(r.variance_grn_qc) }}</td><td class="num">{{ '%.2f'|format(r.qc_pending_qty) }}</td><td class="num">{{ '%.2f'|format(r.qc_failed_qty) }}</td><td class="num">{{ '%.2f'|format(r.warehouse_received_qty) }}</td><td class="num">{{ '%.2f'|format(r.warehouse_available_qty) }}</td><td class="num">{{ '%.2f'|format(r.warehouse_quarantine_qty) }}</td><td class="num">{{ '%.2f'|format(r.variance_qc_warehouse) }}</td></tr>{% endfor %}</tbody>
+ <tfoot><tr><th colspan="4">TOTAL</th>{% for k in ['mr_qty','po_qty','variance_mr_po','delivery_qty','variance_po_delivery','pl_qty','variance_delivery_pl','grn_qty','variance_pl_grn','qc_passed_qty','variance_grn_qc','qc_pending_qty','qc_failed_qty','warehouse_received_qty','warehouse_available_qty','warehouse_quarantine_qty','variance_qc_warehouse'] %}<th class="num">{{ '%.2f'|format(totals[k]) }}</th>{% endfor %}</tr></tfoot>
+ </table>
+</div>
+{% endblock %}
