@@ -903,6 +903,7 @@ def api_create_goods_receipt():
             db.session.add(line)
             db.session.flush()
             created_lines.append(line)
+            inspection_required = bool(pl_line.material and pl_line.material.inspection_required)
 
             inventory = WarehouseInventory.query.filter_by(
                 warehouse_id=warehouse_id,
