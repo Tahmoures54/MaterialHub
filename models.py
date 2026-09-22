@@ -553,9 +553,11 @@ class PurchaseOrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     purchase_order_id = db.Column(db.Integer, db.ForeignKey('purchase_order.id'), nullable=False, index=True)
     material_requisition_id = db.Column(db.Integer, db.ForeignKey('material_requisition.id'), nullable=False, index=True)
+    material_id = db.Column(db.Integer, db.ForeignKey('material_master.id'), nullable=True, index=True)
     quantity = db.Column(db.Float, nullable=False)
     unit_price = db.Column(db.Float, nullable=False)
     material_requisition = db.relationship('MaterialRequisition', backref=db.backref('purchase_order_items', lazy=True))
+    material = db.relationship('MaterialMaster', foreign_keys=[material_id], backref=db.backref('purchase_order_items', lazy=True))
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -572,6 +574,7 @@ class PurchaseOrderItem(db.Model):
             'id': self.id,
             'purchase_order_id': self.purchase_order_id,
             'material_requisition_id': self.material_requisition_id,
+            'material_id': self.material_id,
             'quantity': self.quantity,
             'unit_price': self.unit_price
         }
@@ -583,6 +586,7 @@ class QualityControl(db.Model):
     __tablename__ = 'quality_control'
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('purchase_order.id'), nullable=False, index=True)
+    material_id = db.Column(db.Integer, db.ForeignKey('material_master.id'), nullable=True, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     status = db.Column(Enum(InspectionStatus), nullable=False, default=InspectionStatus.pending)
     inspected_date = db.Column(db.Date, nullable=True)
@@ -591,12 +595,14 @@ class QualityControl(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
     order = db.relationship('PurchaseOrder', backref=db.backref('quality_controls', lazy=True))
+    material = db.relationship('MaterialMaster', foreign_keys=[material_id], backref=db.backref('quality_controls', lazy=True))
     user = db.relationship('User', backref=db.backref('quality_controls', lazy=True))
 
     def to_dict(self):
         return {
             'id': self.id,
             'order_id': self.order_id,
+            'material_id': self.material_id,
             'user_id': self.user_id,
             'status': self.status.value,
             'inspected_date': self.inspected_date.isoformat() if self.inspected_date else None,
@@ -617,6 +623,7 @@ class Delivery(db.Model):
     )
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('purchase_order.id'), nullable=False, index=True)
+    material_id = db.Column(db.Integer, db.ForeignKey('material_master.id'), nullable=True, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     delivery_id = db.Column(db.String(50), nullable=False, index=True)
     status = db.Column(Enum(DeliveryStatus), nullable=False, default=DeliveryStatus.pending)
@@ -626,6 +633,7 @@ class Delivery(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
     order = db.relationship('PurchaseOrder', backref=db.backref('deliveries', lazy=True))
+    material = db.relationship('MaterialMaster', foreign_keys=[material_id], backref=db.backref('deliveries', lazy=True))
     user = db.relationship('User', backref=db.backref('deliveries', lazy=True))
 
     def __init__(self, **kwargs):
@@ -640,6 +648,7 @@ class Delivery(db.Model):
         return {
             'id': self.id,
             'order_id': self.order_id,
+            'material_id': self.material_id,
             'user_id': self.user_id,
             'delivery_id': self.delivery_id,
             'status': self.status.value,
