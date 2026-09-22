@@ -667,7 +667,7 @@ class Delivery(db.Model):
 class WarehouseInventory(db.Model):
     __tablename__ = 'warehouse_inventory'
     __table_args__ = (
-        db.UniqueConstraint('warehouse_id', 'company_name', name='uq_wh_warehouse_id_company'),
+        db.UniqueConstraint('warehouse_id', 'material_id', 'company_name', name='uq_wh_warehouse_material_company'),
         {"extend_existing": True},
     )
     id = db.Column(db.Integer, primary_key=True)
