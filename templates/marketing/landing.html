@@ -78,6 +78,36 @@
   .lp-control-checks small { display:block;margin-top:.2rem;color:#64748B;font-size:.7rem;line-height:1.4; }
   @media(max-width:800px){.lp-cap-grid,.lp-control{grid-template-columns:1fr}.lp-control-checks{grid-template-columns:1fr}}
   @media(max-width:600px){.lp-cap{grid-template-columns:auto 1fr}.lp-cap-arrow{display:none}}
+  .lp-coding { display:grid;grid-template-columns:1.05fr .95fr;gap:1.5rem;align-items:stretch;background:linear-gradient(135deg,#082F49 0%,#0E7490 72%,#0891B2 100%);border-radius:18px;padding:1.6rem;color:#F8FAFC;overflow:hidden;position:relative;box-shadow:0 14px 35px rgba(8,47,73,.15); }
+  .lp-coding:after { content:"";position:absolute;width:330px;height:330px;border:1px solid rgba(255,255,255,.1);border-radius:50%;right:-150px;bottom:-210px; }
+  .lp-coding-copy { position:relative;z-index:1; }
+  .lp-coding .lp-kicker { color:#A5F3FC; }
+  .lp-coding h2 { margin:0 0 .65rem;font-size:clamp(1.45rem,3vw,2rem);line-height:1.15;letter-spacing:-.025em;color:#fff; }
+  .lp-coding-copy > p { margin:0;color:#D8F5F5;line-height:1.7;font-size:.9rem;max-width:650px; }
+  .lp-coding-copy > p strong { color:#fff; }
+  .lp-code-example { display:inline-flex;align-items:baseline;gap:.65rem;margin:1rem 0 .85rem;padding:.55rem .8rem;border:1px solid rgba(165,243,252,.3);border-radius:10px;background:rgba(255,255,255,.08); }
+  .lp-code-example span { font:800 1.2rem/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#A5F3FC;letter-spacing:.03em; }
+  .lp-code-example small { color:#CFFAFE;font-size:.68rem; }
+  .lp-coding-points { display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.2rem; }
+  .lp-coding-points > div { display:flex;gap:.55rem;padding:.65rem;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.055); }
+  .lp-coding-points i { color:#67E8F9;margin-top:.15rem; }
+  .lp-coding-points strong { display:block;font-size:.75rem;color:#fff; }
+  .lp-coding-points small { display:block;margin-top:.15rem;color:#C8E8EA;font-size:.66rem;line-height:1.4; }
+  .lp-code-link { display:inline-flex;align-items:center;gap:.5rem;margin-top:1rem;color:#fff;text-decoration:none;font-size:.82rem;font-weight:800; }
+  .lp-code-link:hover { color:#A5F3FC; }
+  .lp-coding-visual { position:relative;z-index:1;display:flex;align-items:center;justify-content:center; }
+  .lp-code-window { width:min(100%,430px);background:#071521;border:1px solid rgba(165,243,252,.22);border-radius:15px;padding:.8rem;box-shadow:0 18px 45px rgba(0,0,0,.2); }
+  .lp-code-top { display:flex;align-items:center;gap:.35rem;padding:0 .25rem .7rem;border-bottom:1px solid rgba(255,255,255,.1);color:#CFFAFE; }
+  .lp-code-top > span { width:7px;height:7px;border-radius:50%;background:#64748B; }
+  .lp-code-top b { margin-left:auto;font-size:.68rem;font-weight:700; }
+  .lp-code-row { display:flex;justify-content:space-between;gap:1rem;padding:.58rem .35rem;border-bottom:1px solid rgba(255,255,255,.07);font-size:.72rem; }
+  .lp-code-row label { color:#94A3B8; }
+  .lp-code-row span { color:#E2E8F0;text-align:right; }
+  .lp-code-main strong { color:#67E8F9;font:800 .9rem/1 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .lp-code-row em { color:#A5F3FC;font-style:normal;font-weight:800; }
+  .lp-code-footer { display:flex;gap:.45rem;align-items:center;padding:.7rem .35rem .15rem;color:#A5F3FC;font-size:.68rem; }
+  @media(max-width:800px){.lp-coding{grid-template-columns:1fr}.lp-coding-points{grid-template-columns:1fr}.lp-code-window{max-width:520px}}
+  @media(max-width:600px){.lp-coding{padding:1.2rem}.lp-code-row{font-size:.66rem}}
 </style>
 {% endblock %}
 {% block content %}
@@ -176,6 +206,37 @@
       <a class="lp-cap" href="{{ url_for('intelligence.dashboard') }}"><span class="lp-cap-icon"><i class="fas fa-brain"></i></span><div><strong>Material Intelligence</strong><p>Surface readiness, risk signals, supplier intelligence and operational actions from live data.</p></div><span class="lp-cap-arrow">→</span></a>
       <a class="lp-cap" href="{{ url_for('intelligence.traceability') }}"><span class="lp-cap-icon"><i class="fas fa-qrcode"></i></span><div><strong>Traceability</strong><p>Connect material identity with PO, delivery, warehouse, project and traceability references.</p></div><span class="lp-cap-arrow">→</span></a>
       <a class="lp-cap" href="{{ url_for('intelligence.excel_import') }}"><span class="lp-cap-icon"><i class="fas fa-file-excel"></i></span><div><strong>Excel Import</strong><p>Bring structured project data into the system without rebuilding every record manually.</p></div><span class="lp-cap-arrow">→</span></a>
+    </div>
+  </section>
+
+  <section class="lp-section">
+    <div class="lp-coding">
+      <div class="lp-coding-copy">
+        <span class="lp-kicker">Material Intelligence · Coding System</span>
+        <h2>Every material gets one controlled identity.</h2>
+        <p>Stop managing industrial materials by inconsistent descriptions and scattered supplier part numbers. MaterialHub gives each material a stable <strong>Material Code</strong> and keeps technical identity, classification and traceability connected.</p>
+        <div class="lp-code-example"><span>MAT-000247</span><small>Stable Material Code</small></div>
+        <div class="lp-coding-points">
+          <div><i class="fas fa-layer-group"></i><span><strong>Structured identity</strong><small>Family, discipline, group, standard, grade and size.</small></span></div>
+          <div><i class="fas fa-barcode"></i><span><strong>Industry classifications</strong><small>UNSPSC · eCl@ss · ETIM when required.</small></span></div>
+          <div><i class="fas fa-fingerprint"></i><span><strong>Duplicate protection</strong><small>Detect similar material identities before creating another record.</small></span></div>
+          <div><i class="fas fa-link"></i><span><strong>Traceability ready</strong><small>Supplier part, revision, certificate, lot, heat and serial controls stay with the material.</small></span></div>
+        </div>
+        <a class="lp-code-link" href="{{ url_for('material_master.catalog') }}">Explore Material Master <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="lp-coding-visual">
+        <div class="lp-code-window">
+          <div class="lp-code-top"><span></span><span></span><span></span><b>Material Master</b></div>
+          <div class="lp-code-row lp-code-main"><label>Material Code</label><strong>MAT-000247</strong></div>
+          <div class="lp-code-row"><label>Family</label><span>PIP · Piping</span></div>
+          <div class="lp-code-row"><label>Standard</label><span>ASTM A106</span></div>
+          <div class="lp-code-row"><label>Grade</label><span>Gr. B</span></div>
+          <div class="lp-code-row"><label>Size / Schedule</label><span>6" · SCH 40</span></div>
+          <div class="lp-code-row"><label>Controls</label><span>Certificate · Inspection · Heat</span></div>
+          <div class="lp-code-row"><label>Lifecycle</label><em>ACTIVE</em></div>
+          <div class="lp-code-footer"><i class="fas fa-shield-alt"></i> One identity · many transactions · full traceability</div>
+        </div>
+      </div>
     </div>
   </section>
 
