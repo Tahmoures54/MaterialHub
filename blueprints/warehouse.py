@@ -333,7 +333,6 @@ def api_create_transaction():
             if inventory and inventory.material_id and inventory.material_id != material.id:
                 return jsonify({'error': 'Selected material does not match the stock record.'}), 409
             before = float(inventory.received_qty or 0) if inventory else 0.0
-            inspection_required = bool(pl_line.material and pl_line.material.inspection_required)
             if not inventory:
                 inventory = WarehouseInventory.from_dict({
                     'warehouse_id': warehouse_id,
