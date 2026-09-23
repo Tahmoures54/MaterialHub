@@ -226,6 +226,26 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
         assert tx.packing_list_id == pl_id
         assert tx.goods_receipt_id == receipt["id"]
 
+    # Issuing stock must not rewrite the cumulative inbound quantity.
+    _authenticate_session(client, warehouse)
+    csrf = _csrf(client, app)
+    issue = client.post("/warehouse/api/issue", json={
+        "csrf_token": csrf,
+        "warehouse_id": "WH-FLOW-0001",
+        "material_id": material_id,
+        "issue_quantity": 3,
+        "project_no": project.project_no,
+        "contractor": "E2E Contractor",
+        "reference_no": "ISSUE-E2E-001",
+    })
+    assert issue.status_code == 200, issue.get_json()
+    with app.app_context():
+        inventory = WarehouseInventory.query.filter_by(
+            company_name=company, warehouse_id="WH-FLOW-0001", material_id=material_id
+        ).one()
+        assert inventory.received_qty == 8
+        assert inventory.available_qty == 5
+
     # Another tenant cannot read the inbound chain.
     other = _persist_user(app, "flow-other@example.com", AccessLevel.warehouse, "Other Inbound EPC")
     _authenticate_session(client, other)
