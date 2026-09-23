@@ -2,7 +2,7 @@
 
 Repository: Tahmoures54/MaterialHub
 Target branch: main
-Review date: 2026-09-20
+Review/update date: 2026-09-23
 Scope: Production hardening and infrastructure only. No business workflow or user-facing business logic was intentionally changed.
 
 ## Executive summary
@@ -25,7 +25,18 @@ Internet -> Nginx/TLS -> Gunicorn/Flask -> PostgreSQL + Redis
 - Password hashing uses Argon2id, with transparent migration of legacy Werkzeug hashes after successful authentication.
 - High-risk intelligence queries were reviewed for tenant scoping.
 
-### Production runtime
+### Business workflow integrity
+
+- Material Master identity is required for controlled warehouse receiving.
+- Packing Lists and Goods Receipts are explicit inbound documents.
+- Receipt lines retain expected vs received quantity and inspection status.
+- OS&D records discrepancies generated from inbound receiving.
+- QC can release passed receipt-line stock from quarantine.
+- Warehouse transactions retain inbound document references.
+- Warehouse issue preserves cumulative inbound quantity and reduces only the available balance.
+- Reconciliation reports expose quantity differences through the procurement-to-warehouse chain.
+
+## Production runtime
 - Multi-stage Python 3.12-slim production image.
 - Gunicorn is the production WSGI server.
 - Container runs as a dedicated non-root user.
@@ -60,7 +71,7 @@ The repository contains an explicit Alembic baseline followed by incremental har
 Before first production deployment, compare the production schema with this migration history. If the database was created outside Alembic, establish the correct baseline before running flask db upgrade. Do not blindly downgrade production migrations.
 
 ## Verification status
-Verified by repository inspection/configuration: production settings, authentication hardening, container architecture, observability endpoints, CI/security stages and regression tests are present.
+Verified by repository inspection/configuration: production settings, authentication hardening, container architecture, observability endpoints, CI/security stages, tenant-isolation tests and the inbound receiving regression workflow are present.
 
 Still requiring real-environment validation: Docker Compose startup with real secrets, TLS, PostgreSQL migration against a representative database, Redis rate limiting with multiple workers, graceful shutdown, backup/restore, end-to-end authentication/RBAC, tenant isolation, Excel import/export and load testing.
 
