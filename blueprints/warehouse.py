@@ -243,7 +243,9 @@ def api_issue_inventory():
             material = _resolve_material(item)
             if material and inventory.item_code != material.material_code:
                 return jsonify({'error': 'Selected material does not match the stock record.'}), 409
-            inventory.received_quantity -= issue_quantity
+            # `received_qty` is the immutable cumulative inbound quantity; issuing stock
+            # must only reduce the currently available balance. Keeping received_qty intact
+            # preserves the warehouse audit trail and makes reconciliation mathematically stable.
             inventory.available_qty = max(0.0, float(inventory.available_qty or 0) - issue_quantity)
             from utils import generate_next_warehouse_transaction_no
             tx = WarehouseTransaction(
@@ -998,106 +1000,3 @@ def api_create_goods_receipt():
                 supplier_id=pl.supplier_id,
                 remarks='Automatically generated from Goods Receipt quantity discrepancy.',
                 company_name=current_user.company_name,
-                created_by=current_user.id,
-            )
-            db.session.add(osd)
-            db.session.flush()
-            for line, variance in osd_candidates:
-                db.session.add(OSDReportLine(
-                    osd_report_id=osd.id,
-                    goods_receipt_line_id=line.id,
-                    material_id=line.material_id,
-                    discrepancy_type='OVER' if variance > 0 else 'SHORT',
-                    expected_qty=line.expected_qty,
-                    received_qty=line.expected_qty + variance,
-                    variance_qty=variance,
-                    details='Cumulative received quantity does not match the Packing List quantity.',
-                    action_required='Review with supplier/carrier and resolve discrepancy.',
-                ))
-
-        db.session.commit()
-        return jsonify({
-            'receipt': receipt.to_dict(),
-            'osd': osd.to_dict() if osd else None,
-        }), 201
-    except CSRFError:
-        db.session.rollback()
-        return jsonify({'error': 'Invalid CSRF token'}), 403
-    except (ValidationError, ValueError, TypeError) as exc:
-        db.session.rollback()
-        return jsonify({'error': str(exc)}), 400
-    except Exception as exc:
-        db.session.rollback()
-        logger.exception('Goods Receipt creation failed')
-        return jsonify({'error': 'Failed to create Goods Receipt', 'detail': str(exc)}), 500
-
-@warehouse_bp.route('/api/osd-reports', methods=['GET'])
-@login_required
-def api_list_osd_reports():
-    rows = OSDReport.query.filter_by(
-        company_name=current_user.company_name
-    ).order_by(OSDReport.created_at.desc()).limit(500).all()
-    return jsonify([row.to_dict() for row in rows]), 200
-
-@warehouse_bp.route('/api/osd-reports/<int:osd_id>', methods=['GET'])
-@login_required
-def api_get_osd_report(osd_id):
-    row = OSDReport.query.filter_by(
-        id=osd_id, company_name=current_user.company_name
-    ).first()
-    if not row:
-        return jsonify({'error': 'OS&D report not found'}), 404
-    return jsonify(row.to_dict()), 200
-
-@warehouse_bp.route('/api/osd-reports/<int:osd_id>', methods=['PATCH'])
-@login_required
-def api_update_osd_report(osd_id):
-    if not _receiving_user_allowed():
-        return jsonify({'error': 'Unauthorized'}), 403
-    try:
-        data = request.get_json() or {}
-        validate_csrf(data.get('csrf_token'))
-        row = OSDReport.query.filter_by(
-            id=osd_id, company_name=current_user.company_name
-        ).first()
-        if not row:
-            return jsonify({'error': 'OS&D report not found'}), 404
-        if data.get('status'):
-            row.status = OSDStatus(str(data['status']).lower())
-        if 'remarks' in data:
-            row.remarks = data.get('remarks')
-        for raw in data.get('lines') or []:
-            line = OSDReportLine.query.filter_by(
-                id=int(raw.get('id') or 0), osd_report_id=row.id
-            ).first()
-            if not line:
-                continue
-            if 'details' in raw:
-                line.details = raw.get('details')
-            if 'action_required' in raw:
-                line.action_required = raw.get('action_required')
-            if raw.get('discrepancy_type'):
-                line.discrepancy_type = str(raw['discrepancy_type']).upper()
-        db.session.commit()
-        return jsonify(row.to_dict()), 200
-    except (ValueError, TypeError):
-        db.session.rollback()
-        return jsonify({'error': 'Invalid OS&D update'}), 400
-    except CSRFError:
-        db.session.rollback()
-        return jsonify({'error': 'Invalid CSRF token'}), 403
-
-@warehouse_bp.route('/report/<warehouse_id>', methods=['GET'])
-@login_required
-def warehouse_report(warehouse_id):
-    """Render a detailed report for a specific warehouse entry."""
-    try:
-        inventory = WarehouseInventory.query.filter_by(warehouse_id=warehouse_id, company_name=current_user.company_name).first()
-        if not inventory:
-            logger.warning(f"Inventory {warehouse_id} not found for user {current_user.id}")
-            return render_template('errors/404.html', error='Inventory not found'), 404
-        logger.info(f"User {current_user.id} accessed report for inventory {warehouse_id}")
-        return render_template('warehouse/warehouse_report.html', inventory=inventory)
-    except Exception as e:
-        logger.error(f"Error generating report for inventory {warehouse_id} for user {current_user.id}: {str(e)}")
-        return render_template('errors/500.html', error=str(e)), 500
