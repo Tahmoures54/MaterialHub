@@ -156,10 +156,7 @@ MaterialHub/
 
 ## Database Migrations
 
-The repository ships a complete Alembic chain
-(`20260901_0000` baseline → `20260920_0001` auth-secret hardening →
-`20260921_0002` tenant-scoped document numbers → `20260922_0003` inbound receiving documents). A fresh database is ready
-with:
+The repository ships a linear Alembic chain from the initial baseline through the current inbound receiving, OS&D, QC and inventory revisions. Always verify the actual head with `flask db heads` before a release. A fresh database is ready with:
 
 ```bash
 flask db upgrade
@@ -181,6 +178,19 @@ flask db upgrade
 ```
 
 ---
+
+
+## Operational receiving and traceability
+
+Warehouse receiving follows an explicit document chain:
+
+```
+Packing List → Goods Receipt → OS&D → QC → Warehouse → Transaction / Traceability
+```
+
+Warehouse issue operations preserve the cumulative inbound quantity and reduce only the available balance. This keeps reconciliation and audit history stable.
+
+Operational reports are available for Packing Lists, Goods Receipts, OS&D, receiving records and material traceability, with tenant-scoped access.
 
 ## Security Notes
 
@@ -206,7 +216,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-**MaterialHub v1.1.0** — Ready for use and further development.
+**MaterialHub v1.1.0** — material supply-chain management for engineering and industrial projects.
 
 ## Documentation & Template Architecture
 
