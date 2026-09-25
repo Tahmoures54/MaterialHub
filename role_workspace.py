@@ -52,7 +52,7 @@ def user_role():
 
 def _company_query(model):
     query = model.query
-    if not getattr(current_user, "is_admin", False) and hasattr(model, "company_name":
+    if not getattr(current_user, "is_admin", False) and hasattr(model, "company_name"):
         query = query.filter(model.company_name == current_user.company_name)
     return query
 
@@ -155,6 +155,8 @@ def workspace_kpis(role):
             ("Low Stock", low_stock),
         ],
     }
+    # supplier_deliveries reserved for future KPI expansion
+    _ = supplier_deliveries
     return [{"label": label, "value": value} for label, value in mapping.get(role, mapping["project_manager"])]
 
 
