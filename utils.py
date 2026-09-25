@@ -127,6 +127,7 @@ _DOCUMENT_TYPES = {
     "PO": ("PurchaseOrder", "order_no"),
     "DLV": ("Delivery", "delivery_id"),
     "WH": ("WarehouseInventory", "warehouse_id"),
+    "TND": ("Tender", "tender_no"),
 }
 
 
@@ -148,13 +149,14 @@ def _allocate_document_number(key, company_name):
     seq = db.session.get(DocumentSequence, (key, company_name))
     if seq is None:
         model_name, field_name = _DOCUMENT_TYPES[key]
-        from models import MaterialRequisition, PurchaseOrder, Delivery, WarehouseInventory, MaterialMaster
+        from models import MaterialRequisition, PurchaseOrder, Delivery, WarehouseInventory, MaterialMaster, Tender
         model = {
             "MaterialRequisition": MaterialRequisition,
             "PurchaseOrder": PurchaseOrder,
             "Delivery": Delivery,
             "WarehouseInventory": WarehouseInventory,
             "MaterialMaster": MaterialMaster,
+            "Tender": Tender,
         }[model_name]
         last = _query_last_document(model, field_name, company_name)
         seed = _last_number_of(getattr(last, field_name, None) if last else None)
@@ -242,6 +244,17 @@ def generate_next_warehouse_id(company_name=None):
         return _allocate_document_number("WH", company_name or "")
     except Exception:
         return "WH-0001"
+
+
+def generate_next_tender_no(company_name=None):
+    """Return the next tenant-scoped tender number (TND-0001).
+
+    Matches Tender.validate pattern ``TND-XXXX`` (at least 4 digits).
+    """
+    try:
+        return _allocate_document_number("TND", company_name or "")
+    except Exception:
+        return "TND-0001"
 
 
 def parse_enum(enum_cls, value, default=None):
