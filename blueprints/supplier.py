@@ -12,7 +12,7 @@ from models import (
     SupplierMaterial, AccessLevel, PurchaseOrder, PurchaseOrderStatus,
     Delivery, DeliveryStatus, Tender, TenderStatus, Bid, BidStatus, ValidationError,
 )
-from utils import tenant_query
+from utils import tenant_query, compute_supplier_performance
 
 supplier_bp = Blueprint("supplier", __name__, template_folder='templates')
 
@@ -60,7 +60,6 @@ def supplier_dashboard():
 
     materials = _supplier_materials_query().order_by(SupplierMaterial.updated_at.desc()).all()
 
-    # Purchase orders assigned to this supplier
     purchase_orders = (
         PurchaseOrder.query
         .filter_by(supplier_id=current_user.id)
@@ -74,7 +73,6 @@ def supplier_dashboard():
         .all()
     )
 
-    # Open tenders visible across tenants (marketplace opportunity)
     open_tenders = (
         Tender.query
         .filter_by(status=TenderStatus.open)
@@ -109,6 +107,12 @@ def supplier_dashboard():
         'deliveries': len(deliveries),
     }
 
+    performance = compute_supplier_performance(
+        current_user.id, buyer_company=None, persist=True
+    )
+    stats['otif'] = performance.get('otif_score', 0)
+    stats['overall'] = performance.get('overall_score', 0)
+
     return render_template(
         'dashboard/supplier_dashboard.html',
         materials=materials,
@@ -117,6 +121,7 @@ def supplier_dashboard():
         my_bids=my_bids,
         deliveries=deliveries,
         stats=stats,
+        performance=performance,
         full_name=current_user.full_name,
         company_name=current_user.company_name,
         countries=sorted(COUNTRY_CODES.items(), key=lambda x: x[0]),
@@ -306,6 +311,19 @@ def api_mutate_material(material_id):
 
 
 # ---------------------------------------------------------------------------
+# OTIF / performance API
+# ---------------------------------------------------------------------------
+
+@supplier_bp.route('/api/supplier/performance', methods=['GET'])
+@login_required
+def api_supplier_performance():
+    if not _require_supplier():
+        return jsonify({'error': 'Forbidden'}), 403
+    data = compute_supplier_performance(current_user.id, buyer_company=None, persist=True)
+    return jsonify(data), 200
+
+
+# ---------------------------------------------------------------------------
 # Public marketplace (buyers browse all suppliers)
 # ---------------------------------------------------------------------------
 
@@ -389,7 +407,6 @@ def tender():
         .limit(100)
         .all()
     )
-    # Enrich for template compatibility
     tender_rows = []
     for t in tenders:
         mr = t.material_requisition
