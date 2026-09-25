@@ -1,12 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from models import (
-    db, PurchaseOrder, PurchaseOrderStatus, AccessLevel,
+    db, PurchaseOrder, PurchaseOrderStatus, AccessLevel, User,
     MaterialRequisition, ApprovalStatus, Tender, TenderStatus, Bid, BidStatus,
     ValidationError, PurchaseOrderItem,
 )
 from forms.material_forms import PurchaseOrderForm
-from utils import generate_next_po_no, generate_next_tender_no, tenant_query
+from utils import generate_next_po_no, generate_next_tender_no, tenant_query, compute_supplier_performance
 import logging
 from datetime import date
 
@@ -74,6 +74,43 @@ def create_purchase_order():
             logger.error(f"Error creating purchase order: {e}")
             return render_template('errors/500.html'), 500
     return render_template('procurement/purchase_order.html', mode='create', form=form)
+
+
+# ---------------------------------------------------------------------------
+# Supplier performance / OTIF (buyer view)
+# ---------------------------------------------------------------------------
+
+@purchase_order_bp.route('/supplier-performance')
+@login_required
+def supplier_performance():
+    """Rank suppliers by OTIF for the current buyer company."""
+    if not _can_manage_procurement():
+        flash('Only procurement users can view supplier performance.', 'danger')
+        return redirect(url_for('role_workspace.my_workspace'))
+
+    # Suppliers that have at least one PO with this company
+    supplier_ids = [
+        row[0] for row in db.session.query(PurchaseOrder.supplier_id)
+        .filter_by(company_name=current_user.company_name)
+        .distinct()
+        .all()
+        if row[0]
+    ]
+    rankings = []
+    for sid in supplier_ids:
+        data = compute_supplier_performance(
+            sid,
+            buyer_company=current_user.company_name,
+            persist=True,
+        )
+        rankings.append(data)
+    rankings.sort(key=lambda x: (-x.get('overall_score', 0), -x.get('otif_score', 0)))
+
+    return render_template(
+        'procurement/supplier_performance.html',
+        rankings=rankings,
+        period=date.today().strftime('%Y-%m'),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -256,6 +293,16 @@ def _handle_bid_decision(tender):
                 db.session.add(item)
 
             db.session.commit()
+            # Refresh OTIF snapshot for the winning supplier
+            try:
+                compute_supplier_performance(
+                    bid.supplier_id,
+                    buyer_company=current_user.company_name,
+                    persist=True,
+                )
+            except Exception:
+                logger.warning('OTIF refresh after award failed', exc_info=True)
+
             flash(
                 f'Bid accepted. Purchase order {po.order_no} issued to supplier.',
                 'success',
