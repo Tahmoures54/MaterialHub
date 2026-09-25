@@ -31,7 +31,12 @@ def test_totp_secret_is_encrypted_and_qr_not_persisted():
 
 def test_tenant_sensitive_intelligence_queries_are_scoped():
     intelligence = (ROOT / "blueprints" / "intelligence.py").read_text(encoding="utf-8")
-    assert "company_name=current_user.company_name" in intelligence
+    utils = (ROOT / "utils.py").read_text(encoding="utf-8")
+    # Central helpers live in utils; intelligence must import and use them.
+    assert "from utils import company_filter" in intelligence
+    assert "def company_filter(" in utils
+    assert "def tenant_query(" in utils
+    assert "def require_same_tenant(" in utils
     assert "company_filter(RFQ.query,RFQ).filter_by(id=rfq_id)" in intelligence
     assert "company_filter(PurchaseOrder.query,PurchaseOrder).filter_by(id=po_id)" in intelligence
     assert "if not suppliers:" not in intelligence
@@ -52,3 +57,9 @@ def test_contact_inquiry_schema_matches_public_limits():
     assert "20260921_0002" in migration_text
     assert "length=254" in migration_text
     assert "length=160" in migration_text
+
+
+def test_reports_use_central_tenant_query():
+    reports = (ROOT / "blueprints" / "reports.py").read_text(encoding="utf-8")
+    assert "from utils import tenant_query" in reports
+    assert "tenant_query(model, allow_admin=False)" in reports
