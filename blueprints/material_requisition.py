@@ -3,7 +3,7 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from models import db, MaterialRequisition, MaterialMaster, ApprovalStatus
-from utils import generate_next_mr_no, parse_enum
+from utils import generate_next_mr_no, parse_enum, tenant_query, company_filter
 import csv
 import io
 import datetime
@@ -34,10 +34,7 @@ def _resolve_material(data):
     material_id = data.get('material_id')
     material_code = (data.get('material_code') or '').strip()
     try:
-        query = MaterialMaster.query.filter_by(
-            company_name=current_user.company_name,
-            status='active'
-        )
+        query = tenant_query(MaterialMaster).filter_by(status='active')
         if material_id:
             return query.filter_by(id=int(material_id)).first()
         if material_code:
@@ -52,7 +49,7 @@ def api_get_material_requisitions():
     """Get material requisitions for the current user."""
     try:
         discipline = request.args.get('discipline')
-        query = MaterialRequisition.query.filter_by(company_name=current_user.company_name)
+        query = tenant_query(MaterialRequisition)
         if discipline:
             query = query.filter_by(discipline=discipline)
         rows = query.order_by(MaterialRequisition.created_at.desc()).all()
@@ -107,7 +104,7 @@ def api_create_material_requisitions():
 @login_required
 def api_update_material_requisition(mr_no):
     """Update an existing material requisition."""
-    mr = MaterialRequisition.query.filter_by(mr_no=mr_no, company_name=current_user.company_name).first()
+    mr = tenant_query(MaterialRequisition).filter_by(mr_no=mr_no).first()
     if not mr:
         logger.warning(f"User {current_user.company_email} attempted to update non-existent MR {mr_no}")
         return jsonify({'error': 'MR not found.'}), 404
@@ -144,7 +141,7 @@ def api_update_material_requisition(mr_no):
 @login_required
 def api_delete_material_requisition(mr_no):
     """Delete a material requisition."""
-    mr = MaterialRequisition.query.filter_by(mr_no=mr_no, company_name=current_user.company_name).first()
+    mr = tenant_query(MaterialRequisition).filter_by(mr_no=mr_no).first()
     if not mr:
         logger.warning(f"User {current_user.company_email} attempted to delete non-existent MR {mr_no}")
         return jsonify({'error': 'MR not found.'}), 404
@@ -230,7 +227,7 @@ def api_approve_mr():
         mr_no = data.get('mr_no')
         status = data.get('approval_status')
         comments = data.get('comments', '')
-        mr = MaterialRequisition.query.filter_by(mr_no=mr_no, company_name=current_user.company_name).first()
+        mr = tenant_query(MaterialRequisition).filter_by(mr_no=mr_no).first()
         if not mr:
             logger.warning(f"User {current_user.company_email} attempted to approve non-existent MR {mr_no}")
             return jsonify({'error': 'MR not found.'}), 404
@@ -255,7 +252,7 @@ def api_export_csv():
     """Export material requisitions to CSV."""
     try:
         discipline = request.args.get('discipline')
-        query = MaterialRequisition.query.filter_by(company_name=current_user.company_name)
+        query = tenant_query(MaterialRequisition)
         if discipline:
             query = query.filter_by(discipline=discipline)
         rows = query.order_by(MaterialRequisition.created_at.desc()).all()
@@ -283,7 +280,7 @@ def api_export_csv():
 def api_get_single_mr(mr_no):
     """Get a single material requisition."""
     try:
-        mr = MaterialRequisition.query.filter_by(mr_no=mr_no, company_name=current_user.company_name).first()
+        mr = tenant_query(MaterialRequisition).filter_by(mr_no=mr_no).first()
         if not mr:
             logger.warning(f"User {current_user.company_email} requested non-existent MR {mr_no}")
             return jsonify({'error': 'MR not found.'}), 404
@@ -298,7 +295,7 @@ def api_get_single_mr(mr_no):
 def material_requisition_report(mr_no):
     """Render a report for a material requisition."""
     try:
-        mr = MaterialRequisition.query.filter_by(mr_no=mr_no, company_name=current_user.company_name).first()
+        mr = tenant_query(MaterialRequisition).filter_by(mr_no=mr_no).first()
         if not mr:
             logger.warning(f"User {current_user.company_email} requested report for non-existent MR {mr_no}")
             abort(404)
