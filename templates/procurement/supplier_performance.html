@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mh-page">
+  <header class="mh-workspace-hero" style="margin-bottom:1.25rem">
+    <h1>Supplier Performance</h1>
+    <p class="mh-muted">OTIF and quality rankings for suppliers with purchase orders in your company · Period {{ period }}</p>
+    <div class="mh-workspace-nav">
+      <a href="{{ url_for('purchase_order.manage_tenders') }}">Tenders</a>
+      <a href="{{ url_for('purchase_order.get_purchase_orders') }}">Purchase Orders</a>
+      <a href="{{ url_for('supplier.material_marketplace') }}">Marketplace</a>
+    </div>
+  </header>
+
+  <section class="mh-card">
+    <h2>Rankings</h2>
+    {% if rankings %}
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:0.9rem">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">#</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Supplier</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Company</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">OTIF %</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Quality %</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Overall</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Evaluated</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">On Time</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Delayed</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Total POs</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rankings %}
+            <tr>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ loop.index }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ r.supplier_name or r.supplier_id }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ r.company_name or '—' }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee"><strong>{{ '%.1f'|format(r.otif_score) }}%</strong></td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ '%.1f'|format(r.quality_score) }}%</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ '%.1f'|format(r.overall_score) }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ r.evaluated_count }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ r.on_time_count }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ r.delayed_count }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ r.orders_count }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="mh-muted" style="margin-top:0.75rem">
+        OTIF = on-time closed orders ÷ evaluated closed orders × 100.
+        SLA default: 30 days from PO issue date. Delayed deliveries count as late.
+      </p>
+    {% else %}
+      <p class="mh-muted">No supplier purchase orders yet for your company.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
