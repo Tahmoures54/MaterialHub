@@ -2,7 +2,7 @@ import re
 """Shared utility helpers for MaterialHub."""
 
 from functools import wraps
-from flask import flash, redirect, url_for, request
+from flask import flash, redirect, url_for, request, abort
 from flask_login import current_user
 from models import AccessLevel
 
@@ -33,6 +33,55 @@ def role_required(*roles):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+
+# ---------------------------------------------------------------------------
+# Tenant isolation helpers
+# ---------------------------------------------------------------------------
+
+def company_filter(query, model, *, allow_admin: bool = False):
+    """Apply tenant scope to a SQLAlchemy query.
+
+    By default every authenticated non-admin user only sees rows belonging
+    to their own ``company_name``.  Pass ``allow_admin=True`` when an
+    administrative cross-tenant view is intentionally required (and
+    preferably protected by additional checks / audit logging).
+
+    Prefer this helper over hand-written ``filter_by(company_name=...)`` so
+    that tenant scoping stays consistent and easy to audit.
+    """
+    if not hasattr(model, 'company_name'):
+        return query
+    if allow_admin and getattr(current_user, 'is_admin', False):
+        return query
+    return query.filter(model.company_name == current_user.company_name)
+
+
+def tenant_query(model, *, allow_admin: bool = False):
+    """Return a tenant-scoped base query for *model*.
+
+    Equivalent to ``company_filter(model.query, model, allow_admin=...)``.
+    Use this as the starting point for every business-data read.
+    """
+    return company_filter(model.query, model, allow_admin=allow_admin)
+
+
+def require_same_tenant(record, *, allow_admin: bool = False):
+    """Abort with 404 when *record* belongs to a different tenant.
+
+    Call after fetching a single row by primary key so that IDOR attempts
+    cannot leak foreign-tenant data.  Returns the record unchanged when
+    the check passes (convenient for chaining).
+    """
+    if record is None:
+        abort(404)
+    if not hasattr(record, 'company_name'):
+        return record
+    if allow_admin and getattr(current_user, 'is_admin', False):
+        return record
+    if record.company_name != current_user.company_name:
+        abort(404)
+    return record
 
 
 def generate_document_number(prefix: str, last_number: int = 0) -> str:
