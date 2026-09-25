@@ -7,11 +7,9 @@ from extensions import db
 from models import MaterialRequisition, SupplierMaterial, User, AccessLevel, PurchaseOrder, ApprovalStatus, PurchaseOrderStatus, WarehouseInventory
 from models_intelligence import (MaterialTrace, MaterialDocument, SupplierScore, RFQ, RFQSupplier,
     Receipt, SupplierInvoice, ThreeWayMatch, MaterialPriceHistory, ScheduleRisk, RFQStatus, MatchStatus, DocumentType)
+from utils import company_filter
 
 intelligence_bp=Blueprint('intelligence',__name__)
-
-def company_filter(q, model):
-    return q if current_user.is_admin else q.filter(model.company_name==current_user.company_name)
 
 def score_supplier(supplier_id):
     supplier=company_filter(User.query,User).filter_by(id=supplier_id, access_level=AccessLevel.supplier).first()
