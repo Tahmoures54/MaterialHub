@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, curren
 from flask_login import login_required, current_user
 from models import db, PurchaseOrder, PurchaseOrderStatus, AccessLevel
 from forms.material_forms import PurchaseOrderForm
-from utils import generate_next_po_no
+from utils import generate_next_po_no, tenant_query
 import logging
 
 logger = logging.getLogger(__name__)
@@ -11,10 +11,8 @@ purchase_order_bp = Blueprint("purchase_order", __name__, template_folder='templ
 
 
 def _company_pos():
-    query = PurchaseOrder.query
-    if not current_user.is_admin:
-        query = query.filter_by(company_name=current_user.company_name)
-    return query
+    """Tenant-scoped PO query. Admins remain scoped to their own company."""
+    return tenant_query(PurchaseOrder, allow_admin=False)
 
 
 @purchase_order_bp.route('/')
