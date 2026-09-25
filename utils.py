@@ -2,6 +2,7 @@ import re
 """Shared utility helpers for MaterialHub."""
 
 from functools import wraps
+from datetime import date, timedelta
 from flask import flash, redirect, url_for, request, abort
 from flask_login import current_user
 from models import AccessLevel
@@ -82,6 +83,175 @@ def require_same_tenant(record, *, allow_admin: bool = False):
     if record.company_name != current_user.company_name:
         abort(404)
     return record
+
+
+# ---------------------------------------------------------------------------
+# Supplier performance / OTIF
+# ---------------------------------------------------------------------------
+
+def compute_supplier_performance(supplier_id, *, buyer_company=None, sla_days=30, persist=True):
+    """Compute On-Time In-Full and quality metrics for a supplier.
+
+    OTIF definition (practical):
+    - Consider closed POs: status ``delivered`` OR ``delivered_date`` set.
+    - On-time when actual delivery is on/before issued_date + sla_days
+      (default 30). If no issued_date, fall back to created_at date.
+    - In-full: treated as full when the PO reached delivered status
+      (line-level partial receipts are not yet modelled on PO).
+    - OTIF% = on_time_orders / evaluated_orders * 100
+
+    When *persist* is True, upserts ``SupplierScore`` for the current month.
+
+    Returns a dict with otif_score, quality_score, overall_score, counts.
+    """
+    from models import (
+        PurchaseOrder, PurchaseOrderStatus, Delivery, DeliveryStatus,
+        QualityControl, InspectionStatus, User,
+    )
+    from models_intelligence import SupplierScore
+    from extensions import db
+
+    supplier = User.query.get(supplier_id)
+    if not supplier:
+        return {
+            'supplier_id': supplier_id,
+            'otif_score': 0.0,
+            'quality_score': 0.0,
+            'overall_score': 0.0,
+            'orders_count': 0,
+            'evaluated_count': 0,
+            'on_time_count': 0,
+            'delayed_count': 0,
+            'period': date.today().strftime('%Y-%m'),
+        }
+
+    order_query = PurchaseOrder.query.filter_by(supplier_id=supplier_id)
+    if buyer_company:
+        order_query = order_query.filter_by(company_name=buyer_company)
+    orders = order_query.all()
+
+    on_time = 0
+    delayed = 0
+    evaluated = 0
+    detail_rows = []
+
+    for po in orders:
+        delivered_date = po.delivered_date
+        # Prefer linked delivery dates when PO date is missing
+        if not delivered_date:
+            deliveries = Delivery.query.filter_by(order_id=po.id).all()
+            for d in deliveries:
+                if d.delivered_date:
+                    delivered_date = d.delivered_date
+                    break
+                if d.status == DeliveryStatus.delivered and d.updated_at:
+                    delivered_date = d.updated_at.date()
+                    break
+
+        is_closed = (
+            po.status == PurchaseOrderStatus.delivered
+            or delivered_date is not None
+        )
+        if not is_closed:
+            # Still open – skip for OTIF denominator
+            continue
+
+        evaluated += 1
+        baseline = po.issued_date
+        if not baseline and po.created_at:
+            baseline = po.created_at.date()
+        if not baseline:
+            baseline = date.today()
+
+        deadline = baseline + timedelta(days=sla_days)
+        late = False
+        # Explicit delayed delivery status counts as late
+        late_delivery = Delivery.query.filter_by(
+            order_id=po.id, status=DeliveryStatus.delayed
+        ).first()
+        if late_delivery:
+            late = True
+        elif delivered_date and delivered_date > deadline:
+            late = True
+
+        if late:
+            delayed += 1
+        else:
+            on_time += 1
+
+        detail_rows.append({
+            'order_no': po.order_no,
+            'status': po.status.value if po.status else None,
+            'issued_date': baseline.isoformat() if baseline else None,
+            'delivered_date': delivered_date.isoformat() if delivered_date else None,
+            'on_time': not late,
+        })
+
+    otif = round(100.0 * on_time / evaluated, 1) if evaluated else 0.0
+
+    # Quality from QC records linked to this supplier's POs (via company + supplier)
+    quality = 100.0
+    try:
+        qc_query = QualityControl.query
+        if buyer_company:
+            qc_query = qc_query.filter_by(company_name=buyer_company)
+        # Prefer QC rows tied to the supplier user when available
+        qcs = qc_query.filter(
+            (QualityControl.user_id == supplier_id)
+        ).all()
+        if not qcs and buyer_company:
+            # Fallback: any QC under buyer company is not supplier-specific; skip
+            qcs = []
+        if qcs:
+            passed = sum(1 for q in qcs if q.status == InspectionStatus.passed)
+            quality = round(100.0 * passed / len(qcs), 1)
+    except Exception:
+        quality = 100.0
+
+    overall = round(0.55 * otif + 0.35 * quality + 0.10 * 100, 1)
+    period = date.today().strftime('%Y-%m')
+    score_company = buyer_company or supplier.company_name
+
+    if persist and score_company:
+        s = SupplierScore.query.filter_by(
+            supplier_id=supplier_id,
+            period=period,
+            company_name=score_company,
+        ).first()
+        if not s:
+            s = SupplierScore(
+                supplier_id=supplier_id,
+                period=period,
+                company_name=score_company,
+            )
+            db.session.add(s)
+        s.otif_score = otif
+        s.quality_score = quality
+        s.price_score = 100.0
+        s.responsiveness_score = 100.0
+        s.lead_time_score = round(otif, 1)
+        s.overall_score = overall
+        s.orders_count = len(orders)
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+    return {
+        'supplier_id': supplier_id,
+        'supplier_name': getattr(supplier, 'full_name', None) or getattr(supplier, 'company_name', None),
+        'company_name': supplier.company_name,
+        'otif_score': otif,
+        'quality_score': quality,
+        'overall_score': overall,
+        'orders_count': len(orders),
+        'evaluated_count': evaluated,
+        'on_time_count': on_time,
+        'delayed_count': delayed,
+        'period': period,
+        'sla_days': sla_days,
+        'orders': detail_rows[:50],
+    }
 
 
 def generate_document_number(prefix: str, last_number: int = 0) -> str:
