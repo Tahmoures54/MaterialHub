@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mh-page">
+  <header class="mh-workspace-hero" style="margin-bottom:1.25rem">
+    <h1>Tender Management</h1>
+    <p class="mh-muted">Open competitive tenders from approved material requisitions and evaluate supplier bids.</p>
+    <div class="mh-workspace-nav">
+      <a href="{{ url_for('purchase_order.purchase_order') }}">Purchase Orders</a>
+      <a href="{{ url_for('supplier.material_marketplace') }}">Marketplace</a>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <section class="mh-card" style="margin-bottom:1.25rem">
+    <h2>Open a New Tender</h2>
+    {% if eligible_mrs %}
+      <form method="POST" action="{{ url_for('purchase_order.manage_tenders') }}" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end;margin-top:0.75rem">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group" style="min-width:280px;flex:1">
+          <label>Approved Material Requisition</label>
+          <select name="material_requisition_id" required style="width:100%;padding:0.4rem">
+            <option value="">Select MR…</option>
+            {% for mr in eligible_mrs %}
+              <option value="{{ mr.id }}">
+                {{ mr.mr_no }} — {{ mr.material_description or mr.item_code }} (qty {{ mr.quantity }} {{ mr.unit_of_measure or '' }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Open Tender</button>
+      </form>
+    {% else %}
+      <p class="mh-muted">No approved requisitions available without an open tender.</p>
+    {% endif %}
+  </section>
+
+  <section class="mh-card">
+    <h2>Company Tenders ({{ tenders|length }})</h2>
+    {% if tenders %}
+      <div style="overflow-x:auto">
+        <table class="mh-table" style="width:100%;border-collapse:collapse;font-size:0.9rem">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Tender No</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">MR</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Material</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Status</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Bids</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Created</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in tenders %}
+            {% set mr = t.material_requisition %}
+            <tr>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ t.tender_no }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ mr.mr_no if mr else '—' }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ mr.material_description if mr else '—' }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ t.status.value if t.status else '—' }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ t.bids|length if t.bids else 0 }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ t.created_at.strftime('%Y-%m-%d') if t.created_at else '—' }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">
+                <a href="{{ url_for('purchase_order.tender_detail', tender_id=t.id) }}">Evaluate →</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="mh-muted">No tenders yet.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
