@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from datetime import datetime
 from flask_login import login_required, current_user
-from models import db, QualityControl, InspectionStatus, AccessLevel, GoodsReceiptLine, WarehouseInventory
+from models import db, QualityControl, InspectionStatus, AccessLevel, GoodsReceiptLine, WarehouseInventory, GoodsReceipt
 from forms.material_forms import QualityControlForm
-from utils import parse_enum
+from utils import parse_enum, tenant_query
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,10 +12,8 @@ quality_control_bp = Blueprint("quality_control", __name__, template_folder='tem
 
 
 def _company_qc():
-    query = QualityControl.query
-    if not current_user.is_admin:
-        query = query.filter_by(company_name=current_user.company_name)
-    return query
+    """Tenant-scoped QC query. Admins remain scoped to their own company."""
+    return tenant_query(QualityControl, allow_admin=False)
 
 
 @quality_control_bp.route('/')
@@ -76,22 +74,26 @@ def update_receipt_inspection(receipt_line_id):
         from flask_wtf.csrf import validate_csrf, CSRFError
         validate_csrf(data.get('csrf_token'))
         line = GoodsReceiptLine.query.filter_by(id=receipt_line_id).first()
-        if not line or line.goods_receipt.company_name != current_user.company_name:
+        if not line:
+            return jsonify({'error': 'Receipt Line not found'}), 404
+        # Enforce tenant via parent GoodsReceipt
+        receipt = tenant_query(GoodsReceipt).filter_by(id=line.goods_receipt_id).first()
+        if not receipt:
             return jsonify({'error': 'Receipt Line not found'}), 404
         result = str(data.get('status') or '').lower()
         if result not in ('passed', 'failed', 'pending'):
             return jsonify({'error': 'Status must be passed, failed, or pending'}), 400
-        qc = QualityControl.query.filter_by(
-            receipt_line_id=line.id, company_name=current_user.company_name
+        qc = tenant_query(QualityControl).filter_by(
+            receipt_line_id=line.id
         ).order_by(QualityControl.created_at.desc()).first()
         if not qc:
             qc = QualityControl(
-                order_id=line.goods_receipt.order_id,
+                order_id=receipt.order_id,
                 material_id=line.material_id,
                 user_id=current_user.id,
                 goods_receipt_id=line.goods_receipt_id,
                 receipt_line_id=line.id,
-                warehouse_id=line.goods_receipt.warehouse_id,
+                warehouse_id=receipt.warehouse_id,
                 company_name=current_user.company_name,
             )
             db.session.add(qc)
@@ -100,10 +102,9 @@ def update_receipt_inspection(receipt_line_id):
         qc.inspected_date = datetime.utcnow().date()
         qc.user_id = current_user.id
         qc.remarks = data.get('remarks')
-        inventory = WarehouseInventory.query.filter_by(
-            warehouse_id=line.goods_receipt.warehouse_id,
+        inventory = tenant_query(WarehouseInventory).filter_by(
+            warehouse_id=receipt.warehouse_id,
             material_id=line.material_id,
-            company_name=current_user.company_name
         ).first()
         if inventory:
             qty = float(line.received_qty or 0)
