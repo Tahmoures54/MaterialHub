@@ -6,7 +6,7 @@ from models import (
     MaterialRequisition, PurchaseOrder, SupplierMaterial, Delivery,
     WarehouseInventory, QualityControl, Tender, User, AccessLevel,
     ApprovalStatus, PurchaseOrderStatus, DeliveryStatus, InspectionStatus,
-    WorkflowStatus,
+    WorkflowStatus, Bid, TenderStatus,
 )
 
 role_workspace_bp = Blueprint("role_workspace", __name__, url_prefix="/workspace")
@@ -52,7 +52,7 @@ def user_role():
 
 def _company_query(model):
     query = model.query
-    if not getattr(current_user, "is_admin", False) and hasattr(model, "company_name"):
+    if not getattr(current_user, "is_admin", False) and hasattr(model, "company_name":
         query = query.filter(model.company_name == current_user.company_name)
     return query
 
@@ -96,6 +96,21 @@ def workspace_kpis(role):
     pending_warehouse = _safe_count(lambda: _company_query(WarehouseInventory).filter(
         WarehouseInventory.workflow_status == WorkflowStatus.warehouse).count())
 
+    # Supplier-centric metrics (ownership by supplier_id / user_id, not company_name)
+    supplier_materials = _safe_count(lambda: SupplierMaterial.query.filter_by(
+        user_id=current_user.id).count())
+    supplier_open_pos = _safe_count(lambda: PurchaseOrder.query.filter(
+        PurchaseOrder.supplier_id == current_user.id,
+        PurchaseOrder.status.in_([PurchaseOrderStatus.pending, PurchaseOrderStatus.issued]),
+    ).count())
+    supplier_open_tenders = _safe_count(lambda: Tender.query.filter_by(
+        status=TenderStatus.open).count())
+    supplier_bids = _safe_count(lambda: Bid.query.filter_by(
+        supplier_id=current_user.id).count())
+    supplier_deliveries = _safe_count(lambda: Delivery.query.join(
+        PurchaseOrder, Delivery.order_id == PurchaseOrder.id
+    ).filter(PurchaseOrder.supplier_id == current_user.id).count())
+
     mapping = {
         "project_manager": [
             ("Pending Approvals", pending_mrs),
@@ -128,10 +143,10 @@ def workspace_kpis(role):
             ("Low Stock Lots", low_stock),
         ],
         "supplier": [
-            ("Listed Materials", materials),
-            ("Open Tenders", open_tenders),
-            ("Purchase Orders", open_pos),
-            ("Deliveries", delayed_deliveries),
+            ("Listed Materials", supplier_materials),
+            ("Open Tenders", supplier_open_tenders),
+            ("Assigned POs", supplier_open_pos),
+            ("My Bids", supplier_bids),
         ],
         "admin": [
             ("Users", users),
