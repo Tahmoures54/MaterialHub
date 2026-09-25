@@ -7,41 +7,19 @@ from extensions import db
 from models import MaterialRequisition, SupplierMaterial, User, AccessLevel, PurchaseOrder, ApprovalStatus, PurchaseOrderStatus, WarehouseInventory
 from models_intelligence import (MaterialTrace, MaterialDocument, SupplierScore, RFQ, RFQSupplier,
     Receipt, SupplierInvoice, ThreeWayMatch, MaterialPriceHistory, ScheduleRisk, RFQStatus, MatchStatus, DocumentType)
-from utils import company_filter
+from utils import company_filter, compute_supplier_performance
 
 intelligence_bp=Blueprint('intelligence',__name__)
 
 def score_supplier(supplier_id):
-    supplier=company_filter(User.query,User).filter_by(id=supplier_id, access_level=AccessLevel.supplier).first()
-    if not supplier:
-        return 0
-    target_company=supplier.company_name
-    order_query=PurchaseOrder.query.filter_by(supplier_id=supplier_id)
-    if not current_user.is_admin:
-        order_query=order_query.filter_by(company_name=current_user.company_name)
-    orders=order_query.all()
-    if not orders: return 0
-    delivered=sum(1 for o in orders if o.delivered_date and o.issued_date and o.delivered_date<=o.issued_date+timedelta(days=30))
-    quality=100
-    try:
-        from models import QualityControl, InspectionStatus
-        qc_query=QualityControl.query.filter_by(user_id=supplier_id)
-        if not current_user.is_admin:
-            qc_query=qc_query.filter_by(company_name=current_user.company_name)
-        qcs=qc_query.all()
-        if qcs: quality=100*sum(1 for q in qcs if q.status==InspectionStatus.passed)/len(qcs)
-    except Exception:
-        # Scoring degrades gracefully: keep the default quality score when
-        # QC data is unavailable for this supplier.
-        quality = 100
-    otif=100*delivered/len(orders)
-    score=round(0.45*otif+0.35*quality+0.20*100,1)
-    s=SupplierScore.query.filter_by(supplier_id=supplier_id,period=date.today().strftime('%Y-%m'),company_name=target_company).first()
-    if not s:
-        s=SupplierScore(supplier_id=supplier_id,period=date.today().strftime('%Y-%m'),company_name=target_company)
-        db.session.add(s)
-    s.quality_score=round(quality,1); s.otif_score=round(otif,1); s.price_score=100; s.responsiveness_score=100; s.lead_time_score=100; s.overall_score=score; s.orders_count=len(orders)
-    db.session.commit(); return score
+    """Recompute and persist supplier OTIF/quality scores for the current buyer context."""
+    buyer = None if getattr(current_user, 'is_admin', False) else current_user.company_name
+    result = compute_supplier_performance(
+        supplier_id,
+        buyer_company=buyer,
+        persist=True,
+    )
+    return result.get('overall_score', 0)
 
 def readiness(item_code, required_qty=0, required_date=None):
     stock=sum((x.received_qty or 0) for x in company_filter(WarehouseInventory.query,WarehouseInventory).filter_by(item_code=item_code).all())
