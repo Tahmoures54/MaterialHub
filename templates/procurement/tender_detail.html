@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mh-page">
+  <header class="mh-workspace-hero" style="margin-bottom:1.25rem">
+    <h1>Tender {{ tender.tender_no }}</h1>
+    <p class="mh-muted">
+      Status: <strong>{{ tender.status.value if tender.status else '—' }}</strong>
+      {% if mr %} · MR {{ mr.mr_no }} · {{ mr.material_description }} · qty {{ mr.quantity }} {{ mr.unit_of_measure or '' }}{% endif %}
+    </p>
+    <div class="mh-workspace-nav">
+      <a href="{{ url_for('purchase_order.manage_tenders') }}">← All Tenders</a>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% if tender.status and tender.status.value == 'open' %}
+  <section class="mh-card" style="margin-bottom:1rem;display:flex;gap:0.75rem;flex-wrap:wrap">
+    <form method="POST" action="{{ url_for('purchase_order.tender_detail', tender_id=tender.id) }}" onsubmit="return confirm('Close this tender without awarding?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="close_tender">
+      <button type="submit" class="btn">Close Tender</button>
+    </form>
+    <form method="POST" action="{{ url_for('purchase_order.tender_detail', tender_id=tender.id) }}" onsubmit="return confirm('Cancel tender and reject pending bids?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="cancel_tender">
+      <button type="submit" class="btn btn-danger">Cancel Tender</button>
+    </form>
+  </section>
+  {% endif %}
+
+  <section class="mh-card">
+    <h2>Bids ({{ bids|length }})</h2>
+    {% if bids %}
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:0.9rem">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Supplier</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Company</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Amount</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Status</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Submitted</th>
+              <th style="text-align:left;padding:0.5rem;border-bottom:1px solid #eee">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in bids %}
+            <tr>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ b.supplier.full_name if b.supplier else b.supplier_id }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ b.company_name }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee"><strong>{{ '%.2f'|format(b.bid_amount) }}</strong></td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ b.status.value if b.status else '—' }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">{{ b.created_at.strftime('%Y-%m-%d %H:%M') if b.created_at else '—' }}</td>
+              <td style="padding:0.5rem;border-bottom:1px solid #eee">
+                {% if tender.status and tender.status.value == 'open' and b.status and b.status.value == 'pending' %}
+                  <form method="POST" action="{{ url_for('purchase_order.tender_detail', tender_id=tender.id) }}" style="display:inline" onsubmit="return confirm('Accept this bid and issue a purchase order?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="accept_bid">
+                    <input type="hidden" name="bid_id" value="{{ b.id }}">
+                    <button type="submit" class="btn btn-primary btn-sm">Accept</button>
+                  </form>
+                  <form method="POST" action="{{ url_for('purchase_order.tender_detail', tender_id=tender.id) }}" style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="reject_bid">
+                    <input type="hidden" name="bid_id" value="{{ b.id }}">
+                    <button type="submit" class="btn btn-sm">Reject</button>
+                  </form>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="mh-muted" style="margin-top:0.75rem">Bids are sorted by amount (lowest first).</p>
+    {% else %}
+      <p class="mh-muted">No bids submitted yet.</p>
+    {% endif %}
+  </section>
+</div>
+<style>
+.btn { padding: 0.4rem 0.85rem; border: 1px solid #ccc; border-radius: 4px; background: #f5f5f5; cursor: pointer; }
+.btn-primary { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+.btn-danger { background: #c0392b; color: #fff; border-color: #c0392b; }
+.btn-sm { padding: 0.25rem 0.55rem; font-size: 0.8rem; }
+</style>
+{% endblock %}
