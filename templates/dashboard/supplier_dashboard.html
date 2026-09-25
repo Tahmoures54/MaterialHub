@@ -1,100 +1,286 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="supplier-dashboard">
-    <!-- Header -->
-    <header class="dashboard-header">
-        <div class="header-inner">
-            <h1>Supplier Dashboard</h1>
-            <p>Hello {{ full_name }} from {{ company_name }}! This is your management hub.</p>
-        </div>
-    </header>
+<div class="mh-page supplier-dashboard">
+  <header class="mh-workspace-hero" style="margin-bottom:1.25rem">
+    <h1>Supplier Dashboard</h1>
+    <p class="mh-muted">Hello {{ full_name }} · {{ company_name }}. Manage your catalog, respond to tenders and track purchase orders.</p>
+    <div class="mh-workspace-nav">
+      <a href="{{ url_for('supplier.material_marketplace') }}">Marketplace</a>
+      <a href="{{ url_for('supplier.tender') }}">Open Tenders</a>
+      <a href="{{ url_for('role_workspace.role', role='supplier') }}">Workspace</a>
+    </div>
+  </header>
 
-    <!-- Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {# ---- KPI strip ---- #}
+  <section class="mh-grid mh-grid-4" style="margin-bottom:1.25rem">
+    <div class="mh-card mh-kpi"><div class="mh-muted">Listed Materials</div><div class="value">{{ stats.materials }}</div></div>
+    <div class="mh-card mh-kpi"><div class="mh-muted">Open POs</div><div class="value">{{ stats.open_pos }}</div></div>
+    <div class="mh-card mh-kpi"><div class="mh-muted">Open Tenders</div><div class="value">{{ stats.open_tenders }}</div></div>
+    <div class="mh-card mh-kpi"><div class="mh-muted">My Bids</div><div class="value">{{ stats.my_bids }}</div></div>
+  </section>
+
+  {# ---- Add material ---- #}
+  <section class="mh-card" style="margin-bottom:1.25rem">
+    <h2>Add Material to Catalog</h2>
+    <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" class="mh-form-grid">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="add_material">
+      <div class="form-group">
+        <label>Material Name *</label>
+        <input type="text" name="material_name" required maxlength="100" placeholder="e.g. CS Pipe 6 inch">
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <input type="text" name="material_type" maxlength="50" placeholder="Piping / Valve / Fitting" value="General">
+      </div>
+      <div class="form-group">
+        <label>Price *</label>
+        <input type="number" name="price" step="0.01" min="0.01" required placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Available Qty *</label>
+        <input type="number" name="available_qty" step="0.01" min="0.01" required placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Unit</label>
+        <input type="text" name="unit" maxlength="20" value="EA" placeholder="EA / M / KG">
+      </div>
+      <div class="form-group">
+        <label>Delivery (days)</label>
+        <input type="number" name="delivery_time_days" min="1" placeholder="e.g. 14">
+      </div>
+      <div class="form-group">
+        <label>Country</label>
+        <select name="country_code">
+          <option value="">—</option>
+          {% for name, code in countries %}
+            <option value="{{ code }}" {% if code == current_user.country %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="align-self:end">
+        <button type="submit" class="btn btn-primary">Add to Catalog</button>
+      </div>
+    </form>
+  </section>
+
+  {# ---- Catalog ---- #}
+  <section class="mh-card" style="margin-bottom:1.25rem">
+    <h2>My Catalog ({{ materials|length }})</h2>
+    {% if materials %}
+      <div class="mh-table-wrap">
+        <table class="mh-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th>Unit</th>
+              <th>Lead (d)</th>
+              <th>Country</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in materials %}
+            <tr>
+              <td>{{ m.material_name }}</td>
+              <td>{{ m.material_type }}</td>
+              <td>{{ '%.2f'|format(m.price) }}</td>
+              <td>{{ '%.2f'|format(m.available_qty) }}</td>
+              <td>{{ m.unit }}</td>
+              <td>{{ m.delivery_time_days or '—' }}</td>
+              <td>{{ m.country_code or '—' }}</td>
+              <td>
+                <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" style="display:inline" onsubmit="return confirm('Remove this material?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="action" value="delete_material">
+                  <input type="hidden" name="material_id" value="{{ m.id }}">
+                  <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
             {% endfor %}
-        {% endif %}
-    {% endwith %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="mh-muted">No materials listed yet. Add your first item above.</p>
+    {% endif %}
+  </section>
 
-    <!-- Add Material Section -->
-    <section class="material-add-section">
-        <h2>Add New Material</h2>
-        <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" class="material-add-form">
-            <div class="form-group">
-                <input type="text" name="material_name" placeholder="Material Name" required>
-                <input type="number" name="quantity" placeholder="Quantity" required>
-                <input type="number" name="price" placeholder="Price ($)" step="0.01" required>
-                <input type="url" name="link" placeholder="Material Link (Optional)" class="link-input">
-            </div>
-            <button type="submit" name="add_material" class="add-btn">Add Material</button>
-        </form>
-    </section>
+  {# ---- Purchase orders assigned to this supplier ---- #}
+  <section class="mh-card" style="margin-bottom:1.25rem">
+    <h2>Purchase Orders Assigned to You</h2>
+    {% if purchase_orders %}
+      <div class="mh-table-wrap">
+        <table class="mh-table">
+          <thead>
+            <tr>
+              <th>Order No</th>
+              <th>Status</th>
+              <th>Total</th>
+              <th>Company</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for po in purchase_orders %}
+            <tr>
+              <td>{{ po.order_no }}</td>
+              <td><span class="status-tag">{{ po.status.value if po.status else '—' }}</span></td>
+              <td>{{ po.total_price }}</td>
+              <td>{{ po.company_name }}</td>
+              <td>{{ po.created_at.strftime('%Y-%m-%d') if po.created_at else '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="mh-muted">No purchase orders assigned to you yet.</p>
+    {% endif %}
+  </section>
 
-    <!-- Available Materials Section -->
-    <section class="materials-section">
-        <h2>Available Materials</h2>
-        {% if available_materials %}
-            <div class="materials-grid">
-                {% for material in available_materials %}
-                    <div class="material-card">
-                        <div class="material-info">
-                            <h3>{{ material.name }}</h3>
-                            <p>Quantity: {{ material.quantity }}</p>
-                            <p>Price: ${{ material.price }}</p>
-                            {% if material.link %}
-                                <div class="material-link">
-                                    {% if material.link.endswith(('.jpg', '.jpeg', '.png')) %}
-                                        <img src="{{ material.link }}" alt="{{ material.name }}" class="material-image" onerror="this.style.display='none';">
-                                    {% else %}
-                                        <a href="{{ material.link }}" target="_blank" class="view-link-btn">View Link</a>
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" class="marketplace-toggle">
-                            <input type="hidden" name="material_id" value="{{ material.id }}">
-                            <label class="marketplace-label">
-                                <input type="checkbox" name="is_listed" {% if material.is_listed %}checked{% endif %} onchange="this.form.submit()">
-                                <span>In Marketplace</span>
-                            </label>
-                        </form>
-                        <div class="material-actions">
-                            <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" class="action-form">
-                                <input type="hidden" name="material_id" value="{{ material.id }}">
-                                <button type="submit" name="edit_material" class="edit-btn">Edit</button>
-                            </form>
-                            <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" class="action-form">
-                                <input type="hidden" name="material_id" value="{{ material.id }}">
-                                <button type="submit" name="delete_material" class="delete-btn">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="no-data">No materials added yet.</p>
-        {% endif %}
-    </section>
+  {# ---- Open tenders + quick bid ---- #}
+  <section class="mh-card" style="margin-bottom:1.25rem">
+    <h2>Open Tenders</h2>
+    {% if open_tenders %}
+      <div class="mh-table-wrap">
+        <table class="mh-table">
+          <thead>
+            <tr>
+              <th>Tender No</th>
+              <th>Company</th>
+              <th>Material</th>
+              <th>Qty</th>
+              <th>Bid</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in open_tenders %}
+            {% set mr = t.material_requisition %}
+            <tr>
+              <td>{{ t.tender_no }}</td>
+              <td>{{ t.company_name }}</td>
+              <td>{{ mr.material_description if mr else '—' }}</td>
+              <td>{{ mr.quantity if mr else '—' }} {{ mr.unit_of_measure if mr else '' }}</td>
+              <td>
+                <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" class="bid-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="action" value="submit_bid">
+                  <input type="hidden" name="tender_id" value="{{ t.id }}">
+                  <input type="number" name="bid_amount" step="0.01" min="0.01" placeholder="Amount" required style="width:7rem">
+                  <button type="submit" class="btn btn-sm btn-primary">Bid</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="mh-muted">No open tenders right now.</p>
+    {% endif %}
+  </section>
 
-    <!-- Purchase Requests Section -->
-    <section class="requests-section">
-        <h2>Purchase Requests</h2>
-        {% if purchase_requests %}
-            <div class="requests-grid">
-                {% for request in purchase_requests %}
-                    <div class="request-card">
-                        <h3>{{ request.material }}</h3>
-                        <p>Quantity: {{ request.quantity }}</p>
-                        <p>Company: {{ request.company }}</p>
-                        <button class="respond-btn">Respond</button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="no-data">No purchase requests available at the moment.</p>
-        {% endif %}
-    </section>
+  {# ---- My bids ---- #}
+  <section class="mh-card" style="margin-bottom:1.25rem">
+    <h2>My Bids</h2>
+    {% if my_bids %}
+      <div class="mh-table-wrap">
+        <table class="mh-table">
+          <thead>
+            <tr>
+              <th>Tender</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in my_bids %}
+            <tr>
+              <td>{{ b.tender.tender_no if b.tender else b.tender_id }}</td>
+              <td>{{ '%.2f'|format(b.bid_amount) }}</td>
+              <td>{{ b.status.value if b.status else '—' }}</td>
+              <td>{{ b.created_at.strftime('%Y-%m-%d') if b.created_at else '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="mh-muted">You have not placed any bids yet.</p>
+    {% endif %}
+  </section>
+
+  {# ---- Deliveries linked to supplier POs ---- #}
+  <section class="mh-card">
+    <h2>Related Deliveries</h2>
+    {% if deliveries %}
+      <div class="mh-table-wrap">
+        <table class="mh-table">
+          <thead>
+            <tr>
+              <th>Delivery ID</th>
+              <th>Status</th>
+              <th>Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in deliveries %}
+            <tr>
+              <td>{{ d.delivery_id }}</td>
+              <td>{{ d.status.value if d.status else '—' }}</td>
+              <td>{{ d.updated_at.strftime('%Y-%m-%d') if d.updated_at else '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="mh-muted">No deliveries linked to your purchase orders.</p>
+    {% endif %}
+  </section>
 </div>
+
+<style>
+.supplier-dashboard .mh-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem 1rem;
+  margin-top: 0.75rem;
+}
+.supplier-dashboard .form-group label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--mh-muted, #666);
+  margin-bottom: 0.25rem;
+}
+.supplier-dashboard .form-group input,
+.supplier-dashboard .form-group select {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+.supplier-dashboard .mh-table-wrap { overflow-x: auto; }
+.supplier-dashboard .mh-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.supplier-dashboard .mh-table th,
+.supplier-dashboard .mh-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #eee; text-align: left; }
+.supplier-dashboard .bid-inline { display: flex; gap: 0.35rem; align-items: center; }
+.supplier-dashboard .btn-sm { padding: 0.25rem 0.55rem; font-size: 0.8rem; }
+.supplier-dashboard .btn-danger { background: #c0392b; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+.supplier-dashboard .btn-primary { background: #1a73e8; color: #fff; border: none; border-radius: 4px; cursor: pointer; padding: 0.45rem 0.9rem; }
+</style>
 {% endblock %}
