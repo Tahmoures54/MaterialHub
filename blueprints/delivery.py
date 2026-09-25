@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from models import db, Delivery, DeliveryStatus, AccessLevel
 from forms.material_forms import DeliveryForm
-from utils import generate_next_delivery_id, parse_enum
+from utils import generate_next_delivery_id, parse_enum, tenant_query
 import logging
 
 logger = logging.getLogger(__name__)
@@ -11,10 +11,8 @@ delivery_bp = Blueprint("delivery", __name__, template_folder='templates')
 
 
 def _company_deliveries():
-    query = Delivery.query
-    if not current_user.is_admin:
-        query = query.filter_by(company_name=current_user.company_name)
-    return query
+    """Tenant-scoped delivery query. Admins remain scoped to their own company."""
+    return tenant_query(Delivery, allow_admin=False)
 
 
 @delivery_bp.route('/delivery_order')
