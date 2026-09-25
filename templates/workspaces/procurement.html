@@ -7,11 +7,11 @@ window.MaterialHubKPIs = {{ workspace_kpis|default([])|tojson }};
 <div class="mh-page">
   <section class="mh-workspace-hero">
     <h1>Procurement Workspace</h1>
-    <p class="mh-muted">Run tenders, compare supplier bids, manage POs and recover delivery risk.</p>
+    <p class="mh-muted">Run tenders, compare supplier bids, manage POs and track OTIF performance.</p>
     <div class="mh-workspace-nav">
       <a href="{{ url_for('purchase_order.manage_tenders') }}">Open Tenders</a>
-      <a href="{{ url_for('purchase_order.manage_tenders') }}">Evaluate Bids</a>
       <a href="{{ url_for('purchase_order.get_purchase_orders') }}">Purchase Orders</a>
+      <a href="{{ url_for('purchase_order.supplier_performance') }}">Supplier OTIF</a>
       <a href="{{ url_for('supplier.material_marketplace') }}">Marketplace</a>
     </div>
   </section>
@@ -24,7 +24,7 @@ window.MaterialHubKPIs = {{ workspace_kpis|default([])|tojson }};
   <section class="mh-card mh-priority" style="margin-top:1rem">
     <h3>Priority Work</h3>
     <div class="mh-action"><span>Open a tender from an approved material requisition</span><a href="{{ url_for('purchase_order.manage_tenders') }}">Manage tenders →</a></div>
-    <div class="mh-action"><span>Compare and accept supplier bids</span><a href="{{ url_for('purchase_order.manage_tenders') }}">Evaluate →</a></div>
+    <div class="mh-action"><span>Review supplier OTIF rankings</span><a href="{{ url_for('purchase_order.supplier_performance') }}">Performance →</a></div>
     <div class="mh-action"><span>Track issued purchase orders</span><a href="{{ url_for('purchase_order.get_purchase_orders') }}">View POs →</a></div>
   </section>
 </div>
