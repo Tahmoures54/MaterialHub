@@ -5,6 +5,7 @@ from models import (
     ReportShare, MaterialRequest, MaterialRequisition, PurchaseOrder,
     Delivery, WarehouseInventory, AccessLevel, PackingList, PackingListLine, GoodsReceipt, GoodsReceiptLine, OSDReport, PurchaseOrderItem, PurchaseOrderStatus, DeliveryStatus, ReceivingStatus, WarehouseTransaction
 )
+from utils import tenant_query, company_filter
 import csv, io, secrets
 from datetime import datetime, timedelta
 import pytz
@@ -23,10 +24,9 @@ TYPES = {
 
 
 def _query_model(model):
-    q = model.query
-    if not current_user.is_admin:
-        q = q.filter_by(company_name=current_user.company_name)
-    return q
+    """Tenant-scoped query. Admins remain scoped to their own company by default
+    (cross-tenant admin views require an explicit allow_admin path elsewhere)."""
+    return tenant_query(model, allow_admin=False)
 
 
 def _record(kind, record_id):
@@ -99,7 +99,8 @@ REPORT_TYPES = {
 }
 
 def _operational_query(model):
-    return model.query.filter_by(company_name=current_user.company_name)
+    """Always tenant-scoped; operational reports never cross tenants."""
+    return tenant_query(model, allow_admin=False)
 
 def _operational_record(kind, record_id):
     meta = REPORT_TYPES.get(kind)
