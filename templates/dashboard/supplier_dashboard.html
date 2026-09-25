@@ -19,15 +19,59 @@
     {% endif %}
   {% endwith %}
 
-  {# ---- KPI strip ---- #}
   <section class="mh-grid mh-grid-4" style="margin-bottom:1.25rem">
     <div class="mh-card mh-kpi"><div class="mh-muted">Listed Materials</div><div class="value">{{ stats.materials }}</div></div>
     <div class="mh-card mh-kpi"><div class="mh-muted">Open POs</div><div class="value">{{ stats.open_pos }}</div></div>
-    <div class="mh-card mh-kpi"><div class="mh-muted">Open Tenders</div><div class="value">{{ stats.open_tenders }}</div></div>
-    <div class="mh-card mh-kpi"><div class="mh-muted">My Bids</div><div class="value">{{ stats.my_bids }}</div></div>
+    <div class="mh-card mh-kpi"><div class="mh-muted">OTIF Score</div><div class="value">{{ '%.1f'|format(stats.otif or 0) }}%</div></div>
+    <div class="mh-card mh-kpi"><div class="mh-muted">Overall Score</div><div class="value">{{ '%.1f'|format(stats.overall or 0) }}</div></div>
   </section>
 
-  {# ---- Add material ---- #}
+  {% if performance %}
+  <section class="mh-card" style="margin-bottom:1.25rem" id="otif">
+    <h2>On-Time In-Full (OTIF) — {{ performance.period }}</h2>
+    <p class="mh-muted">
+      Evaluated closed orders: <strong>{{ performance.evaluated_count }}</strong>
+      · On time: <strong>{{ performance.on_time_count }}</strong>
+      · Delayed: <strong>{{ performance.delayed_count }}</strong>
+      · SLA: {{ performance.sla_days }} days from issue date
+    </p>
+    <div class="mh-grid mh-grid-4" style="margin:0.75rem 0">
+      <div class="mh-card mh-kpi"><div class="mh-muted">OTIF %</div><div class="value">{{ '%.1f'|format(performance.otif_score) }}%</div></div>
+      <div class="mh-card mh-kpi"><div class="mh-muted">Quality %</div><div class="value">{{ '%.1f'|format(performance.quality_score) }}%</div></div>
+      <div class="mh-card mh-kpi"><div class="mh-muted">Overall</div><div class="value">{{ '%.1f'|format(performance.overall_score) }}</div></div>
+      <div class="mh-card mh-kpi"><div class="mh-muted">Total POs</div><div class="value">{{ performance.orders_count }}</div></div>
+    </div>
+    {% if performance.orders %}
+      <div class="mh-table-wrap">
+        <table class="mh-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Status</th>
+              <th>Issued</th>
+              <th>Delivered</th>
+              <th>On Time?</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in performance.orders %}
+            <tr>
+              <td>{{ o.order_no }}</td>
+              <td>{{ o.status or '—' }}</td>
+              <td>{{ o.issued_date or '—' }}</td>
+              <td>{{ o.delivered_date or '—' }}</td>
+              <td>{% if o.on_time %}<span style="color:#0a0">Yes</span>{% else %}<span style="color:#c00">No</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="mh-muted">No closed purchase orders yet — OTIF appears after deliveries are completed.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
   <section class="mh-card" style="margin-bottom:1.25rem">
     <h2>Add Material to Catalog</h2>
     <form method="POST" action="{{ url_for('supplier.supplier_dashboard') }}" class="mh-form-grid">
@@ -72,7 +116,6 @@
     </form>
   </section>
 
-  {# ---- Catalog ---- #}
   <section class="mh-card" style="margin-bottom:1.25rem">
     <h2>My Catalog ({{ materials|length }})</h2>
     {% if materials %}
@@ -80,14 +123,7 @@
         <table class="mh-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Price</th>
-              <th>Qty</th>
-              <th>Unit</th>
-              <th>Lead (d)</th>
-              <th>Country</th>
-              <th></th>
+              <th>Name</th><th>Type</th><th>Price</th><th>Qty</th><th>Unit</th><th>Lead (d)</th><th>Country</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -118,20 +154,13 @@
     {% endif %}
   </section>
 
-  {# ---- Purchase orders assigned to this supplier ---- #}
-  <section class="mh-card" style="margin-bottom:1.25rem">
+  <section class="mh-card" style="margin-bottom:1.25rem" id="pos">
     <h2>Purchase Orders Assigned to You</h2>
     {% if purchase_orders %}
       <div class="mh-table-wrap">
         <table class="mh-table">
           <thead>
-            <tr>
-              <th>Order No</th>
-              <th>Status</th>
-              <th>Total</th>
-              <th>Company</th>
-              <th>Created</th>
-            </tr>
+            <tr><th>Order No</th><th>Status</th><th>Total</th><th>Company</th><th>Created</th></tr>
           </thead>
           <tbody>
             {% for po in purchase_orders %}
@@ -151,20 +180,13 @@
     {% endif %}
   </section>
 
-  {# ---- Open tenders + quick bid ---- #}
   <section class="mh-card" style="margin-bottom:1.25rem">
     <h2>Open Tenders</h2>
     {% if open_tenders %}
       <div class="mh-table-wrap">
         <table class="mh-table">
           <thead>
-            <tr>
-              <th>Tender No</th>
-              <th>Company</th>
-              <th>Material</th>
-              <th>Qty</th>
-              <th>Bid</th>
-            </tr>
+            <tr><th>Tender No</th><th>Company</th><th>Material</th><th>Qty</th><th>Bid</th></tr>
           </thead>
           <tbody>
             {% for t in open_tenders %}
@@ -193,19 +215,13 @@
     {% endif %}
   </section>
 
-  {# ---- My bids ---- #}
   <section class="mh-card" style="margin-bottom:1.25rem">
     <h2>My Bids</h2>
     {% if my_bids %}
       <div class="mh-table-wrap">
         <table class="mh-table">
           <thead>
-            <tr>
-              <th>Tender</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Submitted</th>
-            </tr>
+            <tr><th>Tender</th><th>Amount</th><th>Status</th><th>Submitted</th></tr>
           </thead>
           <tbody>
             {% for b in my_bids %}
@@ -224,18 +240,13 @@
     {% endif %}
   </section>
 
-  {# ---- Deliveries linked to supplier POs ---- #}
   <section class="mh-card">
     <h2>Related Deliveries</h2>
     {% if deliveries %}
       <div class="mh-table-wrap">
         <table class="mh-table">
           <thead>
-            <tr>
-              <th>Delivery ID</th>
-              <th>Status</th>
-              <th>Updated</th>
-            </tr>
+            <tr><th>Delivery ID</th><th>Status</th><th>Updated</th></tr>
           </thead>
           <tbody>
             {% for d in deliveries %}
@@ -262,17 +273,11 @@
   margin-top: 0.75rem;
 }
 .supplier-dashboard .form-group label {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--mh-muted, #666);
-  margin-bottom: 0.25rem;
+  display: block; font-size: 0.8rem; color: var(--mh-muted, #666); margin-bottom: 0.25rem;
 }
 .supplier-dashboard .form-group input,
 .supplier-dashboard .form-group select {
-  width: 100%;
-  padding: 0.4rem 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  width: 100%; padding: 0.4rem 0.5rem; border: 1px solid #ddd; border-radius: 4px;
 }
 .supplier-dashboard .mh-table-wrap { overflow-x: auto; }
 .supplier-dashboard .mh-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
