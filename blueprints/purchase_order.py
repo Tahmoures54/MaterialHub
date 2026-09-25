@@ -3,11 +3,12 @@ from flask_login import login_required, current_user
 from models import (
     db, PurchaseOrder, PurchaseOrderStatus, AccessLevel,
     MaterialRequisition, ApprovalStatus, Tender, TenderStatus, Bid, BidStatus,
-    ValidationError,
+    ValidationError, PurchaseOrderItem,
 )
 from forms.material_forms import PurchaseOrderForm
 from utils import generate_next_po_no, generate_next_tender_no, tenant_query
 import logging
+from datetime import date
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,6 @@ def manage_tenders():
         .limit(100)
         .all()
     )
-    # Approved MRs that do not yet have an open tender
     open_tender_mr_ids = {
         t.material_requisition_id
         for t in tenant_query(Tender).filter_by(status=TenderStatus.open).all()
@@ -152,7 +152,7 @@ def _create_tender_from_form():
     except (ValidationError, ValueError, TypeError) as exc:
         db.session.rollback()
         flash(str(exc), 'danger')
-    except Exception as exc:
+    except Exception:
         db.session.rollback()
         logger.exception('Failed to create tender')
         flash('Failed to create tender.', 'danger')
@@ -219,7 +219,6 @@ def _handle_bid_decision(tender):
                 flash('Tender is not open.', 'danger')
                 return redirect(url_for('purchase_order.tender_detail', tender_id=tender.id))
 
-            # Accept winner, reject others, close tender, create PO
             bid.status = BidStatus.accepted
             for other in Bid.query.filter(
                 Bid.tender_id == tender.id,
@@ -238,24 +237,23 @@ def _handle_bid_decision(tender):
                 supplier_id=bid.supplier_id,
                 total_price=bid.bid_amount,
                 status=PurchaseOrderStatus.issued,
+                issued_date=date.today(),
                 company_name=current_user.company_name,
             )
             db.session.add(po)
             db.session.flush()
 
-            # Link PO item to MR when model supports it
-            try:
-                from models import PurchaseOrderItem
-                if mr:
-                    item = PurchaseOrderItem(
-                        purchase_order_id=po.id,
-                        material_requisition_id=mr.id,
-                        quantity=float(mr.quantity or 0),
-                        unit_price=float(bid.bid_amount) / max(float(mr.quantity or 1), 1e-9),
-                    )
-                    db.session.add(item)
-            except Exception:
-                logger.warning('PurchaseOrderItem link skipped', exc_info=True)
+            if mr and getattr(mr, 'material_id', None):
+                qty = float(mr.quantity or 1)
+                unit_price = float(bid.bid_amount) / max(qty, 1e-9)
+                item = PurchaseOrderItem(
+                    purchase_order_id=po.id,
+                    material_requisition_id=mr.id,
+                    material_id=mr.material_id,
+                    quantity=qty,
+                    unit_price=unit_price,
+                )
+                db.session.add(item)
 
             db.session.commit()
             flash(
