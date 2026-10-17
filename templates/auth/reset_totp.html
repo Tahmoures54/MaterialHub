@@ -8,7 +8,7 @@
     <img alt="Authenticator setup QR code" src="data:image/png;base64,{{ qr_code }}" width="220" height="220">
     <p>If scanning is unavailable, enter this secret manually:</p>
     <code>{{ totp_secret }}</code>
-    <form method="post" class="auth-form">
+    <form method="post" class="auth-form">\n      <input type="hidden" name="token" value="{{ recovery_token }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label for="totp_code">Six-digit authenticator code</label>
       <input id="totp_code" name="totp_code" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" required autocomplete="one-time-code">
