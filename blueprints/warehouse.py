@@ -4,7 +4,10 @@ from flask_wtf.csrf import validate_csrf, CSRFError
 from io import StringIO
 import csv
 import logging
+import hashlib
+import json
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 from models import (db, WarehouseInventory, WarehouseTransaction, Delivery, MaterialMaster,
                     WorkflowStatus, AccessLevel, ValidationError, PurchaseOrder, InspectionStatus,
                     PackingList, PackingListLine, GoodsReceipt, GoodsReceiptLine,
@@ -823,6 +826,33 @@ def api_create_goods_receipt():
     try:
         data = request.get_json() or {}
         validate_csrf(data.get('csrf_token'))
+        fingerprint_payload = {key: value for key, value in data.items() if key != 'csrf_token'}
+        request_fingerprint = hashlib.sha256(json.dumps(
+            {
+                'company_name': current_user.company_name,
+                'user_id': current_user.id,
+                'payload': fingerprint_payload,
+            },
+            sort_keys=True,
+            separators=(',', ':'),
+            ensure_ascii=False,
+            default=str,
+        ).encode('utf-8')).hexdigest()
+        existing_receipt = GoodsReceipt.query.filter_by(
+            company_name=current_user.company_name,
+            request_fingerprint=request_fingerprint,
+        ).first()
+        if existing_receipt:
+            existing_osd = OSDReport.query.filter_by(
+                goods_receipt_id=existing_receipt.id,
+                company_name=current_user.company_name,
+            ).first()
+            return jsonify({
+                'receipt': existing_receipt.to_dict(),
+                'osd': existing_osd.to_dict() if existing_osd else None,
+                'idempotent_replay': True,
+            }), 200
+
         pl = PackingList.query.filter_by(
             id=int(data.get('packing_list_id') or 0),
             company_name=current_user.company_name
@@ -853,6 +883,7 @@ def api_create_goods_receipt():
             status=ReceivingStatus.posted,
             remarks=data.get('remarks'),
             company_name=current_user.company_name,
+            request_fingerprint=request_fingerprint,
         )
         if GoodsReceipt.query.filter_by(
             receipt_no=receipt.receipt_no, company_name=current_user.company_name
@@ -1026,10 +1057,28 @@ def api_create_goods_receipt():
     except (ValidationError, ValueError, TypeError) as exc:
         db.session.rollback()
         return jsonify({'error': str(exc)}), 400
-    except Exception as exc:
+    except IntegrityError:
+        db.session.rollback()
+        # A concurrent retry may have committed the same fingerprint first.
+        existing_receipt = GoodsReceipt.query.filter_by(
+            company_name=current_user.company_name,
+            request_fingerprint=request_fingerprint,
+        ).first()
+        if existing_receipt:
+            existing_osd = OSDReport.query.filter_by(
+                goods_receipt_id=existing_receipt.id,
+                company_name=current_user.company_name,
+            ).first()
+            return jsonify({
+                'receipt': existing_receipt.to_dict(),
+                'osd': existing_osd.to_dict() if existing_osd else None,
+                'idempotent_replay': True,
+            }), 200
+        return jsonify({'error': 'Duplicate Goods Receipt request'}), 409
+    except Exception:
         db.session.rollback()
         logger.exception('Goods Receipt creation failed')
-        return jsonify({'error': 'Failed to create Goods Receipt', 'detail': str(exc)}), 500
+        return jsonify({'error': 'Failed to create Goods Receipt'}), 500
 
 @warehouse_bp.route('/api/osd-reports', methods=['GET'])
 @login_required
