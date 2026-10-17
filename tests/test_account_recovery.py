@@ -117,6 +117,7 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
     with app.app_context():
         user = _user()
         old_secret = user.decrypt_totp_secret()
+        old_code = pyotp.TOTP(old_secret).now()
         raw_token = "single-use-recovery-token"
         recovery = AccountRecoveryToken(
             user_id=user.id,
@@ -149,6 +150,21 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
         assert user.decrypt_totp_secret() != old_secret
         assert recovery.used_at is not None
         assert recovery.pending_totp_secret is None
+
+    old_login = client.post("/auth/login", data={
+        "email": "recovery@example.com",
+        "totp_code": old_code,
+        "submit": "Login",
+    })
+    assert old_login.status_code == 200
+    assert b"Unable to sign in with those details" in old_login.data
+
+    new_login = client.post("/auth/login", data={
+        "email": "recovery@example.com",
+        "totp_code": pyotp.TOTP(new_secret).now(),
+        "submit": "Login",
+    })
+    assert new_login.status_code == 302
 
     reuse = client.get(f"/auth/reset_totp?token={raw_token}", follow_redirects=True)
     assert b"invalid or expired" in reuse.data.lower()
