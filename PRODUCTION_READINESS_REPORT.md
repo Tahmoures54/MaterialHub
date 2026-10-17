@@ -63,36 +63,21 @@ Internet -> Nginx/TLS -> Gunicorn/Flask -> PostgreSQL + Redis
 
 ## CI status
 
-Latest fully completed quality/integration evidence observed on this PR branch:
-- Ruff: passed.
-- Mypy: passed.
-- Pytest: 80 passed, 0 failed; total measured coverage 81.58% (gate: 80%).
-- Bandit: passed.
-- pip-audit: passed after upgrading Werkzeug from 3.1.6 to patched 3.1.9 (PYSEC-2026-4312).
-- Operational shell syntax checks: passed.
-- PostgreSQL migrations from an empty database: passed.
-- Forward upgrade from revision 20260922_0015 to 20261017_0018: passed.
-- PostgreSQL dump/restore round trip into a separate database: passed.
-- Production app smoke tests, readiness and public funnel: passed.
-- Production Docker image build: passed in the observed run; Trivy was still running at the last poll for that run.
-- A newer workflow run for the current PR head is validating the updated Nginx configuration and re-running the full pipeline.
+Verified evidence on this PR branch:
+- Run 39041541831 (commit 8d18fe0): Ruff, Mypy, operational shell syntax, 80 Pytest tests, Bandit, pip-audit, PostgreSQL integration, forward migration, backup/restore round trip, app smoke tests, Nginx configuration validation, production Docker build and Trivy all passed.
+- Pytest measured 81.58% coverage against an 80% threshold.
+- The current head adds user auth-version session revocation and minimizes PII in authentication logs. Run 39041939729 is revalidating these final changes; its Docker/Trivy result is not yet final at the time of this report.
 
-Do not treat older failed runs as the current status; they preceded the final corrections. Do not claim the current head is fully green until its own jobs complete.
+Older failed runs preceded the Werkzeug patch, route-prefix fixes and later corrections. Use the latest PR-head run for final merge gating.
 
 ## Database migration note
-The repository contains an explicit Alembic baseline followed by a linear migration chain. The current PR adds 20261017_0016 (hashed TOTP recovery tokens) and 20261017_0018 (Goods Receipt idempotency fingerprint) after 20260922_0015. The baseline intentionally has `down_revision = None`; subsequent migrations form a linear chain. Do not modify an already-applied migration in production.
+The repository contains an explicit Alembic baseline followed by a linear migration chain. The current PR adds 20261017_0016 (hashed TOTP recovery tokens), 20261017_0017 (Goods Receipt idempotency fingerprint) and 20261017_0018 (user auth-version for session revocation) after 20260922_0015. The baseline intentionally has `down_revision = None`; subsequent migrations form a linear chain. Do not modify an already-applied migration in production.
 
 Before first production deployment, compare the production schema with this migration history. If the database was created outside Alembic, establish the correct baseline before running flask db upgrade. Do not blindly downgrade production migrations.
 
 ## Verification status
 
-Verified in CI on the PR branch:
-- Warehouse source imports directly without runtime decompression; the inbound workflow regression and duplicate Goods Receipt retry tests pass.
-- Tenant-isolation regression tests pass as part of the 80-test suite.
-- PostgreSQL empty-schema migrations and forward upgrade from the prior revision pass.
-- A PostgreSQL backup/restore round trip into a separate database passes.
-- Production app readiness/public-route smoke tests pass.
-- The production image build passed and the dependency audit passed on the observed run.
+Verified in CI on the PR branch: warehouse source imports without runtime decompression; the inbound workflow and duplicate-receipt retry tests pass; tenant-isolation tests pass; migrations from empty PostgreSQL and forward upgrade to revision 20261017_0018 pass; isolated PostgreSQL backup/restore passes; app readiness/public-route smoke tests pass; Nginx config validation, production image build, Trivy, Bandit and pip-audit passed on run 39041541831. The latest session-revocation/log-minimization commit is being revalidated separately.
 
 Not verified against the live production environment:
 - Production secrets, SMTP delivery, TLS certificates and actual deployment.
