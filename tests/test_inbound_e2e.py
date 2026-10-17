@@ -75,7 +75,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
             "item_code": material.material_code,
             "material_description": material.description,
             "quantity": 10,
-            "project_no": project_no,
+            "project_no": project.project_no,
             "discipline": "Piping",
             "status": "approved",
         }, company, engineer.id)
@@ -235,7 +235,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
         "warehouse_id": "WH-FLOW-0001",
         "material_id": material_id,
         "issue_quantity": 3,
-        "project_no": project.project_no,
+        "project_no": project_no,
         "contractor": "E2E Contractor",
         "reference_no": "ISSUE-E2E-001",
     })
