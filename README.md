@@ -125,7 +125,11 @@ docker-compose up --build
 | DATABASE_URL | No       | PostgreSQL URL (defaults to SQLite)              |
 | FLASK_ENV    | No       | `development` or `production`                    |
 | LOG_LEVEL    | No       | `DEBUG` / `INFO` / `WARNING` / `ERROR`           |
-| ADMIN_EMAIL  | No       | Email that becomes admin on registration         |\n| PUBLIC_BASE_URL | Required for recovery | Trusted HTTPS site origin used in recovery links |\n| SMTP_HOST / SMTP_PORT | Required for recovery | SMTP server; STARTTLS (587) or implicit TLS (465) |\n| SMTP_USERNAME / SMTP_PASSWORD | Optional by server | SMTP authentication credentials; never commit secrets |\n| MAIL_FROM | Required for recovery | Verified sender address for recovery messages |
+| ADMIN_EMAIL  | No       | Email that becomes admin on registration         |
+| PUBLIC_BASE_URL | Required for recovery | Trusted HTTPS site origin used in recovery links |
+| SMTP_HOST / SMTP_PORT | Required for recovery | SMTP server; STARTTLS (587) or implicit TLS (465) |
+| SMTP_USERNAME / SMTP_PASSWORD | Optional by server | SMTP authentication credentials; never commit secrets |
+| MAIL_FROM | Required for recovery | Verified sender address for recovery messages |
 
 Health checks: `GET /health`, `GET /health/live`, `GET /health/ready`.
 
