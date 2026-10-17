@@ -46,4 +46,16 @@ if ! "${compose[@]}" exec -T -e TARGET_DB="$target_db" db \
   echo "Restore failed. The new target database '$target_db' may be partial; inspect and drop it manually after review." >&2
   exit 1
 fi
-echo "Restore completed into new database: $target_db"
+
+# A successful pg_restore exit is not enough: verify the restored database has
+# a valid Alembic revision record before reporting success.
+if ! "${compose[@]}" exec -T -e TARGET_DB="$target_db" db sh -ec '
+  count="$(psql -U "$POSTGRES_USER" -d "$TARGET_DB" -Atc "SELECT count(*) FROM alembic_version")"
+  test "$count" = "1"
+  revision="$(psql -U "$POSTGRES_USER" -d "$TARGET_DB" -Atc "SELECT version_num FROM alembic_version")"
+  test -n "$revision"
+'; then
+  echo "Restore validation failed for '$target_db'. The new target database may be partial; inspect it before use." >&2
+  exit 1
+fi
+echo "Restore completed and Alembic revision validated in new database: $target_db"
