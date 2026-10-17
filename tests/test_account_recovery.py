@@ -151,6 +151,9 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
         assert recovery.used_at is not None
         assert recovery.pending_totp_secret is None
 
+    reuse = client.get(f"/auth/reset_totp?token={raw_token}", follow_redirects=True)
+    assert b"invalid or expired" in reuse.data.lower()
+
     old_login = client.post("/auth/login", data={
         "email": "recovery@example.com",
         "totp_code": old_code,
