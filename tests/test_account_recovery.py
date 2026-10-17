@@ -73,7 +73,7 @@ def test_recovery_token_never_appears_in_request_logs(client, app):
     app.logger.addHandler(handler)
     secret_path_token = "sensitive-recovery-token-value"
     try:
-        client.get(f"/auth/reset_totp/{secret_path_token}")
+        response = client.get(f"/auth/reset_totp/{secret_path_token}")
     finally:
         app.logger.removeHandler(handler)
 
