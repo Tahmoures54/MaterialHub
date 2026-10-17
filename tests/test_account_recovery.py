@@ -60,7 +60,7 @@ def test_recovery_email_failure_does_not_claim_success(client, app, monkeypatch)
         assert token.used_at is not None
 
 
-def test_recovery_token_never_appears_in_request_logs(client, app):
+def test_recovery_token_never_appears_in_request_logs(client):
     class CaptureHandler(logging.Handler):
         def __init__(self):
             super().__init__()
@@ -70,12 +70,13 @@ def test_recovery_token_never_appears_in_request_logs(client, app):
             self.records.append(record)
 
     handler = CaptureHandler()
-    app.logger.addHandler(handler)
+    logger = client.application.logger
+    logger.addHandler(handler)
     secret_path_token = "sensitive-recovery-token-value"
     try:
         response = client.get(f"/auth/reset_totp?token={secret_path_token}")
     finally:
-        app.logger.removeHandler(handler)
+        logger.removeHandler(handler)
 
     paths = [getattr(record, "path", "") for record in handler.records]
     assert "/auth/reset_totp" in paths
