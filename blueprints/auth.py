@@ -218,25 +218,21 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(company_email=form.email.data).first()
         if user:
+            # Incomplete enrollment must stop authentication, not merely show a warning.
             if not user.totp_confirmed:
                 logger.warning("Login rejected because authenticator setup is incomplete (user_id=%s)", user.id)
                 flash('Unable to sign in with those details. Check your email and authenticator code or contact support.', 'danger')
-            totp = pyotp.TOTP(user.decrypt_totp_secret())
-            if totp.verify(form.totp_code.data):
-                login_user(user)
-                session['auth_version'] = int(user.auth_version or 0)
-                logger.info("User logged in (user_id=%s)", user.id)
-                flash('Login successful!', 'success')
-                if user.is_admin:
-                    return redirect(url_for('role_workspace.my_workspace'))
-                elif user.access_level == AccessLevel.supplier:
-                    return redirect(url_for('role_workspace.my_workspace'))
-                elif user.access_level == AccessLevel.project_manager:
-                    return redirect(url_for('role_workspace.my_workspace'))
-                return redirect(url_for('role_workspace.my_workspace'))
             else:
-                logger.warning("Login rejected because authenticator verification failed")
-                flash('Unable to sign in with those details. Check your email and authenticator code or contact support.', 'danger')
+                totp = pyotp.TOTP(user.decrypt_totp_secret())
+                if totp.verify(form.totp_code.data):
+                    login_user(user)
+                    session['auth_version'] = int(user.auth_version or 0)
+                    logger.info("User logged in (user_id=%s)", user.id)
+                    flash('Login successful!', 'success')
+                    return redirect(url_for('role_workspace.my_workspace'))
+                else:
+                    logger.warning("Login rejected because authenticator verification failed")
+                    flash('Unable to sign in with those details. Check your email and authenticator code or contact support.', 'danger')
         else:
             logger.warning("Login rejected because credentials were not accepted")
             flash('Unable to sign in with those details. Check your email and authenticator code or contact support.', 'danger')
