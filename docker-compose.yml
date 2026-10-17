@@ -9,7 +9,7 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgresql://materialhub:materialhub@db:5432/materialhub
-      - FLASK_ENV=production
+      - FLASK_ENV=development\n      - RATELIMIT_STORAGE_URI=memory://
     depends_on:
       - db
     volumes:
