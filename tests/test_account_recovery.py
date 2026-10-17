@@ -70,7 +70,7 @@ def test_recovery_token_never_appears_in_request_logs(client):
             self.records.append(record)
 
     handler = CaptureHandler()
-    logger = client.application.logger
+    logger = logging.getLogger("app")
     logger.addHandler(handler)
     secret_path_token = "sensitive-recovery-token-value"
     try:
