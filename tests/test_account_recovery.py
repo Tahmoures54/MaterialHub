@@ -80,6 +80,8 @@ def test_recovery_token_never_appears_in_request_logs(client, app):
     paths = [getattr(record, "path", "") for record in handler.records]
     assert "/auth/reset_totp" in paths
     assert all(secret_path_token not in path for path in paths)
+    assert response.headers["Cache-Control"] == "no-store"
+    assert response.headers["Referrer-Policy"] == "no-referrer"
 
 
 def test_recovery_request_is_rate_limited(client):
