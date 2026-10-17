@@ -224,6 +224,7 @@ def login():
             totp = pyotp.TOTP(user.decrypt_totp_secret())
             if totp.verify(form.totp_code.data):
                 login_user(user)
+                session['auth_version'] = int(user.auth_version or 0)
                 logger.info(f"User logged in: {user.company_email} (ID: {user.id}, IP: {request.remote_addr})")
                 flash('Login successful!', 'success')
                 if user.is_admin:
@@ -370,6 +371,7 @@ def reset_totp_with_token():
         return redirect(url_for('auth.reset_totp_with_token', token=token))
 
     user.totp_secret = encrypted_secret
+    user.auth_version = int(user.auth_version or 0) + 1
     user.qr_code_base64 = None
     user.totp_confirmed = True
     recovery.used_at = now
