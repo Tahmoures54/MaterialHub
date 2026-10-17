@@ -75,6 +75,28 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Run production migrations on empty PostgreSQL
         run: VERCEL_ENV=production python scripts/vercel_migrate.py
+      - name: Verify forward upgrade from previous schema revision
+        env:
+          DATABASE_URL: postgresql://materialhub:materialhub@127.0.0.1:5432/materialhub_upgrade
+        run: |
+          python - <<'PY'
+          import psycopg2
+          connection = psycopg2.connect(
+              dbname="postgres",
+              user="materialhub",
+              password="materialhub",
+              host="127.0.0.1",
+          )
+          connection.autocommit = True
+          try:
+              with connection.cursor() as cursor:
+                  cursor.execute("CREATE DATABASE materialhub_upgrade")
+          finally:
+              connection.close()
+          PY
+          flask --app wsgi db upgrade 20260922_0015
+          flask --app wsgi db upgrade
+          flask --app wsgi db current
       - name: Smoke test production app, readiness and public funnel
         run: |
           python - <<'PY'
