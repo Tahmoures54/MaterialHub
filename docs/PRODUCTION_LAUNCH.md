@@ -41,7 +41,7 @@ Gunicorn × 3 workers  →  Flask (wsgi:app)
   # secrets/tls_key    (privkey.pem)
   ```
 - [ ] Set `POSTGRES_DB` and `POSTGRES_USER` in `.env.prod`
-- [ ] Confirm `FLASK_ENV=production`
+- [ ] Confirm `FLASK_ENV=production`\n- [ ] Set `PUBLIC_BASE_URL` to the canonical HTTPS origin (never derive recovery links from request Host headers)\n- [ ] Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME` / `SMTP_PASSWORD` if required by the provider, and verified `MAIL_FROM`\n- [ ] Send and receive a real recovery email in staging before enabling customer accounts
 
 ### Domain & TLS
 - [ ] DNS A/AAAA records point to the server
@@ -49,7 +49,7 @@ Gunicorn × 3 workers  →  Flask (wsgi:app)
 - [ ] Nginx config in `nginx/nginx.conf` references the secrets
 
 ### Database
-- [ ] Review Alembic history (`migrations/versions/`)
+- [ ] Review Alembic history (`migrations/versions/`) and confirm one head (`20261017_0017` for this branch)\n- [ ] Run `flask db upgrade` on a staging copy before production; do not stamp an existing database until its schema has been verified
 - [ ] If the DB already exists outside Alembic, stamp the correct baseline first
 - [ ] Plan first backup immediately after migrate
 
@@ -130,7 +130,7 @@ Recommended next steps (product):
 
 ## 7. Operational checklist (first week)
 
-- [ ] Automated daily PostgreSQL backup + one successful restore test
+- [ ] Automated daily PostgreSQL backup + one successful restore test (including an isolated restore to a clean database)
 - [ ] Alert on `/health/ready` returning non-200
 - [ ] Alert on 5xx rate and authentication failures
 - [ ] Log retention policy (JSON logs to stdout → collector)
