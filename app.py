@@ -171,10 +171,10 @@ def create_app(config_name=None):
         from flask import g
         duration_ms = round((time.perf_counter() - request.environ.get('materialhub.request_started', time.perf_counter())) * 1000, 2)
         response.headers['X-Request-ID'] = getattr(g, 'request_id', _request_id())
+        route_template = request.url_rule.rule if request.url_rule else 'unmatched'
         if request_counter is not None:
-            route = request.url_rule.rule if request.url_rule else 'unmatched'
-            request_counter.labels(request.method, route, str(response.status_code)).inc()
-            request_duration.labels(request.method, route).observe(duration_ms / 1000)
+            request_counter.labels(request.method, route_template, str(response.status_code)).inc()
+            request_duration.labels(request.method, route_template).observe(duration_ms / 1000)
         app.logger.info(
             'request completed',
             extra={
@@ -183,7 +183,8 @@ def create_app(config_name=None):
                 'duration_ms': duration_ms,
                 'status_code': response.status_code,
                 'method': request.method,
-                'path': request.path,
+                # Log the Flask route template, never raw paths containing recovery tokens or identifiers.
+                'path': route_template,
             },
         )
         return response
