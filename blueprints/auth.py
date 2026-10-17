@@ -267,7 +267,7 @@ def reset_password_request():
     form = ResetPasswordRequestForm()
     if form.validate_on_submit():
         email = form.email.data.strip().lower()
-        user = User.query.filter(db.func.lower(User.company_email) == email).first()
+        user = User.query.filter(User.company_email.ilike(email)).first()
         if user:
             raw_token = secrets.token_urlsafe(32)
             now = datetime.now(pytz.UTC).replace(tzinfo=None)
