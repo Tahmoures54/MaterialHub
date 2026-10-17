@@ -99,6 +99,19 @@ jobs:
           flask --app wsgi db upgrade 20260922_0015
           flask --app wsgi db upgrade
           flask --app wsgi db current
+      - name: Verify PostgreSQL backup and isolated restore
+        env:
+          PGPASSWORD: materialhub
+        run: |
+          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" -v "$RUNNER_TEMP:/backup" postgres:16-alpine sh -ec '
+            pg_dump -h 127.0.0.1 -U materialhub -d materialhub --format=custom -f /backup/materialhub-ci.dump
+            createdb -h 127.0.0.1 -U materialhub materialhub_restore_test
+            pg_restore -h 127.0.0.1 -U materialhub -d materialhub_restore_test --no-owner --no-privileges /backup/materialhub-ci.dump
+            restored_revision="$(psql -h 127.0.0.1 -U materialhub -d materialhub_restore_test -Atc "SELECT version_num FROM alembic_version")"
+            test "$restored_revision" = "20261017_0017"
+            psql -h 127.0.0.1 -U materialhub -d materialhub_restore_test -Atc "SELECT count(*) FROM account_recovery_token" | grep -q "^0$"
+            echo "PostgreSQL dump/restore round trip passed."
+          '
       - name: Smoke test production app, readiness and public funnel
         run: |
           python - <<'PY'
