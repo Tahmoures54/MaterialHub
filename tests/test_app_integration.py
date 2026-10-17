@@ -204,28 +204,21 @@ def test_authenticated_home_and_logout(client, app):
 
 def test_auth_invalid_totp_and_unknown_user(client, app):
     user = _persist_user(app, "totp@example.com")
-    response = client.post("/auth/login", data={
+    invalid_code_response = client.post("/auth/login", data={
         "email": user.company_email,
         "totp_code": "000000",
         "submit": "Login",
     })
-    assert response.status_code in (200, 302)
-    response = client.post("/auth/login", data={
+    missing_user_response = client.post("/auth/login", data={
         "email": "missing@example.com",
         "totp_code": "000000",
         "submit": "Login",
     })
-    assert response.status_code in (200, 302)
-    assert b"Unable to sign in with those details" in response.data
-    invalid_user_response = client.post("/auth/login", data={
-        "email": "missing@example.com",
-        "totp_code": "000000",
-        "submit": "Login",
-    })
-    assert invalid_user_response.status_code in (200, 302)
-    assert b"Unable to sign in with those details" in invalid_user_response.data
-    assert b"No account found" not in invalid_user_response.data
-
+    assert invalid_code_response.status_code == missing_user_response.status_code == 200
+    generic_message = b"Unable to sign in with those details"
+    assert generic_message in invalid_code_response.data
+    assert generic_message in missing_user_response.data
+    assert b"No account found" not in missing_user_response.data
 
 def test_auth_reset_and_change_password_pages(client, app):
     assert client.get("/auth/reset_password_request").status_code == 200
