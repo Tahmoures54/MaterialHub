@@ -216,6 +216,15 @@ def test_auth_invalid_totp_and_unknown_user(client, app):
         "submit": "Login",
     })
     assert response.status_code in (200, 302)
+    assert b"Unable to sign in with those details" in response.data
+    invalid_user_response = client.post("/auth/login", data={
+        "email": "missing@example.com",
+        "totp_code": "000000",
+        "submit": "Login",
+    })
+    assert invalid_user_response.status_code in (200, 302)
+    assert b"Unable to sign in with those details" in invalid_user_response.data
+    assert b"No account found" not in invalid_user_response.data
 
 
 def test_auth_reset_and_change_password_pages(client, app):
