@@ -21,12 +21,10 @@ def test_concurrent_recovery_token_replay_succeeds_exactly_once():
     if not database_url.startswith(("postgresql://", "postgresql+psycopg2://")):
         pytest.skip("Requires the PostgreSQL integration database")
 
-    app = create_app("testing")
-    app.config.update(
-        TESTING=True,
-        WTF_CSRF_ENABLED=False,
-        SQLALCHEMY_DATABASE_URI=database_url,
-    )
+    # Use production configuration so SQLAlchemy binds PostgreSQL at app initialization.
+    app = create_app("production")
+    app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
+    assert app.config["SQLALCHEMY_DATABASE_URI"].startswith(("postgresql://", "postgresql+psycopg2://"))
     unique = uuid.uuid4().hex
     email = f"recovery-race-{unique}@example.com"
     raw_token = f"single-use-{unique}"
