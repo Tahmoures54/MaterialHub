@@ -130,7 +130,7 @@ Recommended next steps (product):
 
 ## 7. Operational checklist (first week)
 
-- [ ] Automated daily PostgreSQL backup + one successful restore test (including an isolated restore to a clean database)
+- [ ] Schedule `bash scripts/backup_postgres.sh` daily and copy encrypted backups off-host\n- [ ] Test restore to a new isolated database with `bash scripts/restore_postgres.sh backups/FILE.dump materialhub_restore_test`\n- [ ] Keep backup files out of Git; verify checksum and retention policy
 - [ ] Alert on `/health/ready` returning non-200
 - [ ] Alert on 5xx rate and authentication failures
 - [ ] Log retention policy (JSON logs to stdout → collector)
