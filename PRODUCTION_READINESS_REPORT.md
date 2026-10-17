@@ -63,12 +63,19 @@ Internet -> Nginx/TLS -> Gunicorn/Flask -> PostgreSQL + Redis
 
 ## CI status
 
-Verified evidence on this PR branch:
-- Run 39041541831 (commit 8d18fe0): Ruff, Mypy, operational shell syntax, 80 Pytest tests, Bandit, pip-audit, PostgreSQL integration, forward migration, backup/restore round trip, app smoke tests, Nginx configuration validation, production Docker build and Trivy all passed.
-- Pytest measured 81.58% coverage against an 80% threshold.
-- The current head adds user auth-version session revocation and minimizes PII in authentication logs. Run 39041939729 is revalidating these final changes; its Docker/Trivy result is not yet final at the time of this report.
+The latest fully completed CI run for the runtime changes is [39041939729](https://github.com/Tahmoures54/MaterialHub/actions/runs/39041939729) on commit f41d84a:
+- Ruff: passed.
+- Mypy: passed.
+- Pytest: 80 passed, 0 failed; coverage 81.58% against an 80% gate.
+- Operational shell syntax checks: passed.
+- Bandit and pip-audit: passed; Werkzeug is pinned to 3.1.9 after the earlier PYSEC-2026-4312 finding.
+- PostgreSQL migrations from an empty database: passed.
+- Forward upgrade from 20260922_0015 through 20261017_0018: passed.
+- PostgreSQL backup/restore round trip into an isolated database: passed.
+- Production app readiness/public-route smoke tests: passed.
+- Nginx configuration validation, production image build and Trivy scan: passed.
 
-Older failed runs preceded the Werkzeug patch, route-prefix fixes and later corrections. Use the latest PR-head run for final merge gating.
+Older failed runs preceded the dependency, source, route and test corrections and are superseded by this completed run.
 
 ## Database migration note
 The repository contains an explicit Alembic baseline followed by a linear migration chain. The current PR adds 20261017_0016 (hashed TOTP recovery tokens), 20261017_0017 (Goods Receipt idempotency fingerprint) and 20261017_0018 (user auth-version for session revocation) after 20260922_0015. The baseline intentionally has `down_revision = None`; subsequent migrations form a linear chain. Do not modify an already-applied migration in production.
@@ -77,14 +84,17 @@ Before first production deployment, compare the production schema with this migr
 
 ## Verification status
 
-Verified in CI on the PR branch: warehouse source imports without runtime decompression; the inbound workflow and duplicate-receipt retry tests pass; tenant-isolation tests pass; migrations from empty PostgreSQL and forward upgrade to revision 20261017_0018 pass; isolated PostgreSQL backup/restore passes; app readiness/public-route smoke tests pass; Nginx config validation, production image build, Trivy, Bandit and pip-audit passed on run 39041541831. The latest session-revocation/log-minimization commit is being revalidated separately.
+Verified in CI on the PR branch:
+- Warehouse source imports without runtime decompression; inbound workflow, repeated-receipt idempotency and tenant-isolation regression tests pass.
+- TOTP recovery is time-limited and single-use; invalid/expired/reused tokens fail; email failures do not claim delivery; old TOTP fails, the new TOTP signs in, prior sessions are rejected after recovery, and recovery tokens are not placed in logged path segments.
+- Empty PostgreSQL migrations, forward upgrade to 20261017_0018, isolated PostgreSQL backup/restore, app readiness/public-route smoke tests, Nginx config validation, production image build, Trivy, Bandit and pip-audit all pass in run 39041939729.
 
 Not verified against the live production environment:
-- Production secrets, SMTP delivery, TLS certificates and actual deployment.
-- Scheduling off-host encrypted backups and a restore of the real production dataset.
-- Multi-worker Redis behavior under load, full manual RBAC across every business route, Excel import/export edge cases, load testing and rollback rehearsal.
+- Real SMTP delivery, production TLS certificates/secrets and deployment.
+- Scheduling encrypted off-host backups and restoring the real production dataset.
+- Redis behavior under multi-worker load, complete manual RBAC review across every business route, Excel import/export edge cases, load testing and rollback rehearsal.
 
-The backup and restore scripts are provided, but no production database was accessed or modified. Recovery email requires valid PUBLIC_BASE_URL, SMTP_HOST, MAIL_FROM and provider credentials where needed. Recovery responses intentionally do not reveal whether an account exists or guarantee delivery.
+Backup/restore scripts are provided and their database round trip is exercised in CI, but no production database was accessed or modified. Recovery email requires valid PUBLIC_BASE_URL, SMTP_HOST, MAIL_FROM and provider credentials where needed. Recovery responses intentionally neither reveal account existence nor guarantee delivery.
 
 ## Production launch checklist
 - [ ] Set FLASK_ENV=production.
