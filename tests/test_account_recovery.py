@@ -117,6 +117,12 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
         db.session.commit()
         user_id = user.id
 
+    stale_client = app.test_client()
+    with stale_client.session_transaction() as stale_session:
+        stale_session["_user_id"] = str(user_id)
+        stale_session["_fresh"] = True
+        stale_session["auth_version"] = 0
+
     setup = client.get(f"/auth/reset_totp?token={raw_token}")
     assert setup.status_code == 200
     assert setup.headers["Cache-Control"] == "no-store"
@@ -141,6 +147,9 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
         assert user.decrypt_totp_secret() != old_secret
         assert recovery.used_at is not None
         assert recovery.pending_totp_secret is None
+
+    stale_session_response = stale_client.get("/auth/change_password")
+    assert stale_session_response.status_code == 302
 
     reuse = client.get(f"/auth/reset_totp?token={raw_token}", follow_redirects=True)
     assert b"invalid or expired" in reuse.data.lower()
