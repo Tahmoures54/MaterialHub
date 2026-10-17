@@ -166,6 +166,23 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
     assert gr_payload["osd"] is not None
     assert gr_payload["osd"]["status"] == "open"
 
+    # Retrying the exact same POST must return the original receipt, not post stock twice.
+    retry = client.post("/warehouse/api/goods-receipts", json={
+        "csrf_token": csrf,
+        "packing_list_id": pl_id,
+        "warehouse_id": "WH-FLOW-0001",
+        "receipt_date": date.today().isoformat(),
+        "final_receipt": True,
+        "lines": [{
+            "packing_list_line_id": pl_line_id,
+            "received_qty": 8,
+            "storage_location_id": "RACK-A01",
+        }],
+    })
+    assert retry.status_code == 200, retry.get_json()
+    assert retry.get_json()["idempotent_replay"] is True
+    assert retry.get_json()["receipt"]["id"] == receipt["id"]
+
     with app.app_context():
         inventory = WarehouseInventory.query.filter_by(
             company_name=company, warehouse_id="WH-FLOW-0001", material_id=material_id
