@@ -37,6 +37,5 @@ def test_warehouse_blueprint_is_readable_and_importable():
 
     from blueprints.warehouse import warehouse_bp
 
-    endpoint_names = {rule.endpoint.rsplit(".", 1)[-1] for rule in warehouse_bp.deferred_functions if False}
     # Import itself is the regression boundary; app integration tests verify registration.
     assert warehouse_bp.name == "warehouse"
