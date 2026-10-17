@@ -318,7 +318,9 @@ def reset_totp_with_token():
 
     token_hash = hashlib.sha256(token.encode('utf-8')).hexdigest()
     now = datetime.now(pytz.UTC).replace(tzinfo=None)
-    recovery = AccountRecoveryToken.query.filter_by(\n        token_hash=token_hash, used_at=None\n    ).with_for_update().first()
+    recovery = AccountRecoveryToken.query.filter_by(
+        token_hash=token_hash, used_at=None
+    ).with_for_update().first()
     if not recovery or recovery.expires_at <= now:
         flash('This recovery link is invalid or expired. Request a new one.', 'danger')
         return redirect(url_for('auth.reset_password_request'))
