@@ -298,6 +298,10 @@ _DOCUMENT_TYPES = {
     "DLV": ("Delivery", "delivery_id"),
     "WH": ("WarehouseInventory", "warehouse_id"),
     "TND": ("Tender", "tender_no"),
+    "WT": ("WarehouseTransaction", "transaction_no"),
+    "PL": ("PackingList", "packing_list_no"),
+    "GR": ("GoodsReceipt", "receipt_no"),
+    "OSD": ("OSDReport", "osd_no"),
 }
 
 
@@ -319,7 +323,11 @@ def _allocate_document_number(key, company_name):
     seq = db.session.get(DocumentSequence, (key, company_name))
     if seq is None:
         model_name, field_name = _DOCUMENT_TYPES[key]
-        from models import MaterialRequisition, PurchaseOrder, Delivery, WarehouseInventory, MaterialMaster, Tender
+        from models import (
+            MaterialRequisition, PurchaseOrder, Delivery, WarehouseInventory,
+            MaterialMaster, Tender, WarehouseTransaction, PackingList, GoodsReceipt,
+            OSDReport,
+        )
         model = {
             "MaterialRequisition": MaterialRequisition,
             "PurchaseOrder": PurchaseOrder,
@@ -327,6 +335,10 @@ def _allocate_document_number(key, company_name):
             "WarehouseInventory": WarehouseInventory,
             "MaterialMaster": MaterialMaster,
             "Tender": Tender,
+            "WarehouseTransaction": WarehouseTransaction,
+            "PackingList": PackingList,
+            "GoodsReceipt": GoodsReceipt,
+            "OSDReport": OSDReport,
         }[model_name]
         last = _query_last_document(model, field_name, company_name)
         seed = _last_number_of(getattr(last, field_name, None) if last else None)
