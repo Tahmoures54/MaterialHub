@@ -77,6 +77,8 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Run production migrations on empty PostgreSQL
         run: VERCEL_ENV=production python scripts/vercel_migrate.py
+      - name: Test concurrent TOTP recovery replay on PostgreSQL
+        run: pytest -q tests/test_account_recovery_postgres.py
       - name: Verify forward upgrade from previous schema revision
         env:
           DATABASE_URL: postgresql://materialhub:materialhub@127.0.0.1:5432/materialhub_upgrade
