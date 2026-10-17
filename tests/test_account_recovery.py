@@ -32,8 +32,8 @@ def test_recovery_request_response_does_not_disclose_account(client, app, monkey
 
     sent = []
     monkeypatch.setattr("blueprints.auth.send_totp_recovery_email", lambda email, token: sent.append((email, token)))
-    existing = client.post("/reset_password_request", data={"email": "recovery@example.com"}, follow_redirects=True)
-    missing = client.post("/reset_password_request", data={"email": "missing@example.com"}, follow_redirects=True)
+    existing = client.post("/auth/reset_password_request", data={"email": "recovery@example.com"}, follow_redirects=True)
+    missing = client.post("/auth/reset_password_request", data={"email": "missing@example.com"}, follow_redirects=True)
 
     message = b"If the address matches an account and recovery email is configured"
     assert message in existing.data
@@ -51,7 +51,7 @@ def test_recovery_email_failure_does_not_claim_success(client, app, monkeypatch)
         raise RuntimeError("SMTP unavailable")
 
     monkeypatch.setattr("blueprints.auth.send_totp_recovery_email", fail_delivery)
-    response = client.post("/reset_password_request", data={"email": "recovery@example.com"}, follow_redirects=True)
+    response = client.post("/auth/reset_password_request", data={"email": "recovery@example.com"}, follow_redirects=True)
     assert b"If the address matches an account and recovery email is configured" in response.data
     with app.app_context():
         token = AccountRecoveryToken.query.first()
@@ -60,7 +60,7 @@ def test_recovery_email_failure_does_not_claim_success(client, app, monkeypatch)
 
 
 def test_invalid_and_expired_recovery_tokens_are_rejected(client, app):
-    invalid = client.get("/reset_totp/not-a-valid-token", follow_redirects=True)
+    invalid = client.get("/auth/reset_totp/not-a-valid-token", follow_redirects=True)
     assert b"invalid or expired" in invalid.data.lower()
 
     with app.app_context():
@@ -73,7 +73,7 @@ def test_invalid_and_expired_recovery_tokens_are_rejected(client, app):
         db.session.add(expired)
         db.session.commit()
 
-    response = client.get("/reset_totp/expired-token", follow_redirects=True)
+    response = client.get("/auth/reset_totp/expired-token", follow_redirects=True)
     assert b"invalid or expired" in response.data.lower()
 
 
@@ -91,14 +91,14 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
         db.session.commit()
         user_id = user.id
 
-    setup = client.get(f"/reset_totp/{raw_token}")
+    setup = client.get(f"/auth/reset_totp/{raw_token}")
     assert setup.status_code == 200
     with app.app_context():
         recovery = AccountRecoveryToken.query.filter_by(user_id=user_id).first()
         new_secret = User._totp_cipher().decrypt(recovery.pending_totp_secret[4:].encode()).decode()
     code = pyotp.TOTP(new_secret).now()
 
-    response = client.post(f"/reset_totp/{raw_token}", data={"totp_code": code}, follow_redirects=True)
+    response = client.post(f"/auth/reset_totp/{raw_token}", data={"totp_code": code}, follow_redirects=True)
     assert response.status_code == 200
     with app.app_context():
         user = db.session.get(User, user_id)
@@ -109,5 +109,5 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
         assert recovery.used_at is not None
         assert recovery.pending_totp_secret is None
 
-    reuse = client.get(f"/reset_totp/{raw_token}", follow_redirects=True)
+    reuse = client.get(f"/auth/reset_totp/{raw_token}", follow_redirects=True)
     assert b"invalid or expired" in reuse.data.lower()
