@@ -36,7 +36,7 @@ def test_recovery_request_response_does_not_disclose_account(client, app, monkey
     existing = client.post("/auth/reset_password_request", data={"email": "recovery@example.com"}, follow_redirects=True)
     missing = client.post("/auth/reset_password_request", data={"email": "missing@example.com"}, follow_redirects=True)
 
-    message = b"If the address matches an account and recovery email is configured"
+    message = b"If the address matches an account and recovery email is available"
     assert message in existing.data
     assert message in missing.data
     assert len(sent) == 1
@@ -53,7 +53,7 @@ def test_recovery_email_failure_does_not_claim_success(client, app, monkeypatch)
 
     monkeypatch.setattr("blueprints.auth.send_totp_recovery_email", fail_delivery)
     response = client.post("/auth/reset_password_request", data={"email": "recovery@example.com"}, follow_redirects=True)
-    assert b"If the address matches an account and recovery email is configured" in response.data
+    assert b"If the address matches an account and recovery email is available" in response.data
     with app.app_context():
         token = AccountRecoveryToken.query.first()
         assert token is not None
