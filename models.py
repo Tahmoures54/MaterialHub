@@ -1483,3 +1483,16 @@ class MaterialRequest(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
     creator = db.relationship('User', foreign_keys=[created_by])
     __table_args__ = (db.UniqueConstraint('request_no', 'company_name', name='uq_material_request_no_company'),)
+
+
+class AccountRecoveryToken(db.Model):
+    """Single-use, short-lived token for recovering a user's TOTP authenticator."""
+    __tablename__ = "account_recovery_token"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    expires_at = db.Column(db.DateTime, nullable=False, index=True)
+    used_at = db.Column(db.DateTime, nullable=True)
+    pending_totp_secret = db.Column(db.String(512), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    user = db.relationship("User", backref=db.backref("recovery_tokens", lazy=True, cascade="all, delete-orphan"))
