@@ -39,7 +39,7 @@ def warehouse_operations():
         )
     except Exception as e:
         logger.error(f"Error rendering warehouse operations for user {current_user.id}: {str(e)}")
-        return render_template('errors/500.html', error=str(e)), 500
+        return render_template('errors/500.html', error='An unexpected error occurred.'), 500
 
 
 def _resolve_material(data):
@@ -1155,4 +1155,4 @@ def warehouse_report(warehouse_id):
         return render_template('warehouse/warehouse_report.html', inventory=inventory)
     except Exception as e:
         logger.error(f"Error generating report for inventory {warehouse_id} for user {current_user.id}: {str(e)}")
-        return render_template('errors/500.html', error=str(e)), 500
+        return render_template('errors/500.html', error='An unexpected error occurred.'), 500
