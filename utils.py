@@ -360,83 +360,46 @@ def _allocate_document_number(key, company_name):
 
 
 def generate_next_material_code(company_name=None):
-    """Return a stable tenant-scoped Material Master code (MAT-000001)."""
-    try:
-        return _allocate_document_number("MAT", company_name or "")
-    except Exception:
-        return "MAT-000001"
+    """Return the next tenant-scoped Material Master code (MAT-000001)."""
+    return _allocate_document_number("MAT", company_name or "")
 
 
 def generate_next_mr_no(company_name=None):
-    """Return the next Material Requisition number.
-
-    Sequences are scoped per tenant. Falls back to MR-0001 when no
-    application/database context is available.
-    """
-    try:
-        return _allocate_document_number("MR", company_name or "")
-    except Exception:
-        return "MR-0001"
+    """Return the next tenant-scoped Material Requisition number."""
+    return _allocate_document_number("MR", company_name or "")
 
 
 def generate_next_po_no(company_name=None):
-    try:
-        return _allocate_document_number("PO", company_name or "")
-    except Exception:
-        return "PO-0001"
+    return _allocate_document_number("PO", company_name or "")
 
 
 def generate_next_delivery_id(company_name=None):
-    try:
-        return _allocate_document_number("DLV", company_name or "")
-    except Exception:
-        return "DLV-0001"
+    return _allocate_document_number("DLV", company_name or "")
 
 
 def generate_next_warehouse_transaction_no(company_name=None):
-    try:
-        return _allocate_document_number("WT", company_name or "")
-    except Exception:
-        return "WT-0001"
+    return _allocate_document_number("WT", company_name or "")
 
 
 def generate_next_packing_list_no(company_name=None):
-    try:
-        return _allocate_document_number("PL", company_name or "")
-    except Exception:
-        return "PL-0001"
+    return _allocate_document_number("PL", company_name or "")
 
 
 def generate_next_goods_receipt_no(company_name=None):
-    try:
-        return _allocate_document_number("GR", company_name or "")
-    except Exception:
-        return "GR-0001"
+    return _allocate_document_number("GR", company_name or "")
 
 
 def generate_next_osd_no(company_name=None):
-    try:
-        return _allocate_document_number("OSD", company_name or "")
-    except Exception:
-        return "OSD-0001"
+    return _allocate_document_number("OSD", company_name or "")
 
 
 def generate_next_warehouse_id(company_name=None):
-    try:
-        return _allocate_document_number("WH", company_name or "")
-    except Exception:
-        return "WH-0001"
+    return _allocate_document_number("WH", company_name or "")
 
 
 def generate_next_tender_no(company_name=None):
-    """Return the next tenant-scoped tender number (TND-0001).
-
-    Matches Tender.validate pattern ``TND-XXXX`` (at least 4 digits).
-    """
-    try:
-        return _allocate_document_number("TND", company_name or "")
-    except Exception:
-        return "TND-0001"
+    """Return the next tenant-scoped tender number (TND-XXXX)."""
+    return _allocate_document_number("TND", company_name or "")
 
 
 def parse_enum(enum_cls, value, default=None):
