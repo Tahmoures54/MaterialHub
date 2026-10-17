@@ -232,7 +232,12 @@ def api_issue_inventory():
             material = _resolve_material(item)
             if not material:
                 return jsonify({'error': 'Select a valid Material Master item.'}), 400
-            inventory = WarehouseInventory.query.filter_by(warehouse_id=item['warehouse_id'], material_id=material.id, company_name=current_user.company_name).first()
+            # Lock the stock row so concurrent issues cannot overspend availability.
+            inventory = WarehouseInventory.query.filter_by(
+                warehouse_id=item['warehouse_id'],
+                material_id=material.id,
+                company_name=current_user.company_name,
+            ).with_for_update().first()
             if not inventory:
                 logger.warning(f"Inventory {item['warehouse_id']} not found for user {current_user.id}")
                 return jsonify({'error': f'Inventory {item["warehouse_id"]} not found'}), 404
@@ -895,10 +900,11 @@ def api_create_goods_receipt():
         created_lines = []
         osd_candidates = []
         for raw in raw_lines:
+            # Serialize receipts for the same packing-list line on PostgreSQL.
             pl_line = PackingListLine.query.filter_by(
                 id=int(raw.get('packing_list_line_id') or 0),
                 packing_list_id=pl.id
-            ).first()
+            ).with_for_update().first()
             if not pl_line:
                 raise ValidationError('Receipt Line must reference a line from the selected Packing List.')
             received_qty = float(raw.get('received_qty') or 0)
@@ -939,7 +945,7 @@ def api_create_goods_receipt():
                 warehouse_id=warehouse_id,
                 material_id=pl_line.material_id,
                 company_name=current_user.company_name,
-            ).first()
+            ).with_for_update().first()
             before = float(inventory.received_qty or 0) if inventory else 0.0
             if not inventory:
                 inventory = WarehouseInventory.from_dict({
