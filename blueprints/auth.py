@@ -294,7 +294,7 @@ def reset_password_request():
                 logger.warning("TOTP recovery delivery unavailable (%s)", type(exc).__name__)
         # Identical public response for existing/missing users and delivery failure.
         flash(
-            'If the address matches an account and recovery email is configured, instructions will be sent. '
+            'If the address matches an account and recovery email is available, instructions may be sent. '
             'If you do not receive an email, contact support.',
             'info',
         )
