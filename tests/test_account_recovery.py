@@ -136,7 +136,7 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
         new_secret = User._totp_cipher().decrypt(recovery.pending_totp_secret[4:].encode()).decode()
     code = pyotp.TOTP(new_secret).now()
 
-    response = client.post(f"/auth/reset_totp/{raw_token}", data={"totp_code": code}, follow_redirects=True)
+    response = client.post("/auth/reset_totp", data={"token": raw_token, "totp_code": code}, follow_redirects=True)
     assert response.status_code == 200
     with app.app_context():
         user = db.session.get(User, user_id)
