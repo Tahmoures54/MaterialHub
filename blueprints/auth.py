@@ -115,7 +115,7 @@ def register():
             db.session.add(user)
             db.session.commit()
             session['pending_user_id'] = user.id
-            logger.info(f"New user registered: {form.company_email.data} (ID: {user.id}, IP: {request.remote_addr})")
+            logger.info("New user registered (user_id=%s)", user.id)
             flash('Registration successful! Please scan the QR code with Microsoft Authenticator and confirm TOTP.', 'success')
             # Reset CAPTCHA after successful registration
             session.pop('captcha_answer', None)
@@ -133,7 +133,7 @@ def register():
             )
         except IntegrityError as e:
             db.session.rollback()
-            logger.warning(f"Failed registration attempt: {str(e)} (IP: {request.remote_addr})")
+            logger.warning("Registration attempt rejected (%s)", type(e).__name__)
             if 'company_email' in str(e).lower():
                 flash('This email is already registered. Please use a different email or log in.', 'danger')
             elif 'company_phone' in str(e).lower():
@@ -142,11 +142,11 @@ def register():
                 flash('A database error occurred. Please try again later.', 'danger')
         except ValueError as e:
             db.session.rollback()
-            logger.warning(f"Validation error during registration: {str(e)} (IP: {request.remote_addr})")
+            logger.warning("Registration validation failed (%s)", type(e).__name__)
             flash(f"Invalid input: {str(e)}", 'danger')
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Registration error for {form.company_email.data}: {str(e)} (IP: {request.remote_addr})")
+            logger.error("Registration failed (%s)", type(e).__name__)
             flash('An unexpected error occurred during registration. Please try again later.', 'danger')
     else:
         for field, errors in form.errors.items():
@@ -184,7 +184,7 @@ def confirm_totp():
             user.subscription_status = 'trial'
             db.session.commit()
             session.pop('pending_user_id', None)
-            logger.info(f"TOTP confirmed for user: {user.company_email} (ID: {user.id}, IP: {request.remote_addr})")
+            logger.info("TOTP confirmed (user_id=%s)", user.id)
             flash('Two-factor authentication setup confirmed. You can now log in.', 'success')
             return redirect(url_for('auth.login'))
         else:
@@ -225,7 +225,7 @@ def login():
             if totp.verify(form.totp_code.data):
                 login_user(user)
                 session['auth_version'] = int(user.auth_version or 0)
-                logger.info(f"User logged in: {user.company_email} (ID: {user.id}, IP: {request.remote_addr})")
+                logger.info("User logged in (user_id=%s)", user.id)
                 flash('Login successful!', 'success')
                 if user.is_admin:
                     return redirect(url_for('role_workspace.my_workspace'))
@@ -251,7 +251,7 @@ def login():
 @login_required
 def logout():
     """Handle user logout."""
-    logger.info(f"User logged out: {current_user.company_email} (ID: {current_user.id}, IP: {request.remote_addr})")
+    logger.info("User logged out (user_id=%s)", current_user.id)
     logout_user()
     flash('You have been logged out successfully.', 'success')
     return redirect(url_for('auth.home'))
@@ -406,13 +406,13 @@ def change_password():
             user.qr_code_base64 = None
             user.totp_confirmed = False
             db.session.commit()
-            logger.info(f"TOTP reset for user: {user.company_email} (ID: {user.id}, IP: {request.remote_addr})")
+            logger.info("TOTP reset initiated (user_id=%s)", user.id)
             flash('TOTP reset successfully! Please scan the new QR code with Microsoft Authenticator.', 'success')
             return render_template('auth/change_password.html', form=form, qr_code=qr_code,
                                  totp_secret=new_totp_secret, current_year=datetime.now().year)
         except Exception as e:
             db.session.rollback()
-            logger.error(f"TOTP reset error for {current_user.company_email}: {str(e)} (IP: {request.remote_addr})")
+            logger.error("TOTP reset failed (%s)", type(e).__name__)
             flash('An error occurred while resetting TOTP. Please try again.', 'danger')
     else:
         for field, errors in form.errors.items():
