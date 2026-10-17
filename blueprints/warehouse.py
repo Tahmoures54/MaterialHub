@@ -798,7 +798,7 @@ def api_create_packing_list():
     except (ValidationError, ValueError, TypeError) as exc:
         db.session.rollback()
         return jsonify({'error': str(exc)}), 400
-    except Exception as exc:
+    except Exception:
         db.session.rollback()
         logger.exception('Packing List creation failed')
         return jsonify({'error': 'Failed to create Packing List'}), 500
