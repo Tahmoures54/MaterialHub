@@ -243,7 +243,7 @@ def api_issue_inventory():
             material = _resolve_material(item)
             if material and inventory.item_code != material.material_code:
                 return jsonify({'error': 'Selected material does not match the stock record.'}), 409
-            inventory.received_quantity -= issue_quantity
+            # Keep cumulative inbound quantity immutable; available_qty tracks on-hand stock.
             inventory.available_qty = max(0.0, float(inventory.available_qty or 0) - issue_quantity)
             from utils import generate_next_warehouse_transaction_no
             tx = WarehouseTransaction(
