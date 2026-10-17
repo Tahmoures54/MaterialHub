@@ -49,7 +49,7 @@ Gunicorn × 3 workers  →  Flask (wsgi:app)
 - [ ] Nginx config in `nginx/nginx.conf` references the secrets
 
 ### Database
-- [ ] Review Alembic history (`migrations/versions/`) and confirm one head (`20261017_0017` for this branch)\n- [ ] Run `flask db upgrade` on a staging copy before production; do not stamp an existing database until its schema has been verified
+- [ ] Review Alembic history (`migrations/versions/`) and confirm one head (`20261017_0018` for this branch)\n- [ ] Run `flask db upgrade` on a staging copy before production; do not stamp an existing database until its schema has been verified
 - [ ] If the DB already exists outside Alembic, stamp the correct baseline first
 - [ ] Plan first backup immediately after migrate
 
