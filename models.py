@@ -1265,6 +1265,8 @@ class User(db.Model, UserMixin):
     totp_secret = db.Column(db.String(512), nullable=True)
     qr_code_base64 = db.Column(db.Text, nullable=True)
     totp_confirmed = db.Column(db.Boolean, default=False)
+    # Incrementing this revokes already-issued Flask-Login sessions.
+    auth_version = db.Column(db.Integer, nullable=False, default=0, server_default='0')
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True, index=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
