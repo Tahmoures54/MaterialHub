@@ -783,6 +783,7 @@ class GoodsReceipt(db.Model):
     __tablename__ = 'goods_receipt'
     __table_args__ = (
         db.UniqueConstraint('receipt_no', 'company_name', name='uq_goods_receipt_no_company'),
+        db.UniqueConstraint('company_name', 'request_fingerprint', name='uq_goods_receipt_company_request_fingerprint'),
         {"extend_existing": True},
     )
     id = db.Column(db.Integer, primary_key=True)
@@ -796,6 +797,7 @@ class GoodsReceipt(db.Model):
     status = db.Column(Enum(ReceivingStatus), nullable=False, default=ReceivingStatus.posted, index=True)
     remarks = db.Column(db.Text, nullable=True)
     company_name = db.Column(db.String(100), nullable=False, index=True)
+    request_fingerprint = db.Column(db.String(64), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
     packing_list = db.relationship('PackingList', backref=db.backref('goods_receipts', lazy=True))
