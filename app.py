@@ -4,7 +4,7 @@ import sys
 import json
 import time
 import uuid
-from flask import Flask, render_template, redirect, url_for, flash, request, Response
+from flask import Flask, render_template, redirect, url_for, flash, request, Response, session
 from flask_login import login_required, current_user
 from extensions import db, migrate, login_manager, csrf, limiter
 from config.config import config_by_name
@@ -272,7 +272,20 @@ def create_app(config_name=None):
                 app.logger.error(f"Development database initialization failed: {e}")
     @login_manager.user_loader
     def load_user(user_id):
-        return db.session.get(User, int(user_id))
+        user = db.session.get(User, int(user_id))
+        if user is None:
+            return None
+        try:
+            session_version = int(session.get('auth_version', 0))
+        except (TypeError, ValueError):
+            return None
+        if session_version != int(user.auth_version or 0):
+            return None
+        # Legacy sessions map to version 0; recovery increments the user's
+        # version, causing every previously issued session to fail closed.
+        if 'auth_version' not in session:
+            session['auth_version'] = session_version
+        return user
 
     @app.before_request
     def enforce_trial_access():
