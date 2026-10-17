@@ -219,9 +219,8 @@ def login():
         user = User.query.filter_by(company_email=form.email.data).first()
         if user:
             if not user.totp_confirmed:
-                logger.warning(f"Login attempt without TOTP setup: {form.email.data} (IP: {request.remote_addr})")
-                flash('Please complete two-factor authentication setup before logging in.', 'danger')
-                return redirect(url_for('auth.register'))
+                logger.warning("Login rejected because authenticator setup is incomplete (user_id=%s)", user.id)
+                flash('Unable to sign in with those details. Check your email and authenticator code or contact support.', 'danger')
             totp = pyotp.TOTP(user.decrypt_totp_secret())
             if totp.verify(form.totp_code.data):
                 login_user(user)
@@ -235,11 +234,11 @@ def login():
                     return redirect(url_for('role_workspace.my_workspace'))
                 return redirect(url_for('role_workspace.my_workspace'))
             else:
-                logger.warning(f"Invalid TOTP code for {form.email.data} (IP: {request.remote_addr})")
-                flash('Invalid authenticator code. Please try again.', 'danger')
+                logger.warning("Login rejected because authenticator verification failed")
+                flash('Unable to sign in with those details. Check your email and authenticator code or contact support.', 'danger')
         else:
-            logger.warning(f"Login attempt with non-existent email: {form.email.data} (IP: {request.remote_addr})")
-            flash('No account found with that email.', 'danger')
+            logger.warning("Login rejected because credentials were not accepted")
+            flash('Unable to sign in with those details. Check your email and authenticator code or contact support.', 'danger')
     else:
         for field, errors in form.errors.items():
             for error in errors:
