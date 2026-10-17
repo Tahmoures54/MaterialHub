@@ -1,5 +1,6 @@
 """Security regression tests for TOTP recovery."""
 import hashlib
+import logging
 from datetime import datetime, timedelta
 
 import pyotp
@@ -57,6 +58,28 @@ def test_recovery_email_failure_does_not_claim_success(client, app, monkeypatch)
         token = AccountRecoveryToken.query.first()
         assert token is not None
         assert token.used_at is not None
+
+
+def test_recovery_token_never_appears_in_request_logs(client, app):
+    class CaptureHandler(logging.Handler):
+        def __init__(self):
+            super().__init__()
+            self.records = []
+
+        def emit(self, record):
+            self.records.append(record)
+
+    handler = CaptureHandler()
+    app.logger.addHandler(handler)
+    secret_path_token = "sensitive-recovery-token-value"
+    try:
+        client.get(f"/auth/reset_totp/{secret_path_token}")
+    finally:
+        app.logger.removeHandler(handler)
+
+    paths = [getattr(record, "path", "") for record in handler.records]
+    assert "/auth/reset_totp/<token>" in paths
+    assert all(secret_path_token not in path for path in paths)
 
 
 def test_recovery_request_is_rate_limited(client):
