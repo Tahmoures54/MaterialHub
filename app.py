@@ -191,6 +191,11 @@ def create_app(config_name=None):
 
     @app.after_request
     def add_security_headers(response):
+        if request.endpoint == 'auth.reset_totp_with_token':
+            # Recovery URLs contain bearer tokens and pages display a new TOTP secret.
+            response.headers['Cache-Control'] = 'no-store'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Referrer-Policy'] = 'no-referrer'
         response.headers.setdefault('X-Content-Type-Options', 'nosniff')
         response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
         response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
