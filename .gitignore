@@ -16,3 +16,6 @@ htmlcov/
 
 # coverage.py raw data file
 .coverage
+
+# Local database backups (never commit production data)
+backups/
