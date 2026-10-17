@@ -306,9 +306,10 @@ def reset_password_request():
     return render_template('auth/reset_password_request.html', form=form, current_year=datetime.now().year)
 
 
-@auth_bp.route('/reset_totp/<token>', methods=['GET', 'POST'])
+@auth_bp.route('/reset_totp', methods=['GET', 'POST'])
 @limiter.limit('10 per hour')
-def reset_totp_with_token(token):
+def reset_totp_with_token():
+    token = request.args.get('token') if request.method == 'GET' else request.form.get('token')
     """Rotate TOTP only after the emailed token and new authenticator code are verified."""
     if not token or len(token) > 128:
         flash('This recovery link is invalid or expired. Request a new one.', 'danger')
@@ -342,6 +343,7 @@ def reset_totp_with_token(token):
             'auth/reset_totp.html',
             qr_code=generate_qr_code(uri),
             totp_secret=new_secret,
+            recovery_token=token,
         )
 
     code = (request.form.get('totp_code') or '').strip()
