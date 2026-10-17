@@ -108,7 +108,7 @@ jobs:
             createdb -h 127.0.0.1 -U materialhub materialhub_restore_test
             pg_restore -h 127.0.0.1 -U materialhub -d materialhub_restore_test --no-owner --no-privileges /backup/materialhub-ci.dump
             restored_revision="$(psql -h 127.0.0.1 -U materialhub -d materialhub_restore_test -Atc "SELECT version_num FROM alembic_version")"
-            test "$restored_revision" = "20261017_0017"
+            test "$restored_revision" = "20261017_0018"
             psql -h 127.0.0.1 -U materialhub -d materialhub_restore_test -Atc "SELECT count(*) FROM account_recovery_token" | grep -q "^0$"
             echo "PostgreSQL dump/restore round trip passed."
           '
