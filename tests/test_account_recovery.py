@@ -59,6 +59,16 @@ def test_recovery_email_failure_does_not_claim_success(client, app, monkeypatch)
         assert token.used_at is not None
 
 
+def test_recovery_request_is_rate_limited(client):
+    client.environ_base["REMOTE_ADDR"] = "198.51.100.15"
+    responses = [
+        client.post("/auth/reset_password_request", data={"email": "unknown@example.com"})
+        for _ in range(4)
+    ]
+    assert [response.status_code for response in responses[:3]] == [302, 302, 302]
+    assert responses[3].status_code == 429
+
+
 def test_invalid_and_expired_recovery_tokens_are_rejected(client, app):
     invalid = client.get("/auth/reset_totp/not-a-valid-token", follow_redirects=True)
     assert b"invalid or expired" in invalid.data.lower()
@@ -93,6 +103,11 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
 
     setup = client.get(f"/auth/reset_totp/{raw_token}")
     assert setup.status_code == 200
+    invalid_code = client.post(f"/auth/reset_totp/{raw_token}", data={"totp_code": "abcdef"})
+    assert invalid_code.status_code == 302
+    with app.app_context():
+        still_unused = AccountRecoveryToken.query.filter_by(user_id=user_id).first()
+        assert still_unused.used_at is None
     with app.app_context():
         recovery = AccountRecoveryToken.query.filter_by(user_id=user_id).first()
         new_secret = User._totp_cipher().decrypt(recovery.pending_totp_secret[4:].encode()).decode()
