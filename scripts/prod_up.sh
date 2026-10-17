@@ -3,10 +3,16 @@
 # Usage: ./scripts/prod_up.sh [build|up|migrate|seed|status|logs]
 set -euo pipefail
 
-COMPOSE="docker compose -f docker-compose.production.yml"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+if [[ ! -f .env.prod ]]; then
+  echo "Missing .env.prod — copy from .env.prod.example and fill values."
+  exit 1
+fi
+
+# Compose interpolation reads --env-file; env_file: in the YAML only affects containers.
+COMPOSE="docker compose --env-file .env.prod -f docker-compose.production.yml"
 cmd="${1:-up}"
 
 case "$cmd" in
@@ -14,10 +20,6 @@ case "$cmd" in
     $COMPOSE build
     ;;
   up)
-    if [[ ! -f .env.prod ]]; then
-      echo "Missing .env.prod — copy from .env.prod.example and fill values."
-      exit 1
-    fi
     if [[ ! -f secrets/postgres_password ]]; then
       echo "Missing secrets/postgres_password"
       exit 1
