@@ -2,8 +2,8 @@
 
 Repository: Tahmoures54/MaterialHub
 Target branch: main
-Review/update date: 2026-09-23
-Scope: Production hardening and infrastructure only. No business workflow or user-facing business logic was intentionally changed.
+Review/update date: 2026-10-17
+Scope: Production hardening, warehouse transaction integrity, authentication recovery and operational verification. Changes are on PR #3; main has not been modified.
 
 ## Executive summary
 MaterialHub now has security, production runtime, observability, CI/CD, and operational documentation foundations.
@@ -47,7 +47,8 @@ Internet -> Nginx/TLS -> Gunicorn/Flask -> PostgreSQL + Redis
 
 ### Observability
 - JSON application logs are written to stdout.
-- Request logs include request ID, user ID when available, duration, status, method and path.
+- Structured request logs include request ID, user ID when available, duration, status, method and the Flask route template (not raw path parameters).
+- Nginx access logs omit request URIs and production Gunicorn raw access logging is disabled to avoid recording recovery bearer tokens.
 - Incoming request IDs are validated before reuse.
 - /health/live provides liveness.
 - /health/ready checks database and configured Redis dependencies and returns 503 when readiness fails.
@@ -61,19 +62,44 @@ Internet -> Nginx/TLS -> Gunicorn/Flask -> PostgreSQL + Redis
 - Docker validation depends on the quality job.
 
 ## CI status
-The most recent observed run before the latest workflow adjustment failed in the quality job. Ruff reported substantial pre-existing legacy style noise, including E402, E702 and F401 findings. The Argon2 dependency pin was corrected separately.
 
-The Ruff gate was narrowed to actionable correctness/security-oriented classes while excluding the identified legacy E402, E702 and F401 noise. A post-adjustment green run must be observed before claiming the pipeline is green.
+Latest fully completed quality/integration evidence observed on this PR branch:
+- Ruff: passed.
+- Mypy: passed.
+- Pytest: 80 passed, 0 failed; total measured coverage 81.58% (gate: 80%).
+- Bandit: passed.
+- pip-audit: passed after upgrading Werkzeug from 3.1.6 to patched 3.1.9 (PYSEC-2026-4312).
+- Operational shell syntax checks: passed.
+- PostgreSQL migrations from an empty database: passed.
+- Forward upgrade from revision 20260922_0015 to 20261017_0017: passed.
+- PostgreSQL dump/restore round trip into a separate database: passed.
+- Production app smoke tests, readiness and public funnel: passed.
+- Production Docker image build: passed in the observed run; Trivy was still running at the last poll for that run.
+- A newer workflow run for the current PR head is validating the updated Nginx configuration and re-running the full pipeline.
+
+Do not treat older failed runs as the current status; they preceded the final corrections. Do not claim the current head is fully green until its own jobs complete.
 
 ## Database migration note
-The repository contains an explicit Alembic baseline followed by incremental hardening migrations: `20260901_0000` (initial schema), `20260920_0001` (auth secret hardening), `20260921_0002` (tenant-scoped document numbers), and `20260922_0003` (public contact schema limits). The baseline intentionally has `down_revision = None`; subsequent migrations form a linear chain. Do not modify an already-applied migration in production.
+The repository contains an explicit Alembic baseline followed by a linear migration chain. The current PR adds 20261017_0016 (hashed TOTP recovery tokens) and 20261017_0017 (Goods Receipt idempotency fingerprint) after 20260922_0015. The baseline intentionally has `down_revision = None`; subsequent migrations form a linear chain. Do not modify an already-applied migration in production.
 
 Before first production deployment, compare the production schema with this migration history. If the database was created outside Alembic, establish the correct baseline before running flask db upgrade. Do not blindly downgrade production migrations.
 
 ## Verification status
-Verified by repository inspection/configuration: production settings, authentication hardening, container architecture, observability endpoints, CI/security stages, tenant-isolation tests and the inbound receiving regression workflow are present.
 
-Still requiring real-environment validation: Docker Compose startup with real secrets, TLS, PostgreSQL migration against a representative database, Redis rate limiting with multiple workers, graceful shutdown, backup/restore, end-to-end authentication/RBAC, tenant isolation, Excel import/export and load testing.
+Verified in CI on the PR branch:
+- Warehouse source imports directly without runtime decompression; the inbound workflow regression and duplicate Goods Receipt retry tests pass.
+- Tenant-isolation regression tests pass as part of the 80-test suite.
+- PostgreSQL empty-schema migrations and forward upgrade from the prior revision pass.
+- A PostgreSQL backup/restore round trip into a separate database passes.
+- Production app readiness/public-route smoke tests pass.
+- The production image build passed and the dependency audit passed on the observed run.
+
+Not verified against the live production environment:
+- Production secrets, SMTP delivery, TLS certificates and actual deployment.
+- Scheduling off-host encrypted backups and a restore of the real production dataset.
+- Multi-worker Redis behavior under load, full manual RBAC across every business route, Excel import/export edge cases, load testing and rollback rehearsal.
+
+The backup and restore scripts are provided, but no production database was accessed or modified. Recovery email requires valid PUBLIC_BASE_URL, SMTP_HOST, MAIL_FROM and provider credentials where needed. Recovery responses intentionally do not reveal whether an account exists or guarantee delivery.
 
 ## Production launch checklist
 - [ ] Set FLASK_ENV=production.
