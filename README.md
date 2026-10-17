@@ -125,7 +125,7 @@ docker-compose up --build
 | DATABASE_URL | No       | PostgreSQL URL (defaults to SQLite)              |
 | FLASK_ENV    | No       | `development` or `production`                    |
 | LOG_LEVEL    | No       | `DEBUG` / `INFO` / `WARNING` / `ERROR`           |
-| ADMIN_EMAIL  | No       | Email that becomes admin on registration         |
+| ADMIN_EMAIL  | No       | Email that becomes admin on registration         |\n| PUBLIC_BASE_URL | Required for recovery | Trusted HTTPS site origin used in recovery links |\n| SMTP_HOST / SMTP_PORT | Required for recovery | SMTP server; STARTTLS (587) or implicit TLS (465) |\n| SMTP_USERNAME / SMTP_PASSWORD | Optional by server | SMTP authentication credentials; never commit secrets |\n| MAIL_FROM | Required for recovery | Verified sender address for recovery messages |
 
 Health checks: `GET /health`, `GET /health/live`, `GET /health/ready`.
 
@@ -197,7 +197,7 @@ Operational reports are available for Packing Lists, Goods Receipts, OS&D, recei
 - Never commit `.env` or recovery codes.
 - Always use a strong random `SECRET_KEY` in production.
 - Prefer PostgreSQL for any real deployment.
-- TOTP (2FA) is required for login.
+- TOTP (2FA) is required for login. TOTP recovery email is disabled until `PUBLIC_BASE_URL`, `SMTP_HOST`, and `MAIL_FROM` are configured. The public response does not confirm whether an account exists or whether delivery succeeded.
 
 ---
 
