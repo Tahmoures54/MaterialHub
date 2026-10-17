@@ -13,18 +13,19 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("goods_receipt", sa.Column("request_fingerprint", sa.String(length=64), nullable=True))
-    op.create_unique_constraint(
-        "uq_goods_receipt_company_request_fingerprint",
-        "goods_receipt",
-        ["company_name", "request_fingerprint"],
-    )
+    # Batch mode supports SQLite schema upgrades as well as PostgreSQL ALTER TABLE.
+    with op.batch_alter_table("goods_receipt") as batch_op:
+        batch_op.add_column(sa.Column("request_fingerprint", sa.String(length=64), nullable=True))
+        batch_op.create_unique_constraint(
+            "uq_goods_receipt_company_request_fingerprint",
+            ["company_name", "request_fingerprint"],
+        )
 
 
 def downgrade():
-    op.drop_constraint(
-        "uq_goods_receipt_company_request_fingerprint",
-        "goods_receipt",
-        type_="unique",
-    )
-    op.drop_column("goods_receipt", "request_fingerprint")
+    with op.batch_alter_table("goods_receipt") as batch_op:
+        batch_op.drop_constraint(
+            "uq_goods_receipt_company_request_fingerprint",
+            type_="unique",
+        )
+        batch_op.drop_column("request_fingerprint")
