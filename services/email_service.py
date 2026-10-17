@@ -29,7 +29,7 @@ def send_totp_recovery_email(recipient, token):
     port = int(os.getenv("SMTP_PORT", "587"))
     username = os.getenv("SMTP_USERNAME", "")
     password = os.getenv("SMTP_PASSWORD", "")
-    link = f"{public_base_url()}/reset_totp/{token}"
+    link = f"{public_base_url()}/auth/reset_totp/{token}"
 
     message = EmailMessage()
     message["Subject"] = "MaterialHub authenticator recovery"
