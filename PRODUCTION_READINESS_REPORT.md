@@ -71,7 +71,7 @@ Latest fully completed quality/integration evidence observed on this PR branch:
 - pip-audit: passed after upgrading Werkzeug from 3.1.6 to patched 3.1.9 (PYSEC-2026-4312).
 - Operational shell syntax checks: passed.
 - PostgreSQL migrations from an empty database: passed.
-- Forward upgrade from revision 20260922_0015 to 20261017_0017: passed.
+- Forward upgrade from revision 20260922_0015 to 20261017_0018: passed.
 - PostgreSQL dump/restore round trip into a separate database: passed.
 - Production app smoke tests, readiness and public funnel: passed.
 - Production Docker image build: passed in the observed run; Trivy was still running at the last poll for that run.
@@ -80,7 +80,7 @@ Latest fully completed quality/integration evidence observed on this PR branch:
 Do not treat older failed runs as the current status; they preceded the final corrections. Do not claim the current head is fully green until its own jobs complete.
 
 ## Database migration note
-The repository contains an explicit Alembic baseline followed by a linear migration chain. The current PR adds 20261017_0016 (hashed TOTP recovery tokens) and 20261017_0017 (Goods Receipt idempotency fingerprint) after 20260922_0015. The baseline intentionally has `down_revision = None`; subsequent migrations form a linear chain. Do not modify an already-applied migration in production.
+The repository contains an explicit Alembic baseline followed by a linear migration chain. The current PR adds 20261017_0016 (hashed TOTP recovery tokens) and 20261017_0018 (Goods Receipt idempotency fingerprint) after 20260922_0015. The baseline intentionally has `down_revision = None`; subsequent migrations form a linear chain. Do not modify an already-applied migration in production.
 
 Before first production deployment, compare the production schema with this migration history. If the database was created outside Alembic, establish the correct baseline before running flask db upgrade. Do not blindly downgrade production migrations.
 
