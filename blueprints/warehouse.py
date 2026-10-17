@@ -801,7 +801,7 @@ def api_create_packing_list():
     except Exception as exc:
         db.session.rollback()
         logger.exception('Packing List creation failed')
-        return jsonify({'error': 'Failed to create Packing List', 'detail': str(exc)}), 500
+        return jsonify({'error': 'Failed to create Packing List'}), 500
 
 @warehouse_bp.route('/api/goods-receipts', methods=['GET'])
 @login_required
