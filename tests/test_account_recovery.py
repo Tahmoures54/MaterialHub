@@ -73,12 +73,12 @@ def test_recovery_token_never_appears_in_request_logs(client, app):
     app.logger.addHandler(handler)
     secret_path_token = "sensitive-recovery-token-value"
     try:
-        response = client.get(f"/auth/reset_totp/{secret_path_token}")
+        response = client.get(f"/auth/reset_totp?token={secret_path_token}")
     finally:
         app.logger.removeHandler(handler)
 
     paths = [getattr(record, "path", "") for record in handler.records]
-    assert "/auth/reset_totp/<token>" in paths
+    assert "/auth/reset_totp" in paths
     assert all(secret_path_token not in path for path in paths)
 
 
@@ -93,7 +93,7 @@ def test_recovery_request_is_rate_limited(client):
 
 
 def test_invalid_and_expired_recovery_tokens_are_rejected(client, app):
-    invalid = client.get("/auth/reset_totp/not-a-valid-token", follow_redirects=True)
+    invalid = client.get("/auth/reset_totp?token=not-a-valid-token", follow_redirects=True)
     assert b"invalid or expired" in invalid.data.lower()
 
     with app.app_context():
@@ -106,7 +106,7 @@ def test_invalid_and_expired_recovery_tokens_are_rejected(client, app):
         db.session.add(expired)
         db.session.commit()
 
-    response = client.get("/auth/reset_totp/expired-token", follow_redirects=True)
+    response = client.get("/auth/reset_totp?token=expired-token", follow_redirects=True)
     assert b"invalid or expired" in response.data.lower()
 
 
@@ -124,9 +124,9 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
         db.session.commit()
         user_id = user.id
 
-    setup = client.get(f"/auth/reset_totp/{raw_token}")
+    setup = client.get(f"/auth/reset_totp?token={raw_token}")
     assert setup.status_code == 200
-    invalid_code = client.post(f"/auth/reset_totp/{raw_token}", data={"totp_code": "abcdef"})
+    invalid_code = client.post("/auth/reset_totp", data={"token": raw_token, "totp_code": "abcdef"})
     assert invalid_code.status_code == 302
     with app.app_context():
         still_unused = AccountRecoveryToken.query.filter_by(user_id=user_id).first()
@@ -147,5 +147,5 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
         assert recovery.used_at is not None
         assert recovery.pending_totp_secret is None
 
-    reuse = client.get(f"/auth/reset_totp/{raw_token}", follow_redirects=True)
+    reuse = client.get(f"/auth/reset_totp?token={raw_token}", follow_redirects=True)
     assert b"invalid or expired" in reuse.data.lower()
