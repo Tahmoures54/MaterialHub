@@ -171,3 +171,26 @@ def test_valid_recovery_rotates_totp_once_and_rejects_reuse(client, app):
 
     reuse = client.get(f"/auth/reset_totp?token={raw_token}", follow_redirects=True)
     assert b"invalid or expired" in reuse.data.lower()
+
+
+
+def test_login_rejects_valid_totp_until_enrollment_is_confirmed(client, app):
+    """A valid code must not bypass the mandatory TOTP enrollment confirmation."""
+    with app.app_context():
+        user = _user()
+        user.totp_confirmed = False
+        db.session.commit()
+        email = user.company_email
+        code = pyotp.TOTP(user.decrypt_totp_secret()).now()
+
+    response = client.post("/auth/login", data={
+        "email": email,
+        "totp_code": code,
+        "submit": "Login",
+    })
+
+    assert response.status_code == 200
+    assert b"Unable to sign in with those details" in response.data
+    protected = client.get("/auth/change_password", follow_redirects=False)
+    assert protected.status_code == 302
+    assert "/auth/login" in protected.headers["Location"]
