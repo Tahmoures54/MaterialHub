@@ -75,7 +75,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
             "item_code": material.material_code,
             "material_description": material.description,
             "quantity": 10,
-            "project_no": project.project_no,
+            "project_no": project_no,
             "discipline": "Piping",
             "status": "approved",
         }, company, engineer.id)
@@ -116,6 +116,7 @@ def test_full_mr_po_delivery_pl_grn_qc_warehouse_flow(client, app):
         db.session.add(delivery)
         db.session.commit()
         delivery_id, material_id = delivery.id, material.id
+        project_no = project.project_no
 
     _authenticate_session(client, buyer)
     csrf = _csrf(client, app)
