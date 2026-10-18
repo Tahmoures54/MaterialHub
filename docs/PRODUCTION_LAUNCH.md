@@ -1,7 +1,7 @@
 # MaterialHub — Production Launch Guide
 
 **Version target:** v1.1.0+  
-**Last updated:** 2026-09-20
+**Last updated:** 2026-10-18
 
 This document is the single checklist to take MaterialHub from “code ready” to “live with real users and real data”.
 
