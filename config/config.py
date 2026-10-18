@@ -71,12 +71,11 @@ def _normalize_database_url(url):
 
 def _get_database_url():
     """
-    ترتیب اولویت برای پیدا کردن آدرس دیتابیس:
-    1. DATABASE_URL
-    2. material_DATABASE_URL   (Neon با Custom Prefix)
-    3. POSTGRES_URL
-    4. material_POSTGRES_URL
-    5. POSTGRES_PRISMA_URL
+    Resolve PostgreSQL URLs using the same aliases as the Vercel migration script.
+
+    Prefer the application's canonical URL, then Vercel/Neon-provided aliases.
+    Non-pooling URLs are supported for deployments where pooled connections are
+    unsuitable for schema migrations or the application runtime.
     """
     return (
         os.getenv('DATABASE_URL')
@@ -84,6 +83,8 @@ def _get_database_url():
         or os.getenv('POSTGRES_URL')
         or os.getenv('material_POSTGRES_URL')
         or os.getenv('POSTGRES_PRISMA_URL')
+        or os.getenv('POSTGRES_URL_NON_POOLING')
+        or os.getenv('material_POSTGRES_URL_NON_POOLING')
     )
 
 
