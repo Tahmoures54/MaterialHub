@@ -783,6 +783,7 @@ class GoodsReceipt(db.Model):
     __tablename__ = 'goods_receipt'
     __table_args__ = (
         db.UniqueConstraint('receipt_no', 'company_name', name='uq_goods_receipt_no_company'),
+        db.UniqueConstraint('company_name', 'request_fingerprint', name='uq_goods_receipt_company_request_fingerprint'),
         {"extend_existing": True},
     )
     id = db.Column(db.Integer, primary_key=True)
@@ -796,6 +797,7 @@ class GoodsReceipt(db.Model):
     status = db.Column(Enum(ReceivingStatus), nullable=False, default=ReceivingStatus.posted, index=True)
     remarks = db.Column(db.Text, nullable=True)
     company_name = db.Column(db.String(100), nullable=False, index=True)
+    request_fingerprint = db.Column(db.String(64), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
     packing_list = db.relationship('PackingList', backref=db.backref('goods_receipts', lazy=True))
@@ -1263,6 +1265,8 @@ class User(db.Model, UserMixin):
     totp_secret = db.Column(db.String(512), nullable=True)
     qr_code_base64 = db.Column(db.Text, nullable=True)
     totp_confirmed = db.Column(db.Boolean, default=False)
+    # Incrementing this revokes already-issued Flask-Login sessions.
+    auth_version = db.Column(db.Integer, nullable=False, default=0, server_default='0')
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True, index=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
@@ -1483,3 +1487,16 @@ class MaterialRequest(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
     creator = db.relationship('User', foreign_keys=[created_by])
     __table_args__ = (db.UniqueConstraint('request_no', 'company_name', name='uq_material_request_no_company'),)
+
+
+class AccountRecoveryToken(db.Model):
+    """Single-use, short-lived token for recovering a user's TOTP authenticator."""
+    __tablename__ = "account_recovery_token"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    expires_at = db.Column(db.DateTime, nullable=False, index=True)
+    used_at = db.Column(db.DateTime, nullable=True)
+    pending_totp_secret = db.Column(db.String(512), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.UTC))
+    user = db.relationship("User", backref=db.backref("recovery_tokens", lazy=True, cascade="all, delete-orphan"))

@@ -32,6 +32,10 @@ from utils import (
     generate_next_delivery_id,
     generate_next_mr_no,
     generate_next_po_no,
+    generate_next_warehouse_transaction_no,
+    generate_next_packing_list_no,
+    generate_next_goods_receipt_no,
+    generate_next_osd_no,
     parse_enum,
 )
 
@@ -275,5 +279,17 @@ def test_identifier_generators_and_enum_parser(app):
         assert generate_next_mr_no("Acme").startswith("MR-")
         assert generate_next_po_no("Acme").startswith("PO-")
         assert generate_next_delivery_id("Acme").startswith("DLV-")
+        generators = (
+            ("WT-", generate_next_warehouse_transaction_no),
+            ("PL-", generate_next_packing_list_no),
+            ("GR-", generate_next_goods_receipt_no),
+            ("OSD-", generate_next_osd_no),
+        )
+        for prefix, generator in generators:
+            first = generator("Acme")
+            second = generator("Acme")
+            assert first.startswith(prefix)
+            assert second.startswith(prefix)
+            assert first != second
         assert parse_enum(ApprovalStatus, "approved", ApprovalStatus.pending) == ApprovalStatus.approved
         assert parse_enum(ApprovalStatus, "unknown", ApprovalStatus.pending) == ApprovalStatus.pending

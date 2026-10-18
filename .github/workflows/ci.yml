@@ -27,6 +27,8 @@ jobs:
         run: ruff check . --select E4,E7,E9,F --ignore E401,E402,E701,E702,F401
       - name: Mypy
         run: mypy --config-file mypy.ini app.py extensions.py config blueprints role_workspace.py utils.py
+      - name: Validate operational shell scripts
+        run: bash -n scripts/prod_up.sh scripts/backup_postgres.sh scripts/restore_postgres.sh
       - name: Pytest with core coverage
         run: pytest --cov=app.py --cov=blueprints/health.py --cov=blueprints/growth.py --cov=config/config.py --cov=extensions.py --cov=forms --cov=models.py --cov=models_intelligence.py --cov=errors.py --cov=data/country_codes.py --cov-report=term-missing --cov-fail-under=80
       - name: Bandit
@@ -75,6 +77,43 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Run production migrations on empty PostgreSQL
         run: VERCEL_ENV=production python scripts/vercel_migrate.py
+      - name: Test concurrent TOTP recovery replay on PostgreSQL
+        run: pytest -q tests/test_account_recovery_postgres.py
+      - name: Verify forward upgrade from previous schema revision
+        env:
+          DATABASE_URL: postgresql://materialhub:materialhub@127.0.0.1:5432/materialhub_upgrade
+        run: |
+          python - <<'PY'
+          import psycopg2
+          connection = psycopg2.connect(
+              dbname="postgres",
+              user="materialhub",
+              password="materialhub",
+              host="127.0.0.1",
+          )
+          connection.autocommit = True
+          try:
+              with connection.cursor() as cursor:
+                  cursor.execute("CREATE DATABASE materialhub_upgrade")
+          finally:
+              connection.close()
+          PY
+          flask --app wsgi db upgrade 20260922_0015
+          flask --app wsgi db upgrade
+          flask --app wsgi db current
+      - name: Verify PostgreSQL backup and isolated restore
+        env:
+          PGPASSWORD: materialhub
+        run: |
+          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" -v "$RUNNER_TEMP:/backup" postgres:16-alpine sh -ec '
+            pg_dump -h 127.0.0.1 -U materialhub -d materialhub --format=custom -f /backup/materialhub-ci.dump
+            createdb -h 127.0.0.1 -U materialhub materialhub_restore_test
+            pg_restore -h 127.0.0.1 -U materialhub -d materialhub_restore_test --no-owner --no-privileges /backup/materialhub-ci.dump
+            restored_revision="$(psql -h 127.0.0.1 -U materialhub -d materialhub_restore_test -Atc "SELECT version_num FROM alembic_version")"
+            test "$restored_revision" = "20261017_0018"
+            psql -h 127.0.0.1 -U materialhub -d materialhub_restore_test -Atc "SELECT count(*) FROM account_recovery_token" | grep -q "^0$"
+            echo "PostgreSQL dump/restore round trip passed."
+          '
       - name: Smoke test production app, readiness and public funnel
         run: |
           python - <<'PY'
@@ -97,6 +136,18 @@ jobs:
     needs: integration
     steps:
       - uses: actions/checkout@v4
+      - name: Validate Nginx configuration
+        run: |
+          mkdir -p "$RUNNER_TEMP/nginx-tls"
+          openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+            -keyout "$RUNNER_TEMP/nginx-tls/tls_key" \
+            -out "$RUNNER_TEMP/nginx-tls/tls_cert" \
+            -subj "/CN=localhost"
+          docker run --rm --add-host web:127.0.0.1 \
+            -v "$GITHUB_WORKSPACE/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
+            -v "$RUNNER_TEMP/nginx-tls/tls_cert:/run/secrets/tls_cert:ro" \
+            -v "$RUNNER_TEMP/nginx-tls/tls_key:/run/secrets/tls_key:ro" \
+            nginx:1.27-alpine nginx -t
       - name: Build production image
         run: docker build -f Dockerfile.production -t materialhub:ci .
       - name: Trivy vulnerability scan

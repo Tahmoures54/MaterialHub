@@ -1,11 +1,13 @@
 import os
 import logging
 import secrets
+import hashlib
+import re
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 from sqlalchemy.exc import IntegrityError
-from models import User, AccessLevel
+from models import User, AccessLevel, AccountRecoveryToken
 from extensions import db, limiter
 from forms.auth_forms import RegisterForm, LoginForm, ResetPasswordRequestForm, ChangePasswordForm, ConfirmTOTPForm
 from data.country_codes import COUNTRY_CODES
@@ -14,6 +16,7 @@ import pytz
 import qrcode
 from io import BytesIO
 import base64
+from services.email_service import EmailConfigurationError, send_totp_recovery_email
 
 auth_bp = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
@@ -112,7 +115,7 @@ def register():
             db.session.add(user)
             db.session.commit()
             session['pending_user_id'] = user.id
-            logger.info(f"New user registered: {form.company_email.data} (ID: {user.id}, IP: {request.remote_addr})")
+            logger.info("New user registered (user_id=%s)", user.id)
             flash('Registration successful! Please scan the QR code with Microsoft Authenticator and confirm TOTP.', 'success')
             # Reset CAPTCHA after successful registration
             session.pop('captcha_answer', None)
@@ -130,7 +133,7 @@ def register():
             )
         except IntegrityError as e:
             db.session.rollback()
-            logger.warning(f"Failed registration attempt: {str(e)} (IP: {request.remote_addr})")
+            logger.warning("Registration attempt rejected (%s)", type(e).__name__)
             if 'company_email' in str(e).lower():
                 flash('This email is already registered. Please use a different email or log in.', 'danger')
             elif 'company_phone' in str(e).lower():
@@ -139,11 +142,11 @@ def register():
                 flash('A database error occurred. Please try again later.', 'danger')
         except ValueError as e:
             db.session.rollback()
-            logger.warning(f"Validation error during registration: {str(e)} (IP: {request.remote_addr})")
+            logger.warning("Registration validation failed (%s)", type(e).__name__)
             flash(f"Invalid input: {str(e)}", 'danger')
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Registration error for {form.company_email.data}: {str(e)} (IP: {request.remote_addr})")
+            logger.error("Registration failed (%s)", type(e).__name__)
             flash('An unexpected error occurred during registration. Please try again later.', 'danger')
     else:
         for field, errors in form.errors.items():
@@ -181,7 +184,7 @@ def confirm_totp():
             user.subscription_status = 'trial'
             db.session.commit()
             session.pop('pending_user_id', None)
-            logger.info(f"TOTP confirmed for user: {user.company_email} (ID: {user.id}, IP: {request.remote_addr})")
+            logger.info("TOTP confirmed (user_id=%s)", user.id)
             flash('Two-factor authentication setup confirmed. You can now log in.', 'success')
             return redirect(url_for('auth.login'))
         else:
@@ -215,28 +218,24 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(company_email=form.email.data).first()
         if user:
+            # Incomplete enrollment must stop authentication, not merely show a warning.
             if not user.totp_confirmed:
-                logger.warning(f"Login attempt without TOTP setup: {form.email.data} (IP: {request.remote_addr})")
-                flash('Please complete two-factor authentication setup before logging in.', 'danger')
-                return redirect(url_for('auth.register'))
-            totp = pyotp.TOTP(user.decrypt_totp_secret())
-            if totp.verify(form.totp_code.data):
-                login_user(user)
-                logger.info(f"User logged in: {user.company_email} (ID: {user.id}, IP: {request.remote_addr})")
-                flash('Login successful!', 'success')
-                if user.is_admin:
-                    return redirect(url_for('role_workspace.my_workspace'))
-                elif user.access_level == AccessLevel.supplier:
-                    return redirect(url_for('role_workspace.my_workspace'))
-                elif user.access_level == AccessLevel.project_manager:
-                    return redirect(url_for('role_workspace.my_workspace'))
-                return redirect(url_for('role_workspace.my_workspace'))
+                logger.warning("Login rejected because authenticator setup is incomplete (user_id=%s)", user.id)
+                flash('Unable to sign in with those details. Check your email and authenticator code or contact support.', 'danger')
             else:
-                logger.warning(f"Invalid TOTP code for {form.email.data} (IP: {request.remote_addr})")
-                flash('Invalid authenticator code. Please try again.', 'danger')
+                totp = pyotp.TOTP(user.decrypt_totp_secret())
+                if totp.verify(form.totp_code.data):
+                    login_user(user)
+                    session['auth_version'] = int(user.auth_version or 0)
+                    logger.info("User logged in (user_id=%s)", user.id)
+                    flash('Login successful!', 'success')
+                    return redirect(url_for('role_workspace.my_workspace'))
+                else:
+                    logger.warning("Login rejected because authenticator verification failed")
+                    flash('Unable to sign in with those details. Check your email and authenticator code or contact support.', 'danger')
         else:
-            logger.warning(f"Login attempt with non-existent email: {form.email.data} (IP: {request.remote_addr})")
-            flash('No account found with that email.', 'danger')
+            logger.warning("Login rejected because credentials were not accepted")
+            flash('Unable to sign in with those details. Check your email and authenticator code or contact support.', 'danger')
     else:
         for field, errors in form.errors.items():
             for error in errors:
@@ -248,7 +247,7 @@ def login():
 @login_required
 def logout():
     """Handle user logout."""
-    logger.info(f"User logged out: {current_user.company_email} (ID: {current_user.id}, IP: {request.remote_addr})")
+    logger.info("User logged out (user_id=%s)", current_user.id)
     logout_user()
     flash('You have been logged out successfully.', 'success')
     return redirect(url_for('auth.home'))
@@ -256,27 +255,135 @@ def logout():
 @auth_bp.route('/reset_password_request', methods=['GET', 'POST'])
 @limiter.limit('3 per 15 minutes')
 def reset_password_request():
-    """Handle TOTP reset request (email-based, placeholder)."""
+    """Request a one-time, expiring TOTP recovery link without account enumeration."""
     if current_user.is_authenticated:
         flash('You are already logged in.', 'info')
         return redirect(url_for('auth.home'))
 
     form = ResetPasswordRequestForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(company_email=form.email.data).first()
+        email = form.email.data.strip().lower()
+        user = User.query.filter(User.company_email.ilike(email)).first()
         if user:
-            logger.info(f"TOTP reset requested for: {form.email.data} (IP: {request.remote_addr})")
-            flash('A TOTP reset link has been sent to your email (feature not fully implemented).', 'success')
-        else:
-            logger.warning(f"TOTP reset attempt for non-existent email: {form.email.data} (IP: {request.remote_addr})")
-            flash('No account found with that email.', 'danger')
+            raw_token = secrets.token_urlsafe(32)
+            now = datetime.now(pytz.UTC).replace(tzinfo=None)
+            recovery = AccountRecoveryToken(
+                user_id=user.id,
+                token_hash=hashlib.sha256(raw_token.encode('utf-8')).hexdigest(),
+                expires_at=now + timedelta(minutes=30),
+            )
+            db.session.add(recovery)
+            try:
+                db.session.commit()
+                send_totp_recovery_email(user.company_email, raw_token)
+                logger.info("TOTP recovery email submitted for delivery (user_id=%s)", user.id)
+            except Exception as exc:
+                db.session.rollback()
+                # If the token row was committed before SMTP failed, invalidate it.
+                persisted = AccountRecoveryToken.query.filter_by(
+                    token_hash=hashlib.sha256(raw_token.encode('utf-8')).hexdigest(),
+                    used_at=None,
+                ).first()
+                if persisted:
+                    persisted.used_at = datetime.now(pytz.UTC).replace(tzinfo=None)
+                    db.session.commit()
+                # Deliberately log neither the raw token nor the recovery URL.
+                logger.warning("TOTP recovery delivery unavailable (%s)", type(exc).__name__)
+        # Identical public response for existing/missing users and delivery failure.
+        flash(
+            'If the address matches an account and recovery email is available, instructions may be sent. '
+            'If you do not receive an email, contact support.',
+            'info',
+        )
         return redirect(url_for('auth.login'))
-    else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(f"Error in {form[field].label.text}: {error}", 'danger')
 
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(f"Error in {form[field].label.text}: {error}", 'danger')
     return render_template('auth/reset_password_request.html', form=form, current_year=datetime.now().year)
+
+
+@auth_bp.route('/reset_totp', methods=['GET', 'POST'])
+@limiter.limit('10 per hour')
+def reset_totp_with_token():
+    """Rotate TOTP only after the emailed token and new authenticator code are verified."""
+    token = request.args.get('token') if request.method == 'GET' else request.form.get('token')
+    if not token or len(token) > 128:
+        flash('This recovery link is invalid or expired. Request a new one.', 'danger')
+        return redirect(url_for('auth.reset_password_request'))
+
+    token_hash = hashlib.sha256(token.encode('utf-8')).hexdigest()
+    now = datetime.now(pytz.UTC).replace(tzinfo=None)
+    recovery = AccountRecoveryToken.query.filter_by(
+        token_hash=token_hash, used_at=None
+    ).with_for_update().first()
+    if not recovery or recovery.expires_at <= now:
+        flash('This recovery link is invalid or expired. Request a new one.', 'danger')
+        return redirect(url_for('auth.reset_password_request'))
+
+    user = User.query.get(recovery.user_id)
+    if not user:
+        flash('This recovery link is invalid or expired. Request a new one.', 'danger')
+        return redirect(url_for('auth.reset_password_request'))
+
+    if request.method == 'GET':
+        if not recovery.pending_totp_secret:
+            new_secret = pyotp.random_base32()
+            recovery.pending_totp_secret = User.encrypt_totp_secret(new_secret)
+            db.session.commit()
+        new_secret = User._totp_cipher().decrypt(
+            recovery.pending_totp_secret[4:].encode('ascii')
+        ).decode('utf-8') if recovery.pending_totp_secret.startswith('enc:') else recovery.pending_totp_secret
+        uri = pyotp.TOTP(new_secret).provisioning_uri(
+            name=user.company_email,
+            issuer_name='MaterialHub',
+        )
+        return render_template(
+            'auth/reset_totp.html',
+            qr_code=generate_qr_code(uri),
+            totp_secret=new_secret,
+            recovery_token=token,
+        )
+
+    code = (request.form.get('totp_code') or '').strip()
+    if not re.fullmatch(r'\d{6}', code):
+        flash('Enter a valid six-digit authenticator code.', 'danger')
+        return redirect(url_for('auth.reset_totp_with_token', token=token))
+
+    encrypted_secret = recovery.pending_totp_secret
+    if not encrypted_secret:
+        flash('This recovery link is invalid or expired. Request a new one.', 'danger')
+        return redirect(url_for('auth.reset_password_request'))
+    try:
+        new_secret = (
+            User._totp_cipher().decrypt(encrypted_secret[4:].encode('ascii')).decode('utf-8')
+            if encrypted_secret.startswith('enc:') else encrypted_secret
+        )
+    except Exception:
+        logger.error("Unable to decrypt pending TOTP recovery secret (recovery_id=%s)", recovery.id)
+        flash('Recovery could not be completed. Request a new link.', 'danger')
+        return redirect(url_for('auth.reset_password_request'))
+
+    if not pyotp.TOTP(new_secret).verify(code, valid_window=1):
+        flash('Invalid authenticator code. Please try again.', 'danger')
+        return redirect(url_for('auth.reset_totp_with_token', token=token))
+
+    user.totp_secret = encrypted_secret
+    user.auth_version = int(user.auth_version or 0) + 1
+    user.qr_code_base64 = None
+    user.totp_confirmed = True
+    recovery.used_at = now
+    recovery.pending_totp_secret = None
+    AccountRecoveryToken.query.filter(
+        AccountRecoveryToken.user_id == user.id,
+        AccountRecoveryToken.id != recovery.id,
+        AccountRecoveryToken.used_at.is_(None),
+    ).update({AccountRecoveryToken.used_at: now}, synchronize_session=False)
+    db.session.commit()
+    logger.info("TOTP recovery completed (user_id=%s)", user.id)
+    flash('Your authenticator has been reset. You can now sign in with the new code.', 'success')
+    return redirect(url_for('auth.login'))
+
 
 @auth_bp.route('/change_password', methods=['GET', 'POST'])
 @limiter.limit('5 per 15 minutes')
@@ -297,13 +404,13 @@ def change_password():
             user.qr_code_base64 = None
             user.totp_confirmed = False
             db.session.commit()
-            logger.info(f"TOTP reset for user: {user.company_email} (ID: {user.id}, IP: {request.remote_addr})")
+            logger.info("TOTP reset initiated (user_id=%s)", user.id)
             flash('TOTP reset successfully! Please scan the new QR code with Microsoft Authenticator.', 'success')
             return render_template('auth/change_password.html', form=form, qr_code=qr_code,
                                  totp_secret=new_totp_secret, current_year=datetime.now().year)
         except Exception as e:
             db.session.rollback()
-            logger.error(f"TOTP reset error for {current_user.company_email}: {str(e)} (IP: {request.remote_addr})")
+            logger.error("TOTP reset failed (%s)", type(e).__name__)
             flash('An error occurred while resetting TOTP. Please try again.', 'danger')
     else:
         for field, errors in form.errors.items():

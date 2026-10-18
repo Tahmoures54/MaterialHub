@@ -28,3 +28,14 @@ def test_auth_uses_moved_register_template():
     assert "auth/register.html" in auth
     assert "render_template(\n        'register.html'" not in auth
     assert "'register.html'" not in auth
+
+
+def test_warehouse_blueprint_is_readable_and_importable():
+    source = (ROOT / "blueprints" / "warehouse.py").read_text(encoding="utf-8")
+    assert "zlib.decompress" not in source
+    assert "exec(compile(" not in source
+
+    from blueprints.warehouse import warehouse_bp
+
+    # Import itself is the regression boundary; app integration tests verify registration.
+    assert warehouse_bp.name == "warehouse"

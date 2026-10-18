@@ -26,4 +26,4 @@ RUN chmod 0555 /app/docker/entrypoint.sh && chown -R materialhub:materialhub /ap
 USER materialhub
 EXPOSE 8000
 STOPSIGNAL SIGTERM
-CMD ["gunicorn","--bind","0.0.0.0:8000","--workers","3","--threads","2","--timeout","120","--graceful-timeout","30","--access-logfile","-","--error-logfile","-","wsgi:app"]
+CMD ["gunicorn","--bind","0.0.0.0:8000","--workers","3","--threads","2","--timeout","120","--graceful-timeout","30","--access-logfile","/dev/null","--error-logfile","-","wsgi:app"]
