@@ -219,6 +219,7 @@ def create_app(config_name=None):
     from forms.material_forms import MaterialMarketplaceForm, AddMaterialForm
     from models import SupplierMaterial, User, AccessLevel
     import models_intelligence  # register vNext intelligence tables
+    import models_commissioning  # register OPERA commissioning foundation tables
 
     from blueprints.auth import auth_bp
     from blueprints.supplier import supplier_bp
