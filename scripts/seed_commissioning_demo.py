@@ -83,7 +83,7 @@ def seed():
             ("FG-ESD-001", "Feed gas ESD valve", 2),
         ]
         tags = [CommissioningTag(
-            tenant_id=COMPANY, subsystem_id=subsystems[sub], tag_number=number,
+            tenant_id=COMPANY, subsystem_id=subsystems[sub].id, tag_number=number,
             description=description, tag_type="EQUIPMENT", discipline="Mechanical",
             validation_status=TagValidationStatus.VALIDATED,
         ) for number, description, sub in tag_data]
