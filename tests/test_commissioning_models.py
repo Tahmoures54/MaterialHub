@@ -3,10 +3,10 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from extensions import db
-from models import Project, DocumentSequence
+from models import Project, DocumentSequence, User, AccessLevel
 from models_commissioning import (
     CheckSheet, CheckSheetItem, CheckSheetItemResult, CheckSheetStatus, CheckSheetType,
-    CommissioningSubsystem, CommissioningSystem, CommissioningSystemStatus, SystemizationStatus,
+    CommissioningMembership, CommissioningSubsystem, CommissioningSystem, CommissioningSystemStatus, SystemizationStatus,
 )
 from services.commissioning_number_service import next_commissioning_number, format_checksheet_number
 
@@ -88,6 +88,29 @@ def test_checksheet_revision_key_is_unique(app):
             CheckSheet(tenant_id="Tenant A", subsystem_id=subsystem.id, sheet_number="TA-04-A-1",
                        sheet_type=CheckSheetType.A, title="Duplicate", revision=0),
         ])
+        with pytest.raises(IntegrityError):
+            db.session.flush()
+        db.session.rollback()
+
+
+def test_membership_rejects_user_from_another_tenant(app):
+    with app.app_context():
+        project, _, _ = hierarchy("Tenant A", "TA-05")
+        foreign_user = User(
+            company_name="Tenant B",
+            company_email="tenant-b-user@example.com",
+            company_phone="+989121234567",
+            full_name="Tenant B User",
+            company_address="Test",
+            country="IR",
+            access_level=AccessLevel.engineering,
+            totp_confirmed=True,
+        )
+        db.session.add(foreign_user)
+        db.session.flush()
+        db.session.add(CommissioningMembership(
+            tenant_id="Tenant A", project_id=project.id, user_id=foreign_user.id, role="viewer"
+        ))
         with pytest.raises(IntegrityError):
             db.session.flush()
         db.session.rollback()

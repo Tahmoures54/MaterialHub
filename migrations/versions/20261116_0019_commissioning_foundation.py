@@ -18,6 +18,7 @@ def E(*values, name):
 
 def upgrade():
     op.create_index("uq_project_id_company", "project", ["id", "company_name"], unique=True)
+    op.create_index("uq_user_id_company", "user", ["id", "company_name"], unique=True)
 
     op.create_table("commissioning_system",
         sa.Column("id", sa.Integer(), primary_key=True),
@@ -73,7 +74,7 @@ def upgrade():
         sa.UniqueConstraint("id", "tenant_id", name="uq_cs_tag_id_tenant"),
         sa.UniqueConstraint("tenant_id", "tag_number", name="uq_cs_tag_number_tenant"),
         sa.ForeignKeyConstraint(["subsystem_id", "tenant_id"], ["commissioning_subsystem.id", "commissioning_subsystem.tenant_id"], name="fk_cs_tag_subsystem_tenant", ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["validated_by"], ["user.id"], name="fk_cs_tag_validator"))
+        sa.ForeignKeyConstraint(["validated_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_tag_validator_tenant"))
     op.create_index("ix_commissioning_tag_tenant_id", "commissioning_tag", ["tenant_id"])
     op.create_index("ix_commissioning_tag_subsystem_id", "commissioning_tag", ["subsystem_id"])
 
@@ -89,7 +90,7 @@ def upgrade():
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.UniqueConstraint("id", "tenant_id", name="uq_cs_attachment_id_tenant"),
         sa.UniqueConstraint("tenant_id", "storage_key", name="uq_cs_attachment_storage_tenant"),
-        sa.ForeignKeyConstraint(["uploaded_by"], ["user.id"], name="fk_cs_attachment_uploader"))
+        sa.ForeignKeyConstraint(["uploaded_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_attachment_uploader_tenant"))
     op.create_index("ix_commissioning_attachment_tenant_id", "commissioning_attachment", ["tenant_id"])
 
     op.create_table("commissioning_checksheet",
@@ -118,10 +119,10 @@ def upgrade():
         sa.ForeignKeyConstraint(["subsystem_id", "tenant_id"], ["commissioning_subsystem.id", "commissioning_subsystem.tenant_id"], name="fk_cs_checksheet_subsystem_tenant", ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["tag_id", "tenant_id"], ["commissioning_tag.id", "commissioning_tag.tenant_id"], name="fk_cs_checksheet_tag_tenant", ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["supersedes_id", "tenant_id"], ["commissioning_checksheet.id", "commissioning_checksheet.tenant_id"], name="fk_cs_checksheet_supersedes_tenant", ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["issued_by"], ["user.id"], name="fk_cs_checksheet_issuer"),
-        sa.ForeignKeyConstraint(["signed_off_by"], ["user.id"], name="fk_cs_checksheet_signer"),
-        sa.ForeignKeyConstraint(["rejected_by"], ["user.id"], name="fk_cs_checksheet_rejector"),
-        sa.ForeignKeyConstraint(["created_by"], ["user.id"], name="fk_cs_checksheet_creator"))
+        sa.ForeignKeyConstraint(["issued_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_checksheet_issuer_tenant"),
+        sa.ForeignKeyConstraint(["signed_off_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_checksheet_signer_tenant"),
+        sa.ForeignKeyConstraint(["rejected_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_checksheet_rejector_tenant"),
+        sa.ForeignKeyConstraint(["created_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_checksheet_creator_tenant"))
     for column in ("tenant_id", "subsystem_id", "tag_id", "sheet_number", "status"):
         op.create_index("ix_commissioning_checksheet_" + column, "commissioning_checksheet", [column])
 
@@ -143,7 +144,7 @@ def upgrade():
         sa.UniqueConstraint("tenant_id", "checksheet_id", "item_number", name="uq_cs_item_number_tenant"),
         sa.ForeignKeyConstraint(["checksheet_id", "tenant_id"], ["commissioning_checksheet.id", "commissioning_checksheet.tenant_id"], name="fk_cs_item_checksheet_tenant", ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["evidence_attachment_id", "tenant_id"], ["commissioning_attachment.id", "commissioning_attachment.tenant_id"], name="fk_cs_item_attachment_tenant", ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["checked_by"], ["user.id"], name="fk_cs_item_checker"))
+        sa.ForeignKeyConstraint(["checked_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_item_checker_tenant"))
     op.create_index("ix_commissioning_checksheet_item_tenant_id", "commissioning_checksheet_item", ["tenant_id"])
     op.create_index("ix_commissioning_checksheet_item_checksheet_id", "commissioning_checksheet_item", ["checksheet_id"])
 
@@ -173,11 +174,11 @@ def upgrade():
         sa.UniqueConstraint("tenant_id", "punch_number", name="uq_cs_punch_number_tenant"),
         sa.ForeignKeyConstraint(["subsystem_id", "tenant_id"], ["commissioning_subsystem.id", "commissioning_subsystem.tenant_id"], name="fk_cs_punch_subsystem_tenant", ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["checksheet_id", "tenant_id"], ["commissioning_checksheet.id", "commissioning_checksheet.tenant_id"], name="fk_cs_punch_checksheet_tenant", ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["assigned_to"], ["user.id"], name="fk_cs_punch_assignee"),
-        sa.ForeignKeyConstraint(["closed_by"], ["user.id"], name="fk_cs_punch_closer"),
-        sa.ForeignKeyConstraint(["verified_by"], ["user.id"], name="fk_cs_punch_verifier"),
-        sa.ForeignKeyConstraint(["waived_by"], ["user.id"], name="fk_cs_punch_waiver"),
-        sa.ForeignKeyConstraint(["created_by"], ["user.id"], name="fk_cs_punch_creator"))
+        sa.ForeignKeyConstraint(["assigned_to", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_punch_assignee_tenant"),
+        sa.ForeignKeyConstraint(["closed_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_punch_closer_tenant"),
+        sa.ForeignKeyConstraint(["verified_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_punch_verifier_tenant"),
+        sa.ForeignKeyConstraint(["waived_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_punch_waiver_tenant"),
+        sa.ForeignKeyConstraint(["created_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_punch_creator_tenant"))
     for column in ("tenant_id", "subsystem_id", "checksheet_id", "punch_number", "status"):
         op.create_index("ix_commissioning_punch_item_" + column, "commissioning_punch_item", [column])
 
@@ -206,9 +207,9 @@ def upgrade():
         sa.UniqueConstraint("tenant_id", "subsystem_id", "cert_type", "revision", name="uq_cs_certificate_revision_tenant"),
         sa.ForeignKeyConstraint(["subsystem_id", "tenant_id"], ["commissioning_subsystem.id", "commissioning_subsystem.tenant_id"], name="fk_cs_certificate_subsystem_tenant", ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["pdf_attachment_id", "tenant_id"], ["commissioning_attachment.id", "commissioning_attachment.tenant_id"], name="fk_cs_certificate_attachment_tenant", ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["issued_by"], ["user.id"], name="fk_cs_certificate_issuer"),
-        sa.ForeignKeyConstraint(["client_signed_by"], ["user.id"], name="fk_cs_certificate_client_signer"),
-        sa.ForeignKeyConstraint(["contractor_signed_by"], ["user.id"], name="fk_cs_certificate_contractor_signer"))
+        sa.ForeignKeyConstraint(["issued_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_certificate_issuer_tenant"),
+        sa.ForeignKeyConstraint(["client_signed_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_certificate_client_signer_tenant"),
+        sa.ForeignKeyConstraint(["contractor_signed_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_certificate_contractor_signer_tenant"))
     for column in ("tenant_id", "subsystem_id", "status"):
         op.create_index("ix_commissioning_certificate_" + column, "commissioning_certificate", [column])
 
@@ -229,7 +230,7 @@ def upgrade():
         sa.ForeignKeyConstraint(["project_id", "tenant_id"], ["project.id", "project.company_name"], name="fk_cs_snapshot_project_tenant", ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["system_id", "tenant_id"], ["commissioning_system.id", "commissioning_system.tenant_id"], name="fk_cs_snapshot_system_tenant", ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["subsystem_id", "tenant_id"], ["commissioning_subsystem.id", "commissioning_subsystem.tenant_id"], name="fk_cs_snapshot_subsystem_tenant", ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["created_by"], ["user.id"], name="fk_cs_snapshot_creator"))
+        sa.ForeignKeyConstraint(["created_by", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_snapshot_creator_tenant"))
     for column in ("tenant_id", "project_id", "system_id", "subsystem_id", "captured_at"):
         op.create_index("ix_commissioning_progress_snapshot_" + column, "commissioning_progress_snapshot", [column])
 
@@ -245,7 +246,7 @@ def upgrade():
         sa.Column("ip_address", sa.String(64)),
         sa.Column("user_agent", sa.String(255)),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["actor_user_id"], ["user.id"], name="fk_cs_audit_actor"))
+        sa.ForeignKeyConstraint(["actor_user_id", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_audit_actor_tenant"))
     for column in ("tenant_id", "actor_user_id", "entity_type", "entity_id", "created_at"):
         op.create_index("ix_commissioning_audit_event_" + column, "commissioning_audit_event", [column])
 
@@ -258,7 +259,7 @@ def upgrade():
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.UniqueConstraint("tenant_id", "project_id", "user_id", name="uq_cs_membership_user_project"),
         sa.ForeignKeyConstraint(["project_id", "tenant_id"], ["project.id", "project.company_name"], name="fk_cs_membership_project_tenant", ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["user_id"], ["user.id"], name="fk_cs_membership_user"))
+        sa.ForeignKeyConstraint(["user_id", "tenant_id"], ["user.id", "user.company_name"], name="fk_cs_membership_user_tenant"))
     for column in ("tenant_id", "project_id", "user_id"):
         op.create_index("ix_commissioning_membership_" + column, "commissioning_membership", [column])
 
@@ -272,4 +273,5 @@ def downgrade():
         "commissioning_tag", "commissioning_subsystem", "commissioning_system",
     ):
         op.drop_table(table)
+    op.drop_index("uq_user_id_company", table_name="user")
     op.drop_index("uq_project_id_company", table_name="project")

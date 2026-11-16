@@ -1252,6 +1252,7 @@ class Bid(db.Model):
 
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
+    __table_args__ = (db.Index('uq_user_id_company', 'id', 'company_name', unique=True), {"extend_existing": True})
     id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String(100), nullable=False, index=True)
     company_email = db.Column(db.String(120), unique=True, nullable=False, index=True)
