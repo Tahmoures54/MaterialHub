@@ -374,6 +374,8 @@ class CommissioningMembership(db.Model):
         UniqueConstraint("tenant_id", "project_id", "user_id", name="uq_cs_membership_user_project"),
         ForeignKeyConstraint(["project_id", "tenant_id"], ["project.id", "project.company_name"],
                              name="fk_cs_membership_project_tenant", ondelete="CASCADE"),
+        ForeignKeyConstraint(["user_id", "tenant_id"], ["user.id", "user.company_name"],
+                             name="fk_cs_membership_user_tenant"),
     )
     id = db.Column(db.Integer, primary_key=True)
     tenant_id = db.Column(db.String(100), nullable=False, index=True)
