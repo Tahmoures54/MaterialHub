@@ -17,8 +17,7 @@ def E(*values, name):
 
 
 def upgrade():
-    with op.batch_alter_table("project") as batch_op:
-        batch_op.create_unique_constraint("uq_project_id_company", ["id", "company_name"])
+    op.create_index("uq_project_id_company", "project", ["id", "company_name"], unique=True)
 
     op.create_table("commissioning_system",
         sa.Column("id", sa.Integer(), primary_key=True),
@@ -273,5 +272,4 @@ def downgrade():
         "commissioning_tag", "commissioning_subsystem", "commissioning_system",
     ):
         op.drop_table(table)
-    with op.batch_alter_table("project") as batch_op:
-        batch_op.drop_constraint("uq_project_id_company", type_="unique")
+    op.drop_index("uq_project_id_company", table_name="project")

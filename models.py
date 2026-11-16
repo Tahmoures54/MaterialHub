@@ -143,7 +143,7 @@ class Project(db.Model):
     __tablename__ = 'project'
     __table_args__ = (
         db.UniqueConstraint('project_no', 'company_name', name='uq_project_no_company'),
-        db.UniqueConstraint('id', 'company_name', name='uq_project_id_company'),
+        db.Index('uq_project_id_company', 'id', 'company_name', unique=True),
         {"extend_existing": True},
     )
     id = db.Column(db.Integer, primary_key=True)

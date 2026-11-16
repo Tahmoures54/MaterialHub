@@ -4,6 +4,19 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import sqlite3
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+
+
+@event.listens_for(Engine, 'connect')
+def _enable_sqlite_foreign_keys(connection, _record):
+    # SQLite disables FK enforcement by default; OPERA's composite tenant FKs
+    # must be enforced in local development and tests as well as PostgreSQL.
+    if isinstance(connection, sqlite3.Connection):
+        cursor = connection.cursor()
+        cursor.execute('PRAGMA foreign_keys=ON')
+        cursor.close()
 
 db = SQLAlchemy()
 # Tables may be re-registered when a model module is re-executed (e.g. under
